@@ -1,17 +1,60 @@
-def generate_sammy_input_file(filename, title, element, atomic_weight):
-    """
-    Generate an input file for a Fortran program.
+
+
+class Input:
+    MAX_COLUMNS = 80
     
-    Parameters:
-    - filename: the name of the file to save to.
-    - title: a string (up to 80 characters) for the title.
-    - element: a string (up to 10 characters) for the element name.
-    - atomic_weight: a float for the atomic weight of the element.
-    """
-    with open(filename, 'w') as f:
-        # Write the title (padded or truncated to 80 characters)
-        f.write(f"{title:80}\n")
-        
-        # Write the element (padded or truncated to 10 characters) 
-        # and atomic weight (formatted to occupy 10 columns)
-        f.write(f"{element:10}{atomic_weight:10.4f}\n")
+    @staticmethod
+    def format_type_A(data, width):
+        return f"{data:<{width}}"
+
+    @staticmethod
+    def format_type_F(data, width):
+        # The ".4f" here denotes 4 decimal places. You can adjust if needed.
+        return f"{data:>{width}.4f}"
+
+    @staticmethod
+    def format_type_I(data, width):
+        return f"{data:>{width}d}"
+
+    class Card1:
+        def __init__(self, TITLE):
+            self.TITLE = TITLE
+
+        def __str__(self):
+            return Input.format_type_A(self.TITLE, Input.MAX_COLUMNS)
+
+    class Card2:
+        def __init__(self, ELMNT, AW, EMIN, EMAX, NEPNTS, ITMAX, ICORR, NXTRA, IPTDOP, IPTWID, IXXCHN, NDIGIT, IDROPP, MATNUM):
+            self.ELMNT = ELMNT      # Element name
+            self.AW = AW            # Atomic weight
+            self.EMIN = EMIN        # Minimum energy
+            self.EMAX = EMAX        # Maximum energy
+            self.NEPNTS = NEPNTS    # Number of points to be used in generating artificial energy grid
+            self.ITMAX = ITMAX      # Number of iterations (default = 2)
+            self.ICORR = ICORR      # Correlation option (default = 50)
+            self.NXTRA = NXTRA      # Number of extra points to be added between each pair of data points for auxiliary energy grid
+            self.IPTDOP = IPTDOP    # Number of points to be added to auxiliary energy grid across small resonances
+            self.IPTWID = IPTWID    # Determines the number of points to be added to auxiliary grid in tails of small resonances
+            self.IXXCHN = IXXCHN    # Number of energy channels in ODF-type data file to be ignored
+            self.NDIGIT = NDIGIT    # Number of digits for compact format for covariance matrix
+            self.IDROPP = IDROPP    # The input resonanceparameter covariance matrix will be modified before being used in the fitting procedure.
+            self.MATNUM = MATNUM    # ENDF Material number
+
+        def __str__(self):
+            return (
+                Input.format_type_A(self.ELMNT, 10) +
+                Input.format_type_F(self.AW, 10) +
+                Input.format_type_F(self.EMIN, 10) +
+                Input.format_type_F(self.EMAX, 10) +
+                Input.format_type_I(self.NEPNTS, 5) +
+                Input.format_type_I(self.ITMAX, 5) +
+                Input.format_type_I(self.ICORR, 2) +
+                Input.format_type_I(self.NXTRA, 3) +
+                Input.format_type_I(self.IPTDOP, 2) +
+                Input.format_type_I(self.IPTWID, 2) +
+                Input.format_type_I(self.IXXCHN, 10) +
+                Input.format_type_I(self.NDIGIT, 2) +
+                Input.format_type_I(self.IDROPP, 2) +
+                Input.format_type_I(self.MATNUM, 6)
+            )
+

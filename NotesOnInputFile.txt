@@ -1,0 +1,10 @@
+Max Number of Columns in the fortran input file = 80
+
+Data input types 
+“A” can be numbers or letters or symbols
+“F” requires a number with a decimal point
+“I” implies a number without a decimal point like an integer and requires that the number be in the right-most columns
+
+Classes: 
+Card 1 - Line 1: 1-80 columns, A "TITLE"
+Card 2 - Line 1: 1-10 columns, A "ELMNT"; 11-20 columns, F "AW"; 21-30 columns, F "EMIN"; 31-40 columns, F "EMAX"; 41-45 columns, I "NEPNTS"; 46-50 columns, I "ITMAX"; 51-52 columns, I "ICORR"; 53-55 columns, I "NXTRA"; 56-57 columns, I "IPTDOP"; 59-60 columns, I "IPTWID"; 61-70 columns, I "IXXCHN"; 71-72 columns, I "NDIGIT"; 73-74 columns, I "IDROPP"; 75-80 columns, I "MATNUM"
