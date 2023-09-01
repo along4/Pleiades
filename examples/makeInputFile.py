@@ -6,13 +6,12 @@ import sammyInput as samin
 
 def main():
     # Create card instances
-    card1 = samin.Input.Card1("Sample Fortran Input Title")
-    card2 = samin.Input.Card2("Oxygen", 15.9994, 0.1, 100.0, 100, 5, 2, 3, 2, 1, 1234567890, 2, 1, 123456)
+    card1 = samin.InputFile.Card1("Sample Fortran Input Title")
+    card2 = samin.InputFile.Card2("Oxygen", 15.9994, 0.1, 100.0, 100, 5, 2, 3, 2, 1, 0, 2, 1, 0)
 
-    # Generate Fortran input file
-    with open("fortran_input.txt", 'w') as f:
-        f.write(str(card1) + "\n")
-        f.write(str(card2) + "\n")
+    # Use the InputFile method to generate the input file
+    inputFile = samin.InputFile()
+    inputFile.write_to_file("inputExample.txt", card1, card2)
 
 if __name__ == "__main__":
     main()

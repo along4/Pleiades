@@ -1,6 +1,7 @@
 
 
-class Input:
+class InputFile:
+
     MAX_COLUMNS = 80
     
     @staticmethod
@@ -21,7 +22,7 @@ class Input:
             self.TITLE = TITLE
 
         def __str__(self):
-            return Input.format_type_A(self.TITLE, Input.MAX_COLUMNS)
+            return InputFile.format_type_A(self.TITLE, InputFile.MAX_COLUMNS)
 
     class Card2:
         def __init__(self, ELMNT, AW, EMIN, EMAX, NEPNTS, ITMAX, ICORR, NXTRA, IPTDOP, IPTWID, IXXCHN, NDIGIT, IDROPP, MATNUM):
@@ -42,19 +43,28 @@ class Input:
 
         def __str__(self):
             return (
-                Input.format_type_A(self.ELMNT, 10) +
-                Input.format_type_F(self.AW, 10) +
-                Input.format_type_F(self.EMIN, 10) +
-                Input.format_type_F(self.EMAX, 10) +
-                Input.format_type_I(self.NEPNTS, 5) +
-                Input.format_type_I(self.ITMAX, 5) +
-                Input.format_type_I(self.ICORR, 2) +
-                Input.format_type_I(self.NXTRA, 3) +
-                Input.format_type_I(self.IPTDOP, 2) +
-                Input.format_type_I(self.IPTWID, 2) +
-                Input.format_type_I(self.IXXCHN, 10) +
-                Input.format_type_I(self.NDIGIT, 2) +
-                Input.format_type_I(self.IDROPP, 2) +
-                Input.format_type_I(self.MATNUM, 6)
+                InputFile.format_type_A(self.ELMNT, 10) +
+                InputFile.format_type_F(self.AW, 10) +
+                InputFile.format_type_F(self.EMIN, 10) +
+                InputFile.format_type_F(self.EMAX, 10) +
+                InputFile.format_type_I(self.NEPNTS, 5) +
+                InputFile.format_type_I(self.ITMAX, 5) +
+                InputFile.format_type_I(self.ICORR, 2) +
+                InputFile.format_type_I(self.NXTRA, 3) +
+                InputFile.format_type_I(self.IPTDOP, 2) +
+                InputFile.format_type_I(self.IPTWID, 2) +
+                InputFile.format_type_I(self.IXXCHN, 10) +
+                InputFile.format_type_I(self.NDIGIT, 2) +
+                InputFile.format_type_I(self.IDROPP, 2) +
+                InputFile.format_type_I(self.MATNUM, 6)
             )
 
+    def write_to_file(self, filename, *cards):
+        """_summary_
+
+        Args:
+            filename (_type_): _description_
+        """
+        with open(filename, 'w') as f:
+            for card in cards:
+                f.write(str(card) + "\n")
