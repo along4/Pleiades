@@ -30,9 +30,8 @@ Card 3 -
     Lines: various command statements. 
 
 Card 4 - 
-    Note:   This card set is present only when the phrase 
-            “KEY WORD PARTICLE PAir definitions are given” 
-            occurs in card set 3 above
+    Note:   This card set is present only when the phrase  “KEY WORD PARTICLE PAir 
+            definitions are given” occurs in card set 3 above
     Line 1:
         [FILL IN LATER]
 
@@ -46,5 +45,30 @@ Card 5 -
         51-60 columns, F "DELTTT";
         61-70 columns, F "ELOWBR";
 
+Card 6 - 
+    Note:   This card set is included only if DELTAG < 0 in card set 5.
+    Line 1: 
+        01-10 columns, F "DELTAB"   # Minimum channel width for  interval from EMIN to EMAX  (μs)
+        11-15 columns, I "NCF"      # Number of crunch boundaries (energy intervals)
+    Line 2:
+        01-10 columns, F "BCF(I)"   # maximum energy for this crunch factor (read in order of increasing energy) (eV)
+        11-20 columns, F "CF(I)"    # crunch factors (integer units of DELTAB)
 
+Card 7 - 
+    Line 1: 
+        01-10 columns, F "CRFN"     # Channel radius (fermi)
+        11-20 columns, F "THICK"    # Sample thickness (atoms/barn)
+        21-30 columns, F "DCOVA"    # Constant term in data covariance (default = 0.0)
+        31-40 columns, F "DCOVB"    # Linear term in data covariance (default = 0.0)
+        41-50 columns, F "VMIN"     # Minimum absolute uncertainty (standard deviation) on experimental data
         
+Card 8 - 
+    Note:   Line 1 will contain a "command" string that represents the type
+            of data, which must begin in first column on the line. Only those 
+            characters in CAPITAL letters are required. Lines 2 and greater 
+            are not needed unless "DIFFErential elastic cross sections" or 
+            "DIFFERENTIAL REaction" is selected.
+    Line 1: 
+        1-80 columns, A "CROSS"
+    Line 2-N: 
+
