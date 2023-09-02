@@ -1,2 +1,0 @@
-Sample Fortran Input Title                                                      
-Oxygen       15.9994    0.1000  100.0000  100    5 2  3 2 1         0 2 1     0
