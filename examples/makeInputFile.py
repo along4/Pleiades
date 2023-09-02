@@ -3,15 +3,23 @@ import sys
 sys.path.append('../libs') 
 import sammyInput as samin
 
-
-def main():
-    # Create card instances
-    card1 = samin.InputFile.Card1("Sample Fortran Input Title")
-    card2 = samin.InputFile.Card2("Oxygen", 15.9994, 0.1, 100.0, 100, 5, 2, 3, 2, 1, 0, 2, 1, 0)
-
+def main(config_file=None):
+    
     # Use the InputFile method to generate the input file
     inputFile = samin.InputFile()
+
+    # Read cards from config file
+    if config_file != None:
+        card1 = inputFile.Card1(config_file)
+        card2 = inputFile.Card2(config_file)
+    # Otherwise, use default values
+    else:
+        card1 = inputFile.Card1()
+        card2 = inputFile.Card2()
+        
+    # Write cards to input file
     inputFile.write_to_file("inputExample.txt", card1, card2)
 
 if __name__ == "__main__":
-    main()
+
+    main(sys.argv[1] if len(sys.argv) > 1 else None)

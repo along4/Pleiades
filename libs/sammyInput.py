@@ -19,7 +19,7 @@ class InputFile:
 
     class Card1:
         def __init__(self, config_file=None):
-            self.TITLE = ""
+            self.TITLE = "Blank Sammy Input File Title"
             if config_file:
                 self._read_from_config(config_file)
         
@@ -37,7 +37,7 @@ class InputFile:
     class Card2:
         def __init__(self, config_file=None):
             # Default values
-            self.ELMNT = ""     # Element name
+            self.ELMNT = "none"     # Element name
             self.AW = 0         # Atomic weight
             self.EMIN = 0       # Minimum energy
             self.EMAX = 0       # Maximum energy
@@ -108,6 +108,54 @@ class InputFile:
                 InputFile.format_type_I(self.MATNUM, 6)
             )
 
+    class Card3:
+        # Some predefined command statements
+        REICH_MOORE_FORM="REICH-MOORE FORMALISm is wanted"
+        ORIG_REICH_MOORE_FORM = "ORIGINAL REICH-MOORE formalism"
+        MULTI_BREIT = "MULTILEVEL BREITWIGner is wanted"
+        SINGLE_BREIT = "SINGLE LEVEL BREITWigner is wanted"
+        RED_WIDTH_AMPS = "REDUCED WIDTH AMPLITudes are used for input"
+        NEW_SPIN_FORMAT = "USE NEW SPIN GROUP Format"
+        PARTICL_PAIR_DEF = "PARTICLE PAIR DEFINItions are used"
+        KEY_WORD_PARTICLE_PAIR= "KEY-WORD PARTICLE-PAir definitions are given"
+        QUANTUM_NUMBERS = "QUANTUM NUMBERS ARE in parameter file"
+        PUT_QUANTUM_NUMS_IN_PARAM = "PUT QUANTUM NUMBERS into parameter file"    
+        INPUT_ENDF = "INPUT IS ENDF/B FILE"
+        USE_ENDF_ENERGY = "USE ENERGY RANGE FROm endf/b file"
+        FLAG_ALL_RES = "FLAG ALL RESONANCE Parameters"
+        SOLVE_BAYES = "SOLVE BAYES EQUATIONs"
+        NO_SOLVE_BAYES = "DO NOT SOLVE BAYES EQUATIONS"
+        TWENTY = "USE TWENTY SIGNIFICAnt digits"
+        BROADENING = "BROADENING IS WANTED"
+        CHI_SQUARED = "CHI SQUARED IS WANTEd"
+        NO_CHI_SQUARED = "CHI SQUARED IS NOT Wanted"
+        
+        
+        def __init__(self, config_file=None):
+            self.commands = []  # A list to hold the command statements
+            if config_file:
+                self._read_from_config(config_file)
+
+        def add_command(self, command):
+            """Add a command statement to the list."""
+            self.commands.append(command)
+
+        def _read_from_config(self, config_file):
+            config = configparser.ConfigParser()
+            config.read(config_file)
+            # Assuming the config file has a 'Card3' section with 'commands' that's a comma-separated list of commands
+            commands = config.get('Card3', 'commands', fallback='').split(',')
+            for command in commands:
+                command = command.strip()  # Remove any extra spaces
+                if hasattr(self, command):  # If it's one of our predefined commands
+                    self.add_command(getattr(self, command))
+                else:
+                    self.add_command(command)
+
+        def __str__(self):
+            return '\n'.join(self.commands)
+        
+    
     def write_to_file(self, filename, *cards):
         """_summary_
 
