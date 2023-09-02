@@ -21,7 +21,7 @@ def plot_data(data):
     # Plotting
     plt.figure(figsize=(10, 6))
     plt.plot(energy, experimental_cross_section, label='Experimental Cross Section', marker='o', linestyle='-')
-    plt.plot(energy, final_theoretical_cross_section, label='Final Theoretical Cross Section', marker='x', linestyle='--')
+    plt.plot(energy, final_theoretical_cross_section, label='SAMMY Cross Section', marker='x', linestyle='--')
 
     plt.xlabel('Energy')
     plt.ylabel('Cross Section (barns)')

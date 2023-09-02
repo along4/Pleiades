@@ -153,7 +153,7 @@ class InputFile:
                     self.add_command(command)
 
         def __str__(self):
-            return '\n'.join(self.commands)
+            return '\n'.join(self.commands) + '\n'
         
     
     def write_to_file(self, filename, *cards):
