@@ -240,6 +240,37 @@ class InputFile:
             return line1 + "\n" + line2
 
 
+    class Card7:
+        
+        def __init__(self, config_file=None):
+            # Default values
+            self.CRFN = 0.0
+            self.THICK = 0.0
+            self.DCOVA = 0.0
+            self.DCOVB = 0.0
+            self.VMIN = 0.0
+
+            if config_file:
+                self._read_from_config(config_file)
+
+        def _read_from_config(self, config_file):
+            config = configparser.ConfigParser()
+            config.read(config_file)
+            self.CRFN = config.getfloat('Card7', 'CRFN', fallback=self.CRFN)
+            self.THICK = config.getfloat('Card7', 'THICK', fallback=self.THICK)
+            self.DCOVA = config.getfloat('Card7', 'DCOVA', fallback=self.DCOVA)
+            self.DCOVB = config.getfloat('Card7', 'DCOVB', fallback=self.DCOVB)
+            self.VMIN = config.getfloat('Card7', 'VMIN', fallback=self.VMIN)
+
+        def __str__(self):
+            return (
+                InputFile.format_type_F(self.CRFN, 10) +
+                InputFile.format_type_F(self.THICK, 10) +
+                InputFile.format_type_F(self.DCOVA, 10) +
+                InputFile.format_type_F(self.DCOVB, 10) +
+                InputFile.format_type_F(self.VMIN, 10)
+            )
+    
     
     
     def write_to_file(self, filename, *cards):
