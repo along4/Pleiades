@@ -271,7 +271,37 @@ class InputFile:
                 InputFile.format_type_F(self.VMIN, 10)
             )
     
-    
+    class Card8:
+        def __init__(self, config_file=None):
+            """
+            Initialize Card8 instance.
+
+            Parameters:
+            - config_file (str): Path to the configuration file.
+            """
+            
+            if config_file:
+                config = self.read_config(config_file)
+                self.CROSS = config.get("CROSS", "").upper()[:80]
+            else:
+                self.CROSS = ""  # Empty string as default
+
+        def read_config(self, config_file):
+            """
+            Read and parse the configuration file.
+
+            This function assumes you have a way to extract values from a configuration file.
+            Implement this based on your configuration file's structure.
+            """
+            # Placeholder: Replace with actual reading logic
+            config_data = {}
+            return config_data
+
+        def __str__(self):
+            """
+            String representation of Card8 for writing to the input file.
+            """
+            return "{:<80}".format(self.CROSS)
     
     def write_to_file(self, filename, *cards):
         """_summary_
