@@ -1,11 +1,11 @@
 import sys
 
-import pleiades.sammyInput as samin
+import pleiades.sammyInput as psi
 
 def main(config_file=None):
     
     # Use the InputFile method to generate the input file
-    inputFile = samin.InputFile()
+    inputFile = psi.InputFile()
 
     # Read cards from config file
     if config_file != None:
