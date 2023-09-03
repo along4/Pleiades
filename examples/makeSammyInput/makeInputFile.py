@@ -1,7 +1,6 @@
 import sys
 
-sys.path.append('../libs') 
-import sammyInput as samin
+import pleiades.sammyInput as samin
 
 def main(config_file=None):
     
