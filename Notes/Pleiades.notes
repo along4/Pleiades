@@ -1,0 +1,12 @@
+General structure of git repo
+
+notes
+examples
+    - makeSammyInput/
+    - plotOutput/
+pleiades
+    - __pycache__
+    - __init__.py
+    - sammyInput.py 
+    - sammyPlotter.py 
+
