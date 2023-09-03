@@ -192,7 +192,56 @@ class InputFile:
                 InputFile.format_type_F(self.ELOWBR, 10)
             )
 
+    class Card6:
+        def __init__(self, card5_instance=None, config_file=None):
+            self.DELTAG = card5_instance.DELTAG if card5_instance else 0.0
+            self.DELTAB = 0.0
+            self.NCF = 0
+            self.BCF = []  # List of maximum energies for each crunch factor
+            self.CF = []   # List of crunch factors
 
+            if self.DELTAG < 0:
+                if config_file:
+                    self._read_from_config(config_file)
+
+        def _read_from_config(self, config_file):
+            config = configparser.ConfigParser()
+            config.read(config_file)
+            
+            self.DELTAB = config.getfloat('Card6', 'DELTAB', fallback=self.DELTAB)
+            self.NCF = config.getint('Card6', 'NCF', fallback=self.NCF)
+            
+            for i in range(1, self.NCF + 1):
+                bcf_key = f"BCF_{i}"
+                cf_key = f"CF_{i}"
+                
+                bcf_value = config.getfloat('Card6', bcf_key, fallback=0.0)
+                cf_value = config.getfloat('Card6', cf_key, fallback=0.0)
+                
+                self.BCF.append(bcf_value)
+                self.CF.append(cf_value)
+
+        def __str__(self):
+            if self.DELTAG >= 0:
+                return ""
+            
+            line1 = (
+                InputFile.format_type_F(self.DELTAB, 10) +
+                InputFile.format_type_I(self.NCF, 5)
+            )
+            
+            line2 = ""
+            for i in range(self.NCF):
+                line2 += (
+                    InputFile.format_type_F(self.BCF[i], 10) +
+                    InputFile.format_type_F(self.CF[i], 10)
+                )
+            
+            return line1 + "\n" + line2
+
+
+    
+    
     def write_to_file(self, filename, *cards):
         """_summary_
 
