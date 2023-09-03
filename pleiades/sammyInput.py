@@ -236,7 +236,6 @@ class InputFile:
                     InputFile.format_type_F(self.BCF[i], 10) +
                     InputFile.format_type_F(self.CF[i], 10)
                 )
-            
             return line1 + "\n" + line2
 
 
@@ -279,23 +278,18 @@ class InputFile:
             Parameters:
             - config_file (str): Path to the configuration file.
             """
+            self.CROSS = ""  # Default value
             
             if config_file:
-                config = self.read_config(config_file)
-                self.CROSS = config.get("CROSS", "").upper()[:80]
-            else:
-                self.CROSS = ""  # Empty string as default
+                self._read_from_config(config_file)
 
-        def read_config(self, config_file):
-            """
-            Read and parse the configuration file.
+        def _read_from_config(self, config_file):
 
-            This function assumes you have a way to extract values from a configuration file.
-            Implement this based on your configuration file's structure.
-            """
-            # Placeholder: Replace with actual reading logic
-            config_data = {}
-            return config_data
+            config = configparser.ConfigParser()
+            config.read(config_file)
+            
+            # Assuming the config file has a 'Card8' section with a single 'CROSS' key
+            self.CROSS = config.get('Card8', 'CROSS', fallback=self.CROSS)[:80]
 
         def __str__(self):
             """
