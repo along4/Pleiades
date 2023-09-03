@@ -4,7 +4,7 @@ PLEIADES: Python Libraries Extensions for Isotopic Analysis via Detailed Extract
 
 ## Usage
 Once the repo in downloaded please append Pleiases to your python path. 
-'''
+```
 export PYTHONPATH=$PYTHONPATH:/path/to/PLEIADES
-'''
+```
 This can also be saved in the '.bashrc or .zshrc' file within your home dir.
