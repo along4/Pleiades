@@ -12,13 +12,17 @@ def main(config_file=None):
     if config_file != None:
         card1 = inputFile.Card1(config_file)
         card2 = inputFile.Card2(config_file)
+        card3 = inputFile.Card3(config_file)
+        card5 = inputFile.Card5(config_file)
     # Otherwise, use default values
     else:
         card1 = inputFile.Card1()
         card2 = inputFile.Card2()
+        card3 = inputFile.Card3()
+        card5 = inputFile.Card5()
         
     # Write cards to input file
-    inputFile.write_to_file("inputExample.txt", card1, card2)
+    inputFile.write_to_file("inputExample.txt", card1, card2, card3, card5)
 
 if __name__ == "__main__":
 

@@ -155,7 +155,44 @@ class InputFile:
         def __str__(self):
             return '\n'.join(self.commands) + '\n'
         
-    
+    class Card5:
+        
+        def __init__(self, config_file=None):
+            # Default values
+            self.TEMP = 0.0
+            self.DIST = 0.0
+            self.DELTAL = 0.0
+            self.DELTAE = 0.0
+            self.DELTAG = 0.0
+            self.DELTTT = 0.0
+            self.ELOWBR = 0.0
+
+            if config_file:
+                self._read_from_config(config_file)
+
+        def _read_from_config(self, config_file):
+            config = configparser.ConfigParser()
+            config.read(config_file)
+            self.TEMP = config.getfloat('Card5', 'TEMP', fallback=self.TEMP)
+            self.DIST = config.getfloat('Card5', 'DIST', fallback=self.DIST)
+            self.DELTAL = config.getfloat('Card5', 'DELTAL', fallback=self.DELTAL)
+            self.DELTAE = config.getfloat('Card5', 'DELTAE', fallback=self.DELTAE)
+            self.DELTAG = config.getfloat('Card5', 'DELTAG', fallback=self.DELTAG)
+            self.DELTTT = config.getfloat('Card5', 'DELTTT', fallback=self.DELTTT)
+            self.ELOWBR = config.getfloat('Card5', 'ELOWBR', fallback=self.ELOWBR)
+
+        def __str__(self):
+            return (
+                InputFile.format_type_F(self.TEMP, 10) +
+                InputFile.format_type_F(self.DIST, 10) +
+                InputFile.format_type_F(self.DELTAL, 10) +
+                InputFile.format_type_F(self.DELTAE, 10) +
+                InputFile.format_type_F(self.DELTAG, 10) +
+                InputFile.format_type_F(self.DELTTT, 10) +
+                InputFile.format_type_F(self.ELOWBR, 10)
+            )
+
+
     def write_to_file(self, filename, *cards):
         """_summary_
 
