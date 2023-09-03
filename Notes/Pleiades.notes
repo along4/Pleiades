@@ -1,10 +1,13 @@
 General structure of git repo
 
-notes
-examples
+[PLEIADES]
+notes/
+examples/
     - makeSammyInput/
+        - makeInputFile.py
     - plotOutput/
-pleiades
+        - plotSammyLST.py
+pleiades/
     - __pycache__
     - __init__.py
     - sammyInput.py 
