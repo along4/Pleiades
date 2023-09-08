@@ -108,5 +108,5 @@ def get_mass_from_ame(isotopic_str):
         for iso in possible_isotopes_data_list:
             if (iso['el'] == element) and (iso['A'] == atomic_number):
                 final_atomic_mass = iso['atomic_mass']
-
-    return(final_atomic_mass)
+                return final_atomic_mass
+    return None

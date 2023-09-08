@@ -40,18 +40,18 @@ class InputFile:
         def __init__(self, config_file=None):
             # Default values
             self.ELMNT = "none"     # Element name
-            self.AW = 0             # Atomic weight
+            self.AW = 0             # Atomic weight in amu
             self.EMIN = 0           # Minimum energy
             self.EMAX = 0           # Maximum energy
-            self.NEPNTS = 0         # Number of points to be used in generating artificial energy grid
-            self.ITMAX = 0          # Number of iterations (default = 2)
-            self.ICORR = 0          # Correlation option (default = 50)
-            self.NXTRA = 0          # Number of extra points to be added between each pair of data points for auxiliary energy grid
-            self.IPTDOP = 0         # Number of points to be added to auxiliary energy grid across small resonances
-            self.IPTWID = 0         # Determines the number of points to be added to auxiliary grid in tails of small resonances
-            self.IXXCHN = 0         # Number of energy channels in ODF-type data file to be ignored
-            self.NDIGIT = 0         # Number of digits for compact format for covariance matrix
-            self.IDROPP = 0         # The input resonanceparameter covariance matrix will be modified before being used in the fitting procedure.
+            self.NEPNTS = 10001     # Number of points to be used in generating artificial energy grid (default = 10001)
+            self.ITMAX = 2          # Number of iterations (default = 2)
+            self.ICORR = 50         # Correlation option (default = 50)
+            self.NXTRA = 0          # Number of extra points to be added between each pair of data points for auxiliary energy grid (Default = 0)
+            self.IPTDOP = 9         # Number of points to be added to auxiliary energy grid across small resonances (Default = 9)
+            self.IPTWID = 5         # Determines the number of points to be added to auxiliary grid in tails of small resonances (Default = 5)
+            self.IXXCHN = 0         # Number of energy channels in ODF-type data file to be ignored 
+            self.NDIGIT = 2         # Number of digits for compact format for covariance matrix (Default = 2)
+            self.IDROPP = 2         # The input resonanceparameter covariance matrix will be modified before being used in the fitting procedure. (Default = 2)
             self.MATNUM = 0         # ENDF Material number
 
             if config_file:
