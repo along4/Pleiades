@@ -35,22 +35,24 @@ class InputFile:
             return InputFile.format_type_A(self.TITLE, InputFile.MAX_COLUMNS)
 
     class Card2:
+        """ Card2 class for the Sammy input file. 
+        """
         def __init__(self, config_file=None):
             # Default values
             self.ELMNT = "none"     # Element name
-            self.AW = 0         # Atomic weight
-            self.EMIN = 0       # Minimum energy
-            self.EMAX = 0       # Maximum energy
-            self.NEPNTS = 0     # Number of points to be used in generating artificial energy grid
-            self.ITMAX = 0      # Number of iterations (default = 2)
-            self.ICORR = 0      # Correlation option (default = 50)
-            self.NXTRA = 0      # Number of extra points to be added between each pair of data points for auxiliary energy grid
-            self.IPTDOP = 0     # Number of points to be added to auxiliary energy grid across small resonances
-            self.IPTWID = 0     # Determines the number of points to be added to auxiliary grid in tails of small resonances
-            self.IXXCHN = 0     # Number of energy channels in ODF-type data file to be ignored
-            self.NDIGIT = 0     # Number of digits for compact format for covariance matrix
-            self.IDROPP = 0     # The input resonanceparameter covariance matrix will be modified before being used in the fitting procedure.
-            self.MATNUM = 0     # ENDF Material number
+            self.AW = 0             # Atomic weight
+            self.EMIN = 0           # Minimum energy
+            self.EMAX = 0           # Maximum energy
+            self.NEPNTS = 0         # Number of points to be used in generating artificial energy grid
+            self.ITMAX = 0          # Number of iterations (default = 2)
+            self.ICORR = 0          # Correlation option (default = 50)
+            self.NXTRA = 0          # Number of extra points to be added between each pair of data points for auxiliary energy grid
+            self.IPTDOP = 0         # Number of points to be added to auxiliary energy grid across small resonances
+            self.IPTWID = 0         # Determines the number of points to be added to auxiliary grid in tails of small resonances
+            self.IXXCHN = 0         # Number of energy channels in ODF-type data file to be ignored
+            self.NDIGIT = 0         # Number of digits for compact format for covariance matrix
+            self.IDROPP = 0         # The input resonanceparameter covariance matrix will be modified before being used in the fitting procedure.
+            self.MATNUM = 0         # ENDF Material number
 
             if config_file:
                 self._read_from_config(config_file)
@@ -284,6 +286,12 @@ class InputFile:
                 self._read_from_config(config_file)
 
         def _read_from_config(self, config_file):
+            """ 
+            Read the CROSS values from the config file using configparser.
+
+            Args:
+                config_file (_type_): Path to the configuration file.
+            """
 
             config = configparser.ConfigParser()
             config.read(config_file)
@@ -298,10 +306,11 @@ class InputFile:
             return "{:<80}".format(self.CROSS)
     
     def write_to_file(self, filename, *cards):
-        """_summary_
+        """Write the input file to a file with the given filename and the given cards.
 
         Args:
-            filename (_type_): _description_
+            filename (_type_): file to write to
+            *cards (_type_): cards to write to file
         """
         with open(filename, 'w') as f:
             for card in cards:
