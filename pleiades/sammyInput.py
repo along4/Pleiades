@@ -305,6 +305,50 @@ class InputFile:
             """
             return "{:<80}".format(self.CROSS)
     
+    class Card10:
+        def __init__(self, config_file=None):
+            """
+            Initialize Card10 instance.
+            Parameters:
+            - config_file (str): Path to the configuration file.
+            """
+            self.isotopes = []
+            self.spingroups = []
+            
+            if config_file:
+                config = self.read_config(config_file)
+                self.isotopes = config['Card10']['ISOTOPES'].split(',')
+                self.spingroups = list(map(int, config['Card10']['SPINGROUPS'].split(',')))
+
+                # Check if the lengths of isotopes and spin groups match
+                if len(self.isotopes) != len(self.spingroups):
+                    raise ValueError("The number of isotopes and spin groups in the configuration file do not match!")
+                
+        def read_config(self, config_file):
+            """
+            Read and parse the configuration file using configparser.
+            """
+            config = configparser.ConfigParser()
+            config.read(config_file)
+            return config
+
+        def create_spin_group_string(self):
+            spin_group_str = ""
+            
+            for i, isotope in enumerate(self.isotopes):
+                line = "{:3d}    {:>5d}    {:<5.2f}    {:<5.2f}    {:<80}\n".format(
+                    i+1, self.spingroups[i], 0.0, 0.0, isotope  # These 0.0 values are placeholders, replace with actual values as needed
+                )
+                spin_group_str += line
+            
+            return spin_group_str
+
+        def __str__(self):
+            return self.create_spin_group_string()
+
+    
+    
+    
     def write_to_file(self, filename, *cards):
         """Write the input file to a file with the given filename and the given cards.
 

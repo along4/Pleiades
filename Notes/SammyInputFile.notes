@@ -80,6 +80,7 @@ Card 10.1 -
             card set 3 in order to use this alternative; card set 10.1 is now 
             the default.
             Line 2 is repeated for a total of (NENT + NEXT) lines!
+            Line 1 followed by multiple line 2s is repeated for all spin groups
     Line 1: 
         1-3 column, I "JJ"              # Spin group number: 1,2,3, ...
         5 column, A "EXCL"              # Flag to exclude this spin group from calculation of cross section
