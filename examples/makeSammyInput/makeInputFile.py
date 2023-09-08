@@ -1,5 +1,6 @@
 import sys
 import pleiades.sammyInput as psi
+import pleiades.nucData as pnd       # grabbing nucData for Pleiades.
 
 def main(config_file=None):
     
