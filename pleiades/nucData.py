@@ -1,5 +1,31 @@
 import numpy as np
 
+def extract_isotope_info(filename, isotope):
+    """This function extracts the spin and abundance of an isotope from the file isotope.info.
+
+    Args:
+        filename (_type_): isotope.info file location
+        isotope (string): String of the form "element-nucleonNumber" (e.g. "C-13")
+
+    Returns:
+        _type_: spin and natural abundance of the isotope
+    """
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            line = line.strip()  # Remove leading/trailing whitespaces
+            if line and line[0].isdigit():  # Check if the line contains isotope data
+                data = line.split()  # Split the line into columns based on spaces
+                
+                symbol = data[3]  # Extract the element symbol
+                numOfNucleons = data[1]  # Extract the number of nucleons
+                
+                if isotope == f"{symbol}-{numOfNucleons}":  # Check if the isotope matches
+                    spin = data[5]
+                    abundance = data[7]
+                    return spin, abundance
+    return None, None
+
 def parse_ame_line(line):
     def safe_float(val, default="nan"):
         return float(val if val.strip() else default)
