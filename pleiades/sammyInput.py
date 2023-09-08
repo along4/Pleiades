@@ -334,12 +334,24 @@ class InputFile:
 
         def create_spin_group_string(self):
             spin_group_str = ""
+            groupNum = 0
             
             for i, isotope in enumerate(self.isotopes):
-                line = "{:3d}    {:>5d}    {:<5.2f}    {:<5.2f}    {:<80}\n".format(
-                    i+1, self.spingroups[i], 0.0, 0.0, isotope  # These 0.0 values are placeholders, replace with actual values as needed
-                )
-                spin_group_str += line
+                for j in range(self.spingroups[i]):
+                    groupNum += 1
+                    JJ = groupNum 
+                    EXCL = " "  # Assuming a space for now, update if there's a default or provided value
+                    NENT = 0    # Assuming 0 for now, update if there's a default or provided value
+                    NEXT = 0    # Assuming 0 for now, update if there's a default or provided value
+                    SPINJ = 0.0 # Assuming 0.0 for now, update if there's a default or provided value
+                    ABNDNC = 0.0 # Assuming 0.0 for now, update if there's a default or provided value
+                    SPINI = 0.0  # Assuming 0.0 for now, update if there's a default or provided value
+                    Comments = isotope
+                    
+                    line = "{:3d}{}{:>5d}{:>5d}{:>5.2f}{:>10.2f}{:>5.2f}{:<35}\n".format(
+                        JJ, EXCL, NENT, NEXT, SPINJ, ABNDNC, SPINI, Comments
+                    )
+                    spin_group_str += line
             
             return spin_group_str
 

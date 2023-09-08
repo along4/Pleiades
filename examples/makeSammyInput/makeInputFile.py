@@ -16,6 +16,7 @@ def main(config_file=None):
         card6 = inputFile.Card6(card5_instance=card5,config_file=config_file)
         card7 = inputFile.Card7(config_file=config_file)
         card8 = inputFile.Card8(config_file=config_file)
+        card10 = inputFile.Card10(config_file=config_file)
     # Otherwise, use default values
     else:
         card1 = inputFile.Card1()
@@ -25,9 +26,10 @@ def main(config_file=None):
         card6 = inputFile.Card6(card5_instance=card5)   # card6 depends on card5
         card7 = inputFile.Card7()
         card8 = inputFile.Card8()
+        card10 = inputFile.Card10()
         
     # Write cards to input file
-    inputFile.write_to_file("inputExample.txt", card1, card2, card3, card5, card7, card8)
+    inputFile.write_to_file("inputExample.txt", card1, card2, card3, card5, card7, card8, card10)
 
 if __name__ == "__main__":
 
