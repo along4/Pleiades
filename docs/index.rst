@@ -1,12 +1,10 @@
 .. include:: ../README.rst
 
-Welcome to Lumache's documentation!
+Welcome to PLEIADES' documentation!
 ===================================
 
-**Lumache** (/lu'make/) is a Python library for cooks and food lovers
-that creates recipes mixing random ingredients.
-It pulls data from the `Open Food Facts database <https://world.openfoodfacts.org/>`_
-and offers a *simple* and *intuitive* API.
+**PLEIADES:** Python Libraries Extensions for Isotopic Analysis via Detailed Extraction of SAMMY
+------------------------------------------------------------------------------------------------ 
 
 Check out the :doc:`usage` section for further information, including
 how to :ref:`installation` the project.
