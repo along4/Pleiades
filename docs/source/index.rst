@@ -29,14 +29,20 @@ Installation
 
 Describe how to install PLEIADES, any dependencies, and basic configuration.
 
-.. include:: examples/index.rst
+
+Examples
+--------
+Useful examples of how to use PLEIADES.
+
+.. include:: examples/examples.rst
 
 API Documentation
 -----------------
 
 This section provides technical details about the PLEIADES API.
 
-.. include:: api/index.rst
+.. include:: api/pleiades.rst
+.. include:: api/modules.rst
 
 Release Notes
 -------------
