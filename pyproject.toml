@@ -2,3 +2,12 @@
 requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
+[project]
+name = "PLEIADES"
+authors = [{name = "Alexander M. Long"}]
+dynamic = ["version", "description"]
+
+[tool.sphinx]
+source-dir = "docs/source"
+build-dir = "docs/build"
+config-dir = "docs"
