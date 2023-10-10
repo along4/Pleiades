@@ -21,3 +21,5 @@ Contents
    usage
    examples
    api
+   source/modules
+   source/pleiades
