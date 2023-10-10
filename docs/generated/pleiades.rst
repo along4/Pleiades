@@ -1,0 +1,23 @@
+﻿pleiades
+========
+
+.. automodule:: pleiades
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
