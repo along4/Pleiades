@@ -11,13 +11,11 @@ Welcome to PLEIADES's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   introduction  # a hand-written Introduction section, explaining what PLEIADES is about
-   installation  # a hand-written Installation guide
-
-   examples/index  # Detailed Examples using PLEIADES
-
-   api/index  # Generated API documentation
-   release_notes  # a hand-written Release Notes or Change Log section
+   introduction
+   installation
+   ../examples/index
+   ../api/index
+   release_notes
 
 Introduction
 ------------
@@ -34,15 +32,15 @@ Examples
 --------
 Useful examples of how to use PLEIADES.
 
-.. include:: examples/examples.rst
+.. include:: ../examples/examples.rst
 
 API Documentation
 -----------------
 
 This section provides technical details about the PLEIADES API.
 
-.. include:: api/pleiades.rst
-.. include:: api/modules.rst
+.. include:: ../api/pleiades.rst
+.. include:: ../api/modules.rst
 
 Release Notes
 -------------
