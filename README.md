@@ -1,5 +1,6 @@
 # Pleiades
 PLEIADES: Python Library Extensions for Isotopic Analysis via Detailed Extraction of SAMMY results
+For full documentation, please visit [PLEIADES Documentation](https://pleiades-sammy.readthedocs.io/en/latest/).
 
 
 ## Usage
