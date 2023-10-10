@@ -14,6 +14,3 @@ PLEIADES' user documentation
 This is a Python package that sets up, executes, and analyzes, SAMMY runs. If you are unfimiliar 
 with SAMMY, please see the `SAMMY website <https://code.ornl.gov/RNSD/SAMMY>`_.
 
-.. note::
-
-   This project is under active development.
