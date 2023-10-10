@@ -19,4 +19,5 @@ Contents
 
    Home <self>
    usage
+   examples
    api
