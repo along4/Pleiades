@@ -1,47 +1,46 @@
-import argparse
+import argparse, sys
 import matplotlib.pyplot as plt
 import numpy as np
 import pleiades.simData as psd
 
-def main(config_file='config.ini', energy_min=1, energy_max=10000, energy_points=1000):
+def main(config_file='config.ini', energy_min=1, energy_max=100, energy_points=10000):
+    
+    # Read the isotope config file
     info = psd.Isotopes(config_file)
     
-    # Generate an energy grid
-    energy_grid = np.logspace(np.log10(energy_min), np.log10(energy_max), energy_points)
+    # Generate a linear energy grid
+    energy_grid = np.linspace(energy_min, energy_max, energy_points)
     
-    plt.figure()
+    fig, ax = plt.subplots(2,1)
     
     for isotope in info.isotopes:
+        
+        energies, cross_sections = zip(*isotope.xs_data)
+        ax[0].set_xlim(energy_min, energy_max)
+        ax[0].loglog(energies, cross_sections, label=isotope.name)
+        
         # Generate transmission data
-        transmission_data = psd.create_transmission(
-            energy_grid, 
-            isotope.xs_data, 
-            isotope.thickness, 
-            isotope.thickness_unit, 
-            isotope.density, 
-            isotope.density_unit
-        )
-        
-        # Unpack energy and transmission values
-        energies, transmissions = zip(*transmission_data)
-        
-        # Plot the transmission data
-        plt.plot(energies, transmissions, label=isotope.name)
+        transmission_data = psd.create_transmission(energy_grid,isotope)
+        grid_energies, interp_transmission = zip(*transmission_data)
+        ax[1].semilogx(grid_energies, interp_transmission, label=isotope.name)
     
-    # Add labels and title
-    plt.xlabel('Energy (eV)')
-    plt.ylabel('Transmission')
-    plt.title('Transmission for Various Isotopes')
     plt.legend()
-    
     plt.show()
+    
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process config file for isotopes and plot transmission.')
     parser.add_argument('--config', type=str, default='config.ini', help='Path to the config file')
-    parser.add_argument('--energy_min', type=float, default=1, help='Minimum energy for the plot')
-    parser.add_argument('--energy_max', type=float, default=10000, help='Maximum energy for the plot')
-    parser.add_argument('--energy_points', type=int, default=1000, help='Number of energy points for the plot')
+    parser.add_argument('--energy_min', type=float, default=1, help='Minimum energy for the plot [eV]')
+    parser.add_argument('--energy_max', type=float, default=100, help='Maximum energy for the plot [eV]')
+    parser.add_argument('--energy_points', type=int, default=100000, help='Number of energy points for the plot')
     
-    args = parser.parse_args()
-    main(args.config, args.energy_min, args.energy_max, args.energy_points)
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(1)
+    else:
+        args = parser.parse_args()
+        main(args.config, args.energy_min, args.energy_max, args.energy_points)
+    

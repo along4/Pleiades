@@ -7,9 +7,21 @@ examples/
         - makeInputFile.py
     - plotOutput/
         - plotSammyLST.py
+    - plotCrossSections/
+        - plotXS.py
+    - plotTransmission/
+        - plotTrans.py
+nucDataLibs/
+    - isotopeInfo/
+        - isotopes.info
+        - mass.mas20
+    - xSections/
+        - [cross-section files for each isotope]
 pleiades/
     - __pycache__
     - __init__.py
     - sammyInput.py 
     - sammyPlotter.py 
+    - nucData.py
+    - simData.py
 

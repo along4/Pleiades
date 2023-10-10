@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def extract_isotope_info(filename, isotope):
     """This function extracts the spin and abundance of an isotope from the file isotope.info.
 
@@ -50,7 +51,7 @@ def parse_ame_line(line):
     beta_unc = safe_float(line[95:106].replace("*", "nan").replace("#", ".0"))
 
     atomic_mass_coarse = line[106:109].replace("*", "nan").replace("#", ".0")
-    atomic_mass_fine = line[111:124].replace("*", "nan").replace("#", ".0")
+    atomic_mass_fine = line[110:124].replace("*", "nan").replace("#", ".0")
 
     # Check if both coarse and fine are not NaN before converting
     if "nan" not in [atomic_mass_coarse, atomic_mass_fine]:
@@ -82,31 +83,35 @@ def parse_ame_line(line):
 
 def get_info(isotopic_str):
     # Extract the element and its atomic number from the isotopic string
-    element = ''.join([c for c in isotopic_str if not c.isdigit()])
+    element = ''.join([c for c in isotopic_str if not c.isdigit()]).strip("-")
     atomic_number = int(''.join([c for c in isotopic_str if c.isdigit()]))
 
     return element, atomic_number
 
-def get_mass_from_ame(isotopic_str):
-    
-    possible_isotopes_data_list = []
+def get_mass_from_ame(isotopic_str='Unknown'):
+    if isotopic_str == 'Unknown':
+        print("'{}' string given as isotope for get_mass_from_ame()".format(isotopic_str))
+        return 0.0
+    else:
+        possible_isotopes_data_list = []
 
-    element, atomic_number = get_info(isotopic_str)
-    # Load the file into a list of lines
-    with open("mass.mas20", "r") as f:
+        element, atomic_number = get_info(isotopic_str)
+        # Load the file into a list of lines
+        nuclear_data_path = "../../nucDataLibs/isotopeInfo/"
+        nucelar_masses_file = nuclear_data_path+"mass.mas20"
         
-        # Skip the first 36 lines of header info
-        for _ in range(36):
-            next(f)
+        with open(nucelar_masses_file, "r") as f:
+            
+            # Skip the first 36 lines of header info
+            for _ in range(36):
+                next(f)
 
-        # start searching through lines.
-        for line in f:
-            if (element in line[:25]) and (str(atomic_number) in line[:25]):
-                possible_isotopes_data = parse_ame_line(line)
-                possible_isotopes_data_list.append(possible_isotopes_data)
-
-        for iso in possible_isotopes_data_list:
-            if (iso['el'] == element) and (iso['A'] == atomic_number):
-                final_atomic_mass = iso['atomic_mass']
-                return final_atomic_mass
-    return None
+            # start searching through lines.
+            for line in f:
+                if (element in line[:25]) and (str(atomic_number) in line[:25]):
+                    possible_isotopes_data = parse_ame_line(line)
+                    possible_isotopes_data_list.append(possible_isotopes_data)
+            for iso in possible_isotopes_data_list:
+                if (iso['el'] == element) and (iso['A'] == atomic_number):
+                    final_atomic_mass = iso['atomic_mass']
+                    return round(final_atomic_mass/1E6,4)
