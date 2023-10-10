@@ -13,8 +13,6 @@ PLEIADES's documentation!
 
    introduction
    installation
-   ../examples/index
-   ../api/index
    release_notes
 
 Indices and tables
