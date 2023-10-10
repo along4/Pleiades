@@ -32,15 +32,11 @@ Examples
 --------
 Useful examples of how to use PLEIADES.
 
-.. include:: ../examples/examples.rst
 
 API Documentation
 -----------------
 
 This section provides technical details about the PLEIADES API.
-
-.. include:: ../api/pleiades.rst
-.. include:: ../api/modules.rst
 
 Release Notes
 -------------
