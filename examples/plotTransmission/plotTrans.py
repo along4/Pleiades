@@ -10,19 +10,20 @@ def main(config_file='config.ini', energy_min=1, energy_max=100, energy_points=1
     
     # Generate a linear energy grid
     energy_grid = np.linspace(energy_min, energy_max, energy_points)
+    transmissions = []
     
-    fig, ax = plt.subplots(2,1)
+    fig, ax = plt.subplots(1,1)
     
     for isotope in info.isotopes:
-        
-        energies, cross_sections = zip(*isotope.xs_data)
-        ax[0].set_xlim(energy_min, energy_max)
-        ax[0].loglog(energies, cross_sections, label=isotope.name)
-        
         # Generate transmission data
         transmission_data = psd.create_transmission(energy_grid,isotope)
         grid_energies, interp_transmission = zip(*transmission_data)
-        ax[1].semilogx(grid_energies, interp_transmission, label=isotope.name)
+        transmissions.append(interp_transmission)
+        ax.semilogx(grid_energies, interp_transmission, label=isotope.name)
+    
+    #combine transmissions for all isotopes
+    combined_transmission = np.prod(transmissions, axis=0)
+    ax.semilogx(grid_energies, combined_transmission, color='black', alpha=0.5, linestyle='dashed', label="Total")
     
     plt.legend()
     plt.show()
