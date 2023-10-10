@@ -8,7 +8,7 @@ Installation
 
 Currently, PLEIADES is not a python package, so you need to install it manually.
 
-This can be done by cloning the repository and then copying the following in your ``.bashrc`` file:
+This can be done by cloning the repository and then copying the following in your ``.bashrc`` or ``.zshrc`` file:
 
 .. code-block:: console
 
