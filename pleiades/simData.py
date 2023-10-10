@@ -32,10 +32,6 @@ def create_transmission(energy_grid, isotope):
     density_unit = isotope.density_unit
     xs_data = isotope.xs_data
     
-    areal_density = thickness * density * AVOGADRO / atomic_mass / CM2_TO_BARN
-    print("Areal density: {areal_density} atoms/barn".format(areal_density=areal_density))  
-    #print("Thickness: {thickness} {thickness_unit}".format(thickness=isotope.thickness, thickness_unit=isotope.thickness_unit))
-    
     if thickness_unit != "cm":
         if thickness_unit == "mm":
             thickness /= 10.0
@@ -44,6 +40,8 @@ def create_transmission(energy_grid, isotope):
     if density_unit != "g/cm3":
         raise ValueError("Unsupported density unit:{density_unit} for {isotope_name}")
 
+    areal_density = thickness * density * AVOGADRO / atomic_mass / CM2_TO_BARN 
+    
     # Create interpolation function for cross-section data
     energies_eV, cross_sections = zip(*xs_data)
     interpolate_xs_data = interp1d(energies_eV, cross_sections, kind='linear', fill_value="extrapolate")
