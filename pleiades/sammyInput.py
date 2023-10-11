@@ -1,6 +1,8 @@
 import configparser
 
 class InputFile:
+    """ InputFile class for the Sammy input file.
+    """
 
     MAX_COLUMNS = 80
     
