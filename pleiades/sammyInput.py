@@ -6,26 +6,63 @@ class InputFile:
     
     @staticmethod
     def format_type_A(data, width):
+        """ Format a string to be left-justified in a character field of the given width.
+
+        Args:
+            data (string): The string to be formatted.
+            width (int): Integer width of the field.
+
+        Returns:
+            string: character field of the given width with the string left-justified.
+        """
         return f"{data:<{width}}"
 
     @staticmethod
     def format_type_F(data, width):
+        """ Format a float to be right-justified in a float field of the given width.
+
+        Args:
+            data (float): The float to be formatted.
+            width (int): Integer width of the field.
+
+        Returns:
+            string: float field of the given width with the float right-justified.
+        """
         # The ".4f" here denotes 4 decimal places. You can adjust if needed.
         return f"{data:>{width}.4f}"
 
     @staticmethod
     def format_type_I(data, width):
+        """ Format an integer to be right-justified in an integer field of the given width.
+
+        Args:
+            data (int): integer to be formatted.
+            width (int): Integer width of the field.
+
+        Returns:
+            _string: integer field of the given width with the integer right-justified.
+        """
         return f"{data:>{width}d}"
 
     class Card1:
         """ Card1 class for the Sammy input file.
         """
         def __init__(self, config_file=None):
+            """ Initialize Card1 instance.
+
+            Args:
+                config_file (string, optional): Path to the configuration file. Defaults to None.
+            """
             self.TITLE = "Blank Sammy Input File Title"
             if config_file:
                 self._read_from_config(config_file)
         
         def set(self, TITLE):
+            """ Set the TITLE of the Card1 instance.
+
+            Args:
+                TITLE (string): The TITLE to set.
+            """
             self.TITLE = TITLE
         
         def _read_from_config(self, config_file):
@@ -60,6 +97,24 @@ class InputFile:
                 self._read_from_config(config_file)
             
         def set(self, ELMNT=None, AW=None, EMIN=None, EMAX=None, NEPNTS=None, ITMAX=None, ICORR=None, NXTRA=None, IPTDOP=None, IPTWID=None, IXXCHN=None, NDIGIT=None, IDROPP=None, MATNUM=None):
+            """ Set the Card2 instance values.
+
+            Args:
+                ELMNT (string, optional): Element name. Defaults to None.
+                AW (float, optional): Atomic weight in amu. Defaults to 0.
+                EMIN (float, optional): Minimum energy. Defaults to 0.
+                EMAX (float, optional): Maximum energy. Defaults to 0.
+                NEPNTS (int, optional): Number of points to be used in generating artificial energy grid. Defaults to 10001.
+                ITMAX (int, optional): Number of iterations. Defaults to 2.
+                ICORR (int, optional): Correlation option. Defaults to 50.
+                NXTRA (int, optional): Number of extra points to be added between each pair of data points for auxiliary energy grid. Defaults to 0. 
+                IPTDOP (int, optional): Number of points to be added to auxiliary energy grid across small resonances. Defaults to 9.
+                IPTWID (int, optional): Determines the number of points to be added to auxiliary grid in tails of small resonances. Defaults to 5
+                IXXCHN (int, optional): Number of energy channels in ODF-type data file to be ignored 
+                NDIGIT (int, optional): Number of digits for compact format for covariance matrix (Default = 2)
+                IDROPP (int, optional): The input resonanceparameter covariance matrix will be modified before being used in the fitting procedure. Defaults to 2
+                MATNUM (int, optional): ENDF Material number. Defaults to 0.
+            """
             if ELMNT is not None: self.ELMNT = ELMNT
             if AW is not None: self.AW = AW
             if EMIN is not None: self.EMIN = EMIN
@@ -148,11 +203,8 @@ class InputFile:
             self.commands.append(command)
 
         def _read_from_config(self, config_file):
-            """Read the Card3 values from the config file using configparser.
+            """Read the Card3 values from the config file using configparser. """
 
-            Args:
-                config_file (string): Path to the configuration file.
-            """
             config = configparser.ConfigParser()
             config.read(config_file)
             # Assuming the config file has a 'Card3' section with 'commands' that's a comma-separated list of commands
@@ -346,6 +398,8 @@ class InputFile:
             return "{:<80}".format(self.CROSS)
     
     class Card10:
+        """ Card10 class for the Sammy input file.
+        """
         def __init__(self, config_file=None):
             """Initialize Card10 instance.
 
