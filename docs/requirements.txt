@@ -56,3 +56,7 @@ sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
 urllib3==1.26.9
     # via requests
+numpy==1.21.5
+    # via
+    #   -r docs/requirements.in
+    #   matplotlib

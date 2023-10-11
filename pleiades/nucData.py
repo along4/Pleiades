@@ -4,7 +4,9 @@ def extract_isotope_info(filename, isotope):
     """This function extracts the spin and abundance of an isotope from the file isotope.info.
 
     Args:
+    
         filename (string): isotope.info file location
+        
         isotope (string): String of the form "element-nucleonNumber" (e.g. "C-13")
 
     Returns:
