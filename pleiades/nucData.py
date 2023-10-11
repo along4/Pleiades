@@ -5,11 +5,11 @@ def extract_isotope_info(filename, isotope):
     """This function extracts the spin and abundance of an isotope from the file isotope.info.
 
     Args:
-        filename (_type_): isotope.info file location
+        filename (string): isotope.info file location
         isotope (string): String of the form "element-nucleonNumber" (e.g. "C-13")
 
     Returns:
-        _type_: spin and natural abundance of the isotope
+        tuple: spin and natural abundance of the isotope
     """
     with open(filename, 'r') as file:
         lines = file.readlines()
@@ -28,6 +28,14 @@ def extract_isotope_info(filename, isotope):
     return None, None
 
 def parse_ame_line(line):
+    """ Takes a line from the AME file and parses it into its constituent values.
+
+    Args:
+        line (string): line from the AME file
+        
+    Returns:
+        dict: dictionary of the values from the line
+    """
     def safe_float(val, default="nan"):
         return float(val if val.strip() else default)
 
@@ -82,6 +90,14 @@ def parse_ame_line(line):
 
 
 def get_info(isotopic_str):
+    """ Takes a string of the form 'element-atomicNumber' and returns the element and atomic number.
+
+    Args:
+        isotopic_str (string): string of the form 'element-atomicNumber'
+
+    Returns:
+        tuple: element, atomic number
+    """
     # Extract the element and its atomic number from the isotopic string
     element = ''.join([c for c in isotopic_str if not c.isdigit()]).strip("-")
     atomic_number = int(''.join([c for c in isotopic_str if c.isdigit()]))
