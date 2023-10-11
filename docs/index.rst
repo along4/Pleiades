@@ -14,4 +14,3 @@ Contents
    examples
    api
    source/modules
-   source/pleiades
