@@ -59,3 +59,9 @@ urllib3==1.26.9
 numpy==1.26.0
     # via
     #   -r docs/requirements.in
+matplotlib==3.7.2
+    # via
+    #   -r docs/requirements.in
+scipy==1.9.3
+    # via
+    #   -r docs/requirements.in
