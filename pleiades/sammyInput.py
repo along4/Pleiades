@@ -18,6 +18,8 @@ class InputFile:
         return f"{data:>{width}d}"
 
     class Card1:
+        """ Card1 class for the Sammy input file.
+        """
         def __init__(self, config_file=None):
             self.TITLE = "Blank Sammy Input File Title"
             if config_file:
@@ -111,6 +113,9 @@ class InputFile:
             )
 
     class Card3:
+        """ Card3 class for the Sammy input file.
+        """
+        
         # Some predefined command statements
         REICH_MOORE_FORM="REICH-MOORE FORMALISm is wanted"
         ORIG_REICH_MOORE_FORM = "ORIGINAL REICH-MOORE formalism"
@@ -408,8 +413,8 @@ class InputFile:
         """Write the input file to a file with the given filename and the given cards.
 
         Args:
-            filename (_type_): file to write to
-            *cards (_type_): cards to write to file
+            filename (string): file to write to
+            *cards (array): array of cards to write to file
         """
         with open(filename, 'w') as f:
             for card in cards:
