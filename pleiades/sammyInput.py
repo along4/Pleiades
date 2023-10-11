@@ -475,7 +475,7 @@ class InputFile:
 
         Args:
             filename (string): file to write to
-            *cards (array): array of cards to write to file
+            \*cards (array): array of cards to write to file
         """
         with open(filename, 'w') as f:
             for card in cards:
