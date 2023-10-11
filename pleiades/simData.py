@@ -8,10 +8,7 @@ AVOGADRO = 6.02214076E23    # Avogadro's number
 CM2_TO_BARN = 1E24          # Conversion factor from cm2 to barns
 
 def create_transmission(energy_grid, isotope):
-    """Create the transmission data for the given material based on interpolation of the 
-    cross-section data and the energy grid for a given material thickness and density.
-    This uses the the attenuation formula: T = e^(-sigma * A) where sigma is the cross-section,
-    and A is the areal density, which can be taken as thickness * density.
+    """Create the transmission data for the given material based on interpolation of the cross-section data and the energy grid for a given material thickness and density. This uses the the attenuation formula: T = e^(-sigma * A) where sigma is the cross-section, and A is the areal density, which is in units of atoms/barn.
 
     Args:
         xs_data (tuple array): list of tuples containing the energy and cross-section data
@@ -19,10 +16,10 @@ def create_transmission(energy_grid, isotope):
         thickness_unit (string): unit of the thickness for the given material
         density (float): density of the material
         density_unit (string): unit of the density for the given material
-    """
     
-    # TODO: Convert thickness and density to consistent units if necessary. 
-    # This is just an example; you'd need to provide conversion factors.
+    Returns:
+        transmission (tuple array): list of tuples containing the energy and transmission data
+    """
     
     # Extract information from the isotope object
     thickness = isotope.thickness
