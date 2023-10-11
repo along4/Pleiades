@@ -148,6 +148,11 @@ class InputFile:
             self.commands.append(command)
 
         def _read_from_config(self, config_file):
+            """Read the Card3 values from the config file using configparser.
+
+            Args:
+                config_file (string): Path to the configuration file.
+            """
             config = configparser.ConfigParser()
             config.read(config_file)
             # Assuming the config file has a 'Card3' section with 'commands' that's a comma-separated list of commands
