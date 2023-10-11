@@ -158,6 +158,8 @@ class InputFile:
             return '\n'.join(self.commands) + '\n'
         
     class Card5:
+        """Card5 class for the Sammy input file.
+        """
         
         def __init__(self, config_file=None):
             # Default values
@@ -173,6 +175,11 @@ class InputFile:
                 self._read_from_config(config_file)
 
         def _read_from_config(self, config_file):
+            """Read the Card5 values from the config file using configparser.
+
+            Args:
+                config_file (string): Path to the configuration file.
+            """
             config = configparser.ConfigParser()
             config.read(config_file)
             self.TEMP = config.getfloat('Card5', 'TEMP', fallback=self.TEMP)
@@ -184,6 +191,11 @@ class InputFile:
             self.ELOWBR = config.getfloat('Card5', 'ELOWBR', fallback=self.ELOWBR)
 
         def __str__(self):
+            """String representation of Card5 for writing to the input file.
+
+            Returns:
+                string: String representation of Card5 for writing to the input file.
+            """
             return (
                 InputFile.format_type_F(self.TEMP, 10) +
                 InputFile.format_type_F(self.DIST, 10) +
@@ -195,7 +207,15 @@ class InputFile:
             )
 
     class Card6:
+        """Card6 class for the Sammy input file.
+        """
         def __init__(self, card5_instance=None, config_file=None):
+            """Initialize Card6 instance.
+
+            Args:
+                card5_instance (card5_instance, optional): Card5 instance. Defaults to None.
+                config_file (string, optional): Path to the configuration file. Defaults to None.
+            """
             self.DELTAG = card5_instance.DELTAG if card5_instance else 0.0
             self.DELTAB = 0.0
             self.NCF = 0
@@ -207,6 +227,11 @@ class InputFile:
                     self._read_from_config(config_file)
 
         def _read_from_config(self, config_file):
+            """Read the Card6 values from the config file using configparser.
+
+            Args:
+                config_file (string): Path to the configuration file.
+            """
             config = configparser.ConfigParser()
             config.read(config_file)
             
@@ -224,6 +249,11 @@ class InputFile:
                 self.CF.append(cf_value)
 
         def __str__(self):
+            """String representation of Card6 for writing to the input file.
+
+            Returns:
+                string: String representation of Card6 for writing to the input file.
+            """
             if self.DELTAG >= 0:
                 return ""
             
@@ -274,8 +304,7 @@ class InputFile:
     
     class Card8:
         def __init__(self, config_file=None):
-            """
-            Initialize Card8 instance.
+            """Initialize Card8 instance.
 
             Parameters:
             - config_file (str): Path to the configuration file.
@@ -286,8 +315,7 @@ class InputFile:
                 self._read_from_config(config_file)
 
         def _read_from_config(self, config_file):
-            """ 
-            Read the CROSS values from the config file using configparser.
+            """Read the CROSS values from the config file using configparser.
 
             Args:
                 config_file (_type_): Path to the configuration file.
@@ -300,17 +328,22 @@ class InputFile:
             self.CROSS = config.get('Card8', 'CROSS', fallback=self.CROSS)[:80]
 
         def __str__(self):
-            """
-            String representation of Card8 for writing to the input file.
+            """String representation of Card8 for writing to the input file.
+
+            Returns:
+                String: String representation of Card8 for writing to the input file.
             """
             return "{:<80}".format(self.CROSS)
     
     class Card10:
         def __init__(self, config_file=None):
-            """
-            Initialize Card10 instance.
-            Parameters:
-            - config_file (str): Path to the configuration file.
+            """Initialize Card10 instance.
+
+            Args:
+                config_file (string, optional): Path to the configuration file. Defaults to None.
+
+            Raises:
+                ValueError: If the number of isotopes and spin groups in the configuration file do not match.
             """
             self.isotopes = []
             self.spingroups = []
@@ -325,14 +358,24 @@ class InputFile:
                     raise ValueError("The number of isotopes and spin groups in the configuration file do not match!")
                 
         def read_config(self, config_file):
-            """
-            Read and parse the configuration file using configparser.
+            """Read the Card10 values from the config file using configparser.
+
+            Args:
+                config_file (string): Path to the configuration file.
+
+            Returns:
+                configparser.ConfigParser: ConfigParser instance with the config file loaded.
             """
             config = configparser.ConfigParser()
             config.read(config_file)
             return config
 
         def create_spin_group_string(self):
+            """Create the string representation of the spin group data for writing to the input file.
+
+            Returns:
+                string: String representation of the spin group data for writing to the input file.
+            """
             spin_group_str = ""
             groupNum = 0
             
