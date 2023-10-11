@@ -1,9 +1,7 @@
 import numpy as np
 
-
 def extract_isotope_info(filename, isotope):
-    """
-    This function extracts the spin and abundance of an isotope from the file isotope.info.
+    """This function extracts the spin and abundance of an isotope from the file isotope.info.
 
     Args:
         filename (string): isotope.info file location
@@ -29,8 +27,7 @@ def extract_isotope_info(filename, isotope):
     return None, None
 
 def parse_ame_line(line):
-    """ 
-    Takes a line from the AME file and parses it into its constituent values.
+    """ Takes a line from the AME file and parses it into its constituent values.
 
     Args:
         line (string): line from the AME file
@@ -92,8 +89,7 @@ def parse_ame_line(line):
 
 
 def get_info(isotopic_str):
-    """ 
-    Takes a string of the form 'element-atomicNumber' and returns the element and atomic number.
+    """Takes a string of the form 'element-atomicNumber' and returns the element and atomic number.
 
     Args:
         isotopic_str (string): string of the form 'element-atomicNumber'
@@ -101,6 +97,7 @@ def get_info(isotopic_str):
     Returns:
         tuple: element, atomic number
     """
+    
     # Extract the element and its atomic number from the isotopic string
     element = ''.join([c for c in isotopic_str if not c.isdigit()]).strip("-")
     atomic_number = int(''.join([c for c in isotopic_str if c.isdigit()]))
