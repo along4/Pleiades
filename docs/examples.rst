@@ -15,6 +15,7 @@ It has the following files:
 * ```isotope.ini``` : A configuration file that contains the isotopic information needed to simulate the neutron transmission spectrum
 
 The isotope.ini file contains the following information:
+
 .. code-block:: ini
 
     [Isotope1]
@@ -26,7 +27,7 @@ The isotope.ini file contains the following information:
     density = 19.1
     density_unit = g/cm3
     ignore = false
-    
+
 Example 2: SAMMY input files
 ----------------------------
 Making a SAMMY input file with the pleiades.sammyInput module
