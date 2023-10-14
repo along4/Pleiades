@@ -175,9 +175,26 @@ def load_isotopes_from_config(config_file, verbose=False):
     return isotopes
 
   
-  
-'''    
-# print the isotopes using __repr__. This is called when you do print(isotopes).  
-def __repr__(self):
-return "\n".join([str(isotope) for isotope in self.isotopes])
-'''
+def write_transmission_data(energy_data, transmission_data, output_file, include_error=False, verbose=False):
+    """Write the transmission data to a file in the format: energy (eV), transmission (0-1) with SAMMY's twenty character format.
+
+    Args:
+        transmission_data (array): List of tuples containing the energy and transmission data
+        output_file (string): Path to the output file
+        include_error (bool, optional): Include an error column. Defaults to False.
+        verbose (bool, optional): Print verbose output. Defaults to False.
+    """
+    with open(output_file, 'w') as f:
+        if verbose:
+            print(f"Writing transmission data to {output_file}")
+            
+        for energy, transmission in zip(energy_data,transmission_data):
+            energy_str = f"{energy:>20}"                    # Right-justified, 20 characters
+            transmission_str = f"{transmission:>20}"        # Right-justified, 20 characters
+            transmission_error_str = f"{0.1:>20}"           # Right-justified, 20 characters
+            
+            if include_error:
+                f.write(f"{energy_str}{transmission_str}{transmission_error_str}\n")
+            else:
+                f.write(f"{energy_str}{transmission_str}\n")    # Write the data to the file
+

@@ -37,6 +37,9 @@ def main(config_file='config.ini', energy_min=1, energy_max=100, energy_points=1
     plt.legend()
     plt.show()
     
+    # Write the transmission data to a file, do not include error. 
+    psd.write_transmission_data(grid_energies,combined_transmission,"./uranium.twenty", include_error=False, verbose=True)
+    
 
 
 
