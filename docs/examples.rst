@@ -111,6 +111,8 @@ Using the isotope.ini file and the ```plotTrans.py``` script, the following plot
    :width: 600px
    :align: center
 
+   Reading in the file isotope.ini giving in the example should result in the transmission of U-238 and U-235 as a function of energy. 
+
 
 Example 2: SAMMY input files
 ----------------------------
