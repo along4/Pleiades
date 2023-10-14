@@ -22,6 +22,26 @@ In ```plotTrans.py```, the pleiades module, along with other needed modules, as 
     import pleiades.simulate as psd # For simulating neutron transmission spectra
     import numpy as np              # For generating energy grids
 
+and the main function is defined as follows:
+
+.. code-block:: python
+    
+    if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Process config file for isotopes and plot transmission.')
+    parser.add_argument('--isoConfig', type=str, default='config.ini', help='Path to the isotope config file')
+    parser.add_argument('--energy_min', type=float, default=1, help='Minimum energy for the plot [eV]')
+    parser.add_argument('--energy_max', type=float, default=100, help='Maximum energy for the plot [eV]')
+    parser.add_argument('--energy_points', type=int, default=100000, help='Number of energy points for the plot')
+    
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(1)
+    else:
+        args = parser.parse_args()
+        main(args.isoConfig, args.energy_min, args.energy_max, args.energy_points)
+
+The ```argparse``` module is used to parse command line arguments. The ```--isoConfig``` argument is used to specify the location of the isotope configuration file. The ```--energy_min```, ```--energy_max```, and ```--energy_points``` arguments are used to specify the energy range and number of points for the plot. 
+
 The isotope.ini file contains the following information:
 
 .. code-block:: ini
