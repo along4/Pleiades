@@ -22,7 +22,7 @@ In ```plotTrans.py```, the pleiades module, along with other needed modules, as 
     import pleiades.simulate as psd # For simulating neutron transmission spectra
     import numpy as np              # For generating energy grids
 
-and the main function is defined as follows:
+additionaly, ```plotTrans.py`` uses a main function is defined as follows:
 
 .. code-block:: python
     
@@ -40,7 +40,7 @@ and the main function is defined as follows:
         args = parser.parse_args()
         main(args.isoConfig, args.energy_min, args.energy_max, args.energy_points)
 
-The ```argparse``` module is used to parse command line arguments. The ```--isoConfig``` argument is used to specify the location of the isotope configuration file. The ```--energy_min```, ```--energy_max```, and ```--energy_points``` arguments are used to specify the energy range and number of points for the plot. 
+The ```argparse``` module is used to parse command line arguments. The ```--isoConfig``` argument is used to specify the location of the isotope configuration file. The ```--energy_min```, ```--energy_max```, and ```--energy_points``` arguments are used to specify the energy range and number of points for the plot. The command ```python plotTrans.py --help``` can be used to print the help message for the command line arguments.
 
 The isotope.ini file contains the following information:
 
@@ -104,6 +104,12 @@ Once all the transmission data is stored in the ```transmissions``` list, the to
     # Plot the combined transmission data
     ax.semilogx(energy_grid, combined_transmission, color='black', alpha=0.75, linestyle='dashed', label="Total")
 
+Using the isotope.ini file and the ```plotTrans.py``` script, the following plot is generated:
+
+.. image:: _images/example1.jpg
+   :alt: The transmission of U-238 and U-235 as a function of energy. 
+   :width: 600px
+   :align: center
 
 
 Example 2: SAMMY input files
