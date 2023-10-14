@@ -105,7 +105,7 @@ def get_info(isotopic_str):
 
     return element, atomic_number
 
-def get_mass_from_ame(isotopic_str='Unknown'):
+def get_mass_from_ame(isotopic_str='Unknown',verbose=False):
     if isotopic_str == 'Unknown':
         print("'{}' string given as isotope for get_mass_from_ame()".format(isotopic_str))
         return 0.0
@@ -125,10 +125,17 @@ def get_mass_from_ame(isotopic_str='Unknown'):
 
             # start searching through lines.
             for line in f:
+                # If we find the name of the isotope and the atomic number
                 if (element in line[:25]) and (str(atomic_number) in line[:25]):
                     possible_isotopes_data = parse_ame_line(line)
                     possible_isotopes_data_list.append(possible_isotopes_data)
-            for iso in possible_isotopes_data_list:
-                if (iso['el'] == element) and (iso['A'] == atomic_number):
-                    final_atomic_mass = iso['atomic_mass']
-                    return round(final_atomic_mass/1E6,4)
+            
+            # If we didn't find any data for the isotope
+            if len(possible_isotopes_data_list) == 0:
+                raise ValueError("No data found for {} in {}".format(isotopic_str, nucelar_masses_file))
+            # If we found more than one isotope, then we need to find the correct one. 
+            else:
+                for iso in possible_isotopes_data_list:
+                    if (iso['el'] == element) and (iso['A'] == atomic_number):
+                        final_atomic_mass = iso['atomic_mass']
+                        return round(final_atomic_mass/1E6,4)

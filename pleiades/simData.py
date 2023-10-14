@@ -37,6 +37,7 @@ def create_transmission(energy_grid, isotope):
     if density_unit != "g/cm3":
         raise ValueError("Unsupported density unit:{density_unit} for {isotope_name}")
 
+    # Calculate the areal density
     areal_density = thickness * density * AVOGADRO / atomic_mass / CM2_TO_BARN 
     
     # Create interpolation function for cross-section data
@@ -78,7 +79,7 @@ def parse_xs_file(file_location, isotope_name):
     with open(file_location, 'r') as f:
         for line in f:
             # If we find the name of the isotope
-            if isotope_name in line:
+            if isotope_name.upper() in line:
                 isotope_xs_found = True
             # If we have found the isotope, then look for the "#data..." marker
             if isotope_xs_found:
@@ -126,11 +127,12 @@ class Isotope:
         xs_status = "XS data loaded successfully" if len(self.xs_data) != 0 else "XS data not loaded"
         return f"Isotope({self.name},{self.atomic_mass},{self.thickness} {self.thickness_unit}, {self.abundance}, {self.xs_file_location}, {self.density} {self.density_unit}, {xs_status})"
 
-def load_isotopes_from_config(config_file):
+def load_isotopes_from_config(config_file, verbose=False):
     """Load isotopes from a config file.
 
     Args:
         config_file (string): Path to the config file
+        verbose (bool, optional): Print verbose output. Defaults to False.
 
     Returns:
         array: List of Isotope objects
@@ -153,7 +155,9 @@ def load_isotopes_from_config(config_file):
 
         # Fetch each attribute with the default value from the dummy Isotope instance
         name = config.get(section, 'name', fallback=default_isotope.name)
-        atomic_mass = pnd.get_mass_from_ame(name)
+        atomic_mass = pnd.get_mass_from_ame(name, verbose=verbose)
+        if atomic_mass == None:
+            raise ValueError(f"Could not find atomic mass for {name}")
         thickness = config.getfloat(section, 'thickness', fallback=default_isotope.thickness)
         thickness_unit = config.get(section, 'thickness_unit', fallback=default_isotope.thickness_unit)
         abundance = config.getfloat(section, 'abundance', fallback=default_isotope.abundance)
