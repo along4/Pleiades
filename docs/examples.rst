@@ -106,7 +106,7 @@ Once all the transmission data is stored in the ```transmissions``` list, the to
 
 Using the isotope.ini file and the ```plotTrans.py``` script, the following plot is generated:
 
-.. image:: _images/example1.jpg
+.. figure:: _images/example1.jpg
    :alt: The transmission of U-238 and U-235 as a function of energy. 
    :width: 600px
    :align: center
