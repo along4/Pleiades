@@ -6,7 +6,7 @@ import pleiades.simData as psd
 def main(config_file='config.ini', energy_min=1, energy_max=100, energy_points=10000):
     
     # Read the isotope config file
-    isotope_info = psd.Isotopes(config_file)
+    isotopes = psd.load_isotopes_from_config(config_file)
     
     # Generate a linear energy grid
     energy_grid = np.linspace(energy_min, energy_max, energy_points)
@@ -18,7 +18,7 @@ def main(config_file='config.ini', energy_min=1, energy_max=100, energy_points=1
     fig, ax = plt.subplots(1,1)
     
     # Loop over all isotopes in isotope_info.isotopes
-    for isotope in isotope_info.isotopes:
+    for isotope in isotopes:
         
         # Generate transmission data
         transmission_data = psd.create_transmission(energy_grid,isotope)

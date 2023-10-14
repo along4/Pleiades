@@ -126,41 +126,54 @@ class Isotope:
         xs_status = "XS data loaded successfully" if len(self.xs_data) != 0 else "XS data not loaded"
         return f"Isotope({self.name},{self.atomic_mass},{self.thickness} {self.thickness_unit}, {self.abundance}, {self.xs_file_location}, {self.density} {self.density_unit}, {xs_status})"
 
-class Isotopes:
-    """Class to hold information about all isotopes from a config file.
+def load_isotopes_from_config(config_file):
+    """Load isotopes from a config file.
+
+    Args:
+        config_file (string): Path to the config file
+
+    Returns:
+        array: List of Isotope objects
     """
-    def __init__(self, config_file):
-        self.isotopes = []
-        config = configparser.ConfigParser()
-        config.read(config_file)
-
-        # Create a dummy Isotope instance to get the default values
-        default_isotope = Isotope()
-
-        for section in config.sections():
-            # Check if the ignore flag is set for this isotope
-            ignore = config.getboolean(section, 'ignore', fallback=False)
-            if ignore:
-                continue
-            
-            # Fetch each attribute with the default value from the dummy Isotope instance
-            name = config.get(section, 'name', fallback=default_isotope.name)
-            atomic_mass = pnd.get_mass_from_ame(name)
-            thickness = config.getfloat(section, 'thickness', fallback=default_isotope.thickness)
-            thickness_unit = config.get(section, 'thickness_unit', fallback=default_isotope.thickness_unit)
-            abundance = config.getfloat(section, 'abundance', fallback=default_isotope.abundance)
-            xs_file_location = config.get(section, 'xs_file_location', fallback=default_isotope.xs_file_location)
-            density = config.getfloat(section, 'density', fallback=default_isotope.density)
-            density_unit = config.get(section, 'density_unit', fallback=default_isotope.density_unit)
-
-            # Create an Isotope instance and load the xs data
-            isotope = Isotope(name, atomic_mass, thickness, thickness_unit, abundance, xs_file_location, density, density_unit)
-            isotope.load_xs_data()  # Load xs data for the isotope
-            
-            # Add the isotope to the list of isotopes
-            self.isotopes.append(isotope)
+    isotopes = []
     
-    # print the isotopes using __repr__. This is called when you do print(isotopes).  
-    def __repr__(self):
-        return "\n".join([str(isotope) for isotope in self.isotopes])
+    # Create a ConfigParser object and read the config file
+    config = configparser.ConfigParser()
+    config.read(config_file)
+    
+    # Create a dummy Isotope instance to get the default values
+    default_isotope = Isotope()
 
+    # Loop over each section in the config file
+    for section in config.sections():
+        # Check if the ignore flag is set for this isotope
+        ignore = config.getboolean(section, 'ignore', fallback=False)
+        if ignore:
+            continue
+
+        # Fetch each attribute with the default value from the dummy Isotope instance
+        name = config.get(section, 'name', fallback=default_isotope.name)
+        atomic_mass = pnd.get_mass_from_ame(name)
+        thickness = config.getfloat(section, 'thickness', fallback=default_isotope.thickness)
+        thickness_unit = config.get(section, 'thickness_unit', fallback=default_isotope.thickness_unit)
+        abundance = config.getfloat(section, 'abundance', fallback=default_isotope.abundance)
+        xs_file_location = config.get(section, 'xs_file_location', fallback=default_isotope.xs_file_location)
+        density = config.getfloat(section, 'density', fallback=default_isotope.density)
+        density_unit = config.get(section, 'density_unit', fallback=default_isotope.density_unit)
+
+        # Create an Isotope instance and load the xs data
+        isotope = Isotope(name, atomic_mass, thickness, thickness_unit, abundance, xs_file_location, density, density_unit)
+        isotope.load_xs_data()
+        
+        # Append the Isotope instance to the list
+        isotopes.append(isotope)
+
+    return isotopes
+
+  
+  
+'''    
+# print the isotopes using __repr__. This is called when you do print(isotopes).  
+def __repr__(self):
+return "\n".join([str(isotope) for isotope in self.isotopes])
+'''

@@ -52,9 +52,9 @@ To load the isotope.ini file, use the following code:
 .. code-block:: python
 
     # Read the isotope config file
-    isotope_info = psd.Isotopes(config_file)
+    isotopes = psd.load_isotopes_from_config(config_file)
 
-Once loaded, the information can be accessed using the following code:
+Once loaded in the an array of isotope objects, the information can be accessed using the following code:
 
 .. code-block:: python
 
@@ -62,13 +62,28 @@ Once loaded, the information can be accessed using the following code:
     energy_grid = np.linspace(energy_min, energy_max, energy_points)
 
     # Loop over all isotopes in isotope_info.isotopes
-    for isotope in isotope_info.isotopes:
+    for isotope in isotopes:
         
         # Generate transmission data
         transmission_data = psd.create_transmission(energy_grid,isotope)
         grid_energies, interp_transmission = zip(*transmission_data)
+        transmissions.append(interp_transmission)
 
-Here the main function of ```psd.create_transmission(energy_grid,isotope)``` is used to generate the transmission data. The first argument is the energy grid, and the second argument is the isotope information. The function returns a list of tuples where the first element of the tuple is the energy and the second element is the transmission. The ```zip(*transmission_data)``` function is used to unzip the list of tuples into two lists, one for the energy and one for the transmission.
+        # Plot the transmission data
+        ax.semilogx(grid_energies, interp_transmission, alpha=0.75, label=isotope.name)
+
+Here the main function of ```psd.create_transmission(energy_grid,isotope)``` is used to generate the transmission data. The first argument is the energy grid, and the second argument is the isotope information. The function returns a list of tuples where the first element of the tuple is the energy and the second element is the transmission. The ```zip(*transmission_data)``` function is used to unzip the list of tuples into two lists, one for the energy and one for the transmission. The ```transmissions``` list is used to store the transmission data for each isotope. Once stored the transmissison can be ploted using the ```ax.semilogx``` function. 
+
+Once all the transmission data is stored in the ```transmissions``` list, the total transmission can be calculated using the following code:
+
+.. code-block:: python
+
+    #combine transmissions for all isotopes
+    combined_transmission = np.prod(transmissions, axis=0)
+    
+    # Plot the combined transmission data
+    ax.semilogx(energy_grid, combined_transmission, color='black', alpha=0.75, linestyle='dashed', label="Total")
+
 
 
 Example 2: SAMMY input files
