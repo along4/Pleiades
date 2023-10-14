@@ -14,6 +14,14 @@ It has the following files:
 * ```plotTrans.py```: A python script that uses the pleiades.simulate module to simulate a neutron transmission spectrum
 * ```isotope.ini``` : A configuration file that contains the isotopic information needed to simulate the neutron transmission spectrum
 
+In ```plotTrans.py```, the pleiades module, along with other needed modules, as loaded using the following code:
+
+.. code-block:: python
+
+    import argparse, sys            # For parsing command line arguments
+    import pleiades.simulate as psd # For simulating neutron transmission spectra
+    import numpy as np              # For generating energy grids
+
 The isotope.ini file contains the following information:
 
 .. code-block:: ini
@@ -38,14 +46,6 @@ This file contains the information for one isotope. There can be multiple isotop
 * ```density = 19.1```: The density of the isotope
 * ```density_unit = g/cm3```: The units of the density
 * ```ignore = false```: A flag to ignore the isotope. If set to true, then the isotope is ignored.
-
-To load the needed pleiades modules, use the following code:
-
-.. code-block:: python
-
-    import argparse, sys            # For parsing command line arguments
-    import pleiades.simulate as psd # For simulating neutron transmission spectra
-    import numpy as np              # For generating energy grids
 
 To load the isotope.ini file, use the following code:
 
