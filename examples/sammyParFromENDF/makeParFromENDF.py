@@ -23,6 +23,16 @@ def main(config_inp_file: str="config_inp.ini"):
         card8 = inputFile.Card8(config_file=config_inp_file)
         card10 = inputFile.Card10(config_file=config_inp_file)
 
+    # get atomic mass and mat_number
+    isotopic_str = card2.ELMNT
+    mass = pnd.get_mass_from_ame(isotopic_str)
+    mat_number = pnd.get_mat_number(isotopic_str)
+
+    # update cards
+    card2.AW = mass
+    for i, command in enumerate(card3.commands):
+        if command.startswith("INPUT IS ENDF"):
+            card3.commands[i] = f'INPUT IS ENDF/B FILE MAT={mat_number}'
         
     # Write cards to input file
     inputFile.write_to_file("inputExample.txt", card1, card2, card3, card5, card7, card8, card10)
