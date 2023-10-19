@@ -8,7 +8,6 @@ mkdir -p archive/$ARCHIVE/results
 ENDFFILE=$(dirname $0)/../../nucDataLibs/resonanceTables/res_endf8.endf
 DATFILE="eu153.dat"
 
-
 # copy files into archive
 cp example.inp archive/$ARCHIVE/$ARCHIVE.inp
 INPFILE=$ARCHIVE.inp
