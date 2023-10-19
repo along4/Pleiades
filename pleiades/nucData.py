@@ -144,3 +144,29 @@ def get_mass_from_ame(isotopic_str: str='U-238',verbose: bool=False)->float:
                 if (iso['el'] == element) and (iso['A'] == atomic_number):
                     final_atomic_mass = iso['atomic_mass']
                     return round(final_atomic_mass/1E6,4)     
+
+def get_mat_number(isotopic_str: str='U-238')-> int:
+    """Grabs the ENDF mat number of the requested isotope
+
+    Args:
+        isotopic_str (string): string of the form 'element-atomicNumber'
+
+    Returns:
+        int: mat number 
+    """  
+    import re
+    pattern = r"\b([A-Z][a-z]?)-(\d+)\b"
+    if not re.search(pattern,isotopic_str):
+        raise ValueError(f"isotopic_str should be in the format of Element-AtomicMass (U-235)")
+    
+    # open the file containing the endf summary table
+    with open(PWD.parent / "nucDataLibs/isotopeInfo/neutrons.list","r") as fid:
+        for line in fid:
+            # remove trailing spaces in some isotope definitions
+            line = line.replace("- ","-").replace(" -","-").replace("-  ","-")
+            if line.count(isotopic_str):
+                # the mat number is a 4 digits string at the end of each line
+                matnumber = int(line[-5:])
+                return matnumber
+                
+    raise ValueError(f"{isotopic_str} not found")                                    
