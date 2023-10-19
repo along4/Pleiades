@@ -35,7 +35,7 @@ def main(config_inp_file: str="config_inp.ini"):
             card3.commands[i] = f'INPUT IS ENDF/B FILE MAT={mat_number}'
         
     # Write cards to input file
-    inputFile.write_to_file("inputExample.txt", card1, card2, card3, card5, card7, card8, card10)
+    inputFile.write_to_file("example.inp", card1, card2, card3, card5, card7, card8, card10)
 
 if __name__ == "__main__":
 
