@@ -2,6 +2,9 @@ import numpy as np
 import sys
 import pleiades.sammyInput as psi
 import pleiades.nucData as pnd
+import pathlib
+
+PWD = pathlib.Path(__file__).parent # get the location of this py file
 
 def main(config_inp_file: str="config_inp.ini"):
     
@@ -26,4 +29,4 @@ def main(config_inp_file: str="config_inp.ini"):
 
 if __name__ == "__main__":
 
-    main()
+    main(PWD / "config_inp.ini")
