@@ -1,4 +1,8 @@
 import numpy as np
+import os
+
+# current file location
+PWD = os.path.dirname(os.path.abspath(__file__))
 
 def extract_isotope_info(filename, isotope):
     """This function extracts the spin and abundance of an isotope from the file isotope.info.
@@ -113,30 +117,56 @@ def get_mass_from_ame(isotopic_str: str='U-238',verbose: bool=False)->float:
     
     possible_isotopes_data_list = []
 
-        element, atomic_number = get_info(isotopic_str)
-        # Load the file into a list of lines
-        nuclear_data_path = "../../nucDataLibs/isotopeInfo/"
-        nucelar_masses_file = nuclear_data_path+"mass.mas20"
+    element, atomic_number = get_info(isotopic_str)
+    # Load the file into a list of lines
+    nuclear_data_path = "../../nucDataLibs/isotopeInfo/"
+    nucelar_masses_file = nuclear_data_path+"mass.mas20"
+    
+    with open(nucelar_masses_file, "r") as f:
         
-        with open(nucelar_masses_file, "r") as f:
-            
-            # Skip the first 36 lines of header info
-            for _ in range(36):
-                next(f)
+        # Skip the first 36 lines of header info
+        for _ in range(36):
+            next(f)
 
-            # start searching through lines.
-            for line in f:
-                # If we find the name of the isotope and the atomic number
-                if (element in line[:25]) and (str(atomic_number) in line[:25]):
-                    possible_isotopes_data = parse_ame_line(line)
-                    possible_isotopes_data_list.append(possible_isotopes_data)
-            
-            # If we didn't find any data for the isotope
-            if len(possible_isotopes_data_list) == 0:
-                raise ValueError("No data found for {} in {}".format(isotopic_str, nucelar_masses_file))
-            # If we found more than one isotope, then we need to find the correct one. 
-            else:
-                for iso in possible_isotopes_data_list:
-                    if (iso['el'] == element) and (iso['A'] == atomic_number):
-                        final_atomic_mass = iso['atomic_mass']
-                        return round(final_atomic_mass/1E6,4)
+        # start searching through lines.
+        for line in f:
+            # If we find the name of the isotope and the atomic number
+            if (element in line[:25]) and (str(atomic_number) in line[:25]):
+                possible_isotopes_data = parse_ame_line(line)
+                possible_isotopes_data_list.append(possible_isotopes_data)
+        
+        # If we didn't find any data for the isotope
+        if len(possible_isotopes_data_list) == 0:
+            raise ValueError("No data found for {} in {}".format(isotopic_str, nucelar_masses_file))
+        # If we found more than one isotope, then we need to find the correct one. 
+        else:
+            for iso in possible_isotopes_data_list:
+                if (iso['el'] == element) and (iso['A'] == atomic_number):
+                    final_atomic_mass = iso['atomic_mass']
+                    return round(final_atomic_mass/1E6,4)     
+
+def get_mat_number(isotopic_str: str='U-238')-> int:
+    """Grabs the ENDF mat number of the requested isotope
+
+    Args:
+        isotopic_str (string): string of the form 'element-atomicNumber'
+
+    Returns:
+        int: mat number 
+    """  
+    import re
+    pattern = r"\b([A-Z][a-z]?)-(\d+)\b"
+    if not re.search(pattern,isotopic_str):
+        raise ValueError(f"isotopic_str should be in the format of Element-AtomicMass (U-235)")
+    
+    # open the file containing the endf summary table
+    with open(PWD + "/../nucDataLibs/isotopeInfo/neutrons.list","r") as fid:
+        for line in fid:
+            # remove trailing spaces in some isotope definitions
+            line = line.replace("- ","-").replace(" -","-").replace("-  ","-")
+            if line.count(isotopic_str):
+                # the mat number is a 4 digits string at the end of each line
+                matnumber = int(line[-5:])
+                return matnumber
+                
+    raise ValueError(f"{isotopic_str} not found")                                    
