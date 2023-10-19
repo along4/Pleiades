@@ -105,12 +105,13 @@ def get_info(isotopic_str):
 
     return element, atomic_number
 
-def get_mass_from_ame(isotopic_str='Unknown',verbose=False):
-    if isotopic_str == 'Unknown':
-        print("'{}' string given as isotope for get_mass_from_ame()".format(isotopic_str))
-        return 0.0
-    else:
-        possible_isotopes_data_list = []
+def get_mass_from_ame(isotopic_str: str='U-238',verbose: bool=False)->float:
+    import re
+    pattern = r"\b([A-Z][a-z]?)-(\d+)\b"
+    if not re.search(pattern,isotopic_str):
+        raise ValueError(f"isotopic_str should be in the format of Element-AtomicMass (U-235)")
+    
+    possible_isotopes_data_list = []
 
         element, atomic_number = get_info(isotopic_str)
         # Load the file into a list of lines
