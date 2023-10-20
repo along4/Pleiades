@@ -157,14 +157,16 @@ def get_mat_number(isotopic_str: str='U-238')-> int:
     import re
     pattern = r"\b([A-Z][a-z]?)-(\d+)\b"
     if not re.search(pattern,isotopic_str):
-        raise ValueError(f"isotopic_str should be in the format of Element-AtomicMass (U-235)")
+        raise ValueError(f"isotopic_str should be in the format of Element-AtomicMass (e.g. U-238)")
     
     # open the file containing the endf summary table
     with open(PWD.parent / "nucDataLibs/isotopeInfo/neutrons.list","r") as fid:
+        pattern = r'\b\s*(\d+)\s*-\s*([A-Za-z]+)\s*-\s*(\d+)([A-Za-z]*)\b' # match the isotope name 
         for line in fid:
-            # remove trailing spaces in some isotope definitions
-            line = line.replace("- ","-").replace(" -","-").replace("-  ","-")
-            if line.count(isotopic_str):
+            # find match for an isotope string in the line
+            match = re.search(pattern,line)
+
+            if match and match.expand(r'\2-\3')==isotopic_str:
                 # the mat number is a 4 digits string at the end of each line
                 matnumber = int(line[-5:])
                 return matnumber
