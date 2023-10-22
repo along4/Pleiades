@@ -73,3 +73,37 @@ class parFile:
         self.spingroup_cards = spin_groups
     
         # parse cards
+        self._parse_particle_pair_cards()
+
+        return
+
+    def _parse_particle_pair_cards(self) -> None:
+        """ parse a list of particle pair cards, sort the key-word pairs specifying reactions
+
+            Args: 
+                - particle_pair_cards (list): list of strings containing the lines associated with particle-pair cards
+                - name (string): if "auto", the particle pair is assigned according to the par filename, 
+                                otherwise, the upto 6 characters long 'name' will be assigned.  
+
+            Returns: (list of dicts): list containing particle pairs, each entry is a dictionary containing key-value dicts with the associate parameters
+        """
+        pp_pattern = r'\s*(\b[\w\s]+\b)\s*=\s*([\w.]+)'
+        # Find all key-value pairs using regex
+        pp_dicts = []
+        for num, particle_pair in enumerate(self.particle_pair_cards):
+            # assign key-word pairs according to regex pattern
+            pp_dict = dict(re.findall(pp_pattern, particle_pair))
+
+            # assign new name for the particle-pair reaction
+            if self.rename=="auto" and len(self.particle_pair_cards)==1:
+                pp_dict["Name"] = self.filepath.stem[:8]
+            elif self.rename=="auto" and len(self.particle_pair_cards)>1:
+                pp_dict["Name"] = self.filepath.stem[:6] + f"_{num+1}"
+            elif self.rename!="auto" and len(self.particle_pair_cards)==1:
+                pp_dict["Name"] = self.filepath.stem[:8]
+            elif self.rename!="auto" and len(self.particle_pair_cards)>1:
+                pp_dict["Name"] = self.filepath.stem[:6] + f"_{num+1}"
+            pp_dicts.append(pp_dict)
+    
+        self.particle_pair_data = pp_dicts
+
