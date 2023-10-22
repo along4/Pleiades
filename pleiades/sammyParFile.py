@@ -34,8 +34,10 @@ class ParFile:
                                    "L_spin":slice(19-1,20),
                                    "channel_spin":slice(21-1,30),
                                    "boundary_condition":slice(31-1,40),
-                                   "effective_radius":slice(41-1,50),
-                                   "true_radius":slice(51-1,60)}
+                                   #"effective_radius":slice(41-1,50),
+                                   "effective_radius":slice(42-1,52),
+                                   #"true_radius":slice(51-1,60)}
+                                   "true_radius":slice(53-1,63)}
 
 
     def read(self) -> None:
