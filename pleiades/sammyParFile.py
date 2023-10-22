@@ -35,3 +35,41 @@ class parFile:
         """
         self.filename = filename
         self.rename = rename
+
+
+    def read(self) -> None:
+        """ Reads SAMMY .par file into data-structures that allow updating values
+        """
+        self.filepath = pathlib.Path(self.filename)
+        with open(self.filepath,"r") as fid:
+            for line in fid:
+                
+                # read particle pair cards
+                if line.upper().startswith("PARTICLE PAIR DEF"):
+                    # loop until the end of the P-Pair cards
+                    particle_pair = particle_pairs = [] # empty holders for particle pairs
+                    line = next(fid)
+                    while line.strip():
+                        if line.startswith("Name"):
+                            if particle_pair:
+                                particle_pair = " ".join(particle_pair).replace("\n"," ").strip()
+                                particle_pairs.append(particle_pair) # stack particle pairs in list
+                            particle_pair = []
+                        particle_pair.append(line) 
+                        line = next(fid)
+                    particle_pair = " ".join(particle_pair).replace("\n"," ").strip()
+                    particle_pairs.append(particle_pair) # stack the final particle pairs in list
+
+                # read spin group and channel cards
+                if line.upper().startswith("SPIN GROUP INFO"):
+                    # loop until the end of spin groups info
+                    spin_groups = []
+                    line = next(fid)
+                    while line.strip():
+                        spin_groups.append(line.replace("\n","")) 
+                        line = next(fid)
+                    
+        self.particle_pair_cards = particle_pairs
+        self.spingroup_cards = spin_groups
+    
+        # parse cards
