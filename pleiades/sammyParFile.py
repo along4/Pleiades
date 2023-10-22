@@ -2,7 +2,7 @@ import re
 import pathlib
 from typing import Tuple, List, Dict, Any
 
-class parFile:
+class ParFile:
     """ parFile class for the Sammy par file.
     """
 
