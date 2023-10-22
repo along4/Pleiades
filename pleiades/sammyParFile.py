@@ -178,3 +178,11 @@ class parFile:
         return "".join(new_text)
 
 
+if __name__=="__main__":
+
+    par = parFile("/sammy/samexm/samexm/endf_to_par/archive/Ar_40/results/Ar_40.par")
+    par.read()
+    print(par.spingroup_data)
+
+
+
