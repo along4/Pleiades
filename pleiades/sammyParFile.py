@@ -75,6 +75,7 @@ class parFile:
     
         # parse cards
         self._parse_particle_pair_cards()
+        self._parse_spingroup_cards()
 
         return
 
@@ -107,4 +108,73 @@ class parFile:
             pp_dicts.append(pp_dict)
     
         self.particle_pair_data = pp_dicts
+
+    def _parse_spingroup_cards(self) -> None:
+        """ parse a list of spingroup cards, sort the key-word pairs of groups and channels
+
+            Args: 
+                - spingroup_cards (list): list of strings containing the lines associated with spin-groups and/or spin-channels
+
+            Returns: (list of dicts): list containing groups, each group is a dictionary containing key-value dicts for spingroups and channels
+        """
+        spingroups = []
+        lines = (line for line in self.spingroup_cards) # convert to a generator object
+        
+        for line in lines:
+            # read each line
+            spingroup_dict = self._read_spingroup(line)
+            # prepare a key-label for the dict entry in the format "group 1"
+            group_label = f"group {int(spingroup_dict['group_number'])}"
+            # store the spingroup and later the associate channels
+            spingroup = {group_label:spingroup_dict}
+            
+            # number of channels for this group
+            n_channels = int(spingroup_dict['n_entrance_channel']) + int(spingroup_dict['n_exit_channel'])
+            
+            # loop over channels
+            for n in range(n_channels):
+                line = next(lines)
+                # read the spin-channel line
+                spinchannel_dict = self._read_spinchannel(line)
+                # prepare a key-label for the dict entry in the format "channel 1"
+                channel_label = f"channel {int(spinchannel_dict['channel_number'])}"
+                # store the associate channels
+                spingroup[channel_label] = spinchannel_dict
+
+            spingroups.append(spingroup)
+
+        self.spingroup_data = spingroups
+
+
+    def _read_spingroup(self,spingroup_line: str) -> dict:
+        # parse key-word pairs from a spingroup line
+        spingroup_dict = {key:spingroup_line[value] for key,value in self.SPINGROUP_FORMAT.items()}
+        return spingroup_dict
+    
+
+    def _write_spingroup(self,spingroup_dict: dict) -> str:
+        # write a formated spingroup line from dict with the key-word spingroup values
+        new_text = [" "]*40 # 40 characters long list of spaces to be filled
+        for key,slice_value in self.SPINGROUP_FORMAT.items():
+            word_length = slice_value.stop - slice_value.start
+            # assign the fixed-format position with the corresponding key-word value
+            new_text[slice_value] = list(str(spingroup_dict[key])[:word_length])
+        return "".join(new_text)
+
+    
+    def _read_spinchannel(self,spinchannel_line: str) -> dict:
+        # parse key-word pairs from a spin-channel line
+        spinchannel_dict = {key:spinchannel_line[value] for key,value in self.SPINCHANNEL_FORMAT.items()}
+        return spinchannel_dict
+
+
+    def _write_spinchannel(self,spinchannel_dict: dict) -> str:
+        # write a formated spin-channel line from dict with the key-word channel values
+        new_text = [" "]*70 # 70 characters long list of spaces to be filled
+        for key,slice_value in self.SPINCHANNEL_FORMAT.items():
+            word_length = slice_value.stop - slice_value.start
+            # assign the fixed-format position with the corresponding key-word value
+            new_text[slice_value] = list(str(spinchannel_dict[key])[:word_length])
+        return "".join(new_text)
+
 
