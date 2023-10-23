@@ -43,3 +43,31 @@ def test_spingroup_loopback():
     loopback = par._write_spinchannel(sc_dict)
     assert loopback.strip()==par._spingroup_cards[3].strip()   
 
+
+def test_channel_group_loopback():
+    # tests if I can read and write a channel_group card and get the same card back
+    par = sammyParFile.ParFile(PWD / "U_235.par")
+    par.read()
+
+    # original line: 'Group=2 Chan=1, 2, 3,'
+    original_line = par._channel_group_cards[1]
+    converted_line = par._write_channel_group(par.par_file_data["channel_group"][1])
+    assert original_line==converted_line
+
+    # original line: 'Group=11 Chan=1,'
+    original_line = par._channel_group_cards[10]
+    converted_line = par._write_channel_group(par.par_file_data["channel_group"][10])
+    assert original_line==converted_line
+
+
+def test_channel_radii_loopback():
+    # tests if I can read and write a channel_radii card and get the same card back
+    par = sammyParFile.ParFile(PWD / "U_235.par")
+    par.read()
+
+    # original line: 'Radii= 9.602, 9.602    Flags= 0, 0'
+    original_line = par._channel_radii_cards
+    converted_line = par._write_channel_radii(par.par_file_data["channel_radii"])
+    assert original_line==converted_line
+    
+

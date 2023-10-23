@@ -189,8 +189,8 @@ class ParFile:
         # Using re.search to find the pattern in the line
         match = re.search(cr_pattern, self._channel_radii_cards)
 
-        cr_data = {"radius": [match.group(1),match.group(2)],
-                   "flags": [match.group(3),match.group(4)]}
+        cr_data = {"radii": [match.group(1).strip(),match.group(2).strip()],
+                   "flags": [match.group(3).strip(),match.group(4).strip()]}
 
         self._channel_radii_data = cr_data
 
@@ -244,6 +244,23 @@ class ParFile:
             # assign the fixed-format position with the corresponding key-word value
             new_text[slice_value] = list(str(spinchannel_dict[key])[:word_length])
         return "".join(new_text)
+    
+
+    def _write_channel_group(self,channel_group_dict: dict) -> str:
+        # write a formated channel-group line from dict with the channel-group key-word
+        # this is a free format key-word so there is no template
+        group_string = f"{channel_group_dict['Group']}"
+        channel_string = ", ".join([f"{ch}" for ch in channel_group_dict["Channels"]])
+        return f"Group={group_string} Chan={channel_string},"
+    
+
+    def _write_channel_radii(self,channel_radii_dict: dict) -> str:
+        # write a formated channel_radii line from dict with the channel_radii key-word
+        # this is a free format key-word so there is no template
+        radii_string = ", ".join(channel_radii_dict["radii"])
+        flag_string = ", ".join(channel_radii_dict["flags"])
+        return f"Radii= {radii_string}    Flags= {flag_string}"
+
 
 
 if __name__=="__main__":
