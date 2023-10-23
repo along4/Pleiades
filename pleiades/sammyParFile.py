@@ -16,8 +16,8 @@ class ParFile:
             - rename (string): 'auto' will pick a name automatically based on the filename
                                otherwise, reaction name will be renamed according to 'name'
         """
-        self.filename = filename
-        self.rename = rename
+        self._filename = filename
+        self._rename = rename
                         
         # Same column numbers from card 10.2 of SAMMY manual
         # removing 1 from the starting index, since python index starts with 0 
@@ -43,8 +43,8 @@ class ParFile:
     def read(self) -> None:
         """ Reads SAMMY .par file into data-structures that allow updating values
         """
-        self.filepath = pathlib.Path(self.filename)
-        with open(self.filepath,"r") as fid:
+        self._filepath = pathlib.Path(self._filename)
+        with open(self._filepath,"r") as fid:
             for line in fid:
                 
                 # read particle pair cards
@@ -96,15 +96,16 @@ class ParFile:
                         line = next(fid)
 
                     
-        self.particle_pair_cards = particle_pairs
-        self.spingroup_cards = spin_groups
-        self.resonance_param_cards = resonance_params
-        self.channel_radii_cards = channel_radii
-        self.channel_group_cards = channel_groups
+        self._particle_pair_cards = particle_pairs
+        self._spingroup_cards = spin_groups
+        self._resonance_param_cards = resonance_params
+        self._channel_radii_cards = channel_radii
+        self._channel_group_cards = channel_groups
     
         # parse cards
         self._parse_particle_pair_cards()
         self._parse_spingroup_cards()
+        self._parse_channel_radii_cards()
 
         return
 
@@ -121,19 +122,19 @@ class ParFile:
         pp_pattern = r'\s*(\b[\w\s]+\b)\s*=\s*([\w.]+)'
         # Find all key-value pairs using regex
         pp_dicts = []
-        for num, particle_pair in enumerate(self.particle_pair_cards):
+        for num, particle_pair in enumerate(self._particle_pair_cards):
             # assign key-word pairs according to regex pattern
             pp_dict = dict(re.findall(pp_pattern, particle_pair))
 
             # assign new name for the particle-pair reaction
-            if self.rename=="auto" and len(self.particle_pair_cards)==1:
-                pp_dict["Name"] = self.filepath.stem[:8]
-            elif self.rename=="auto" and len(self.particle_pair_cards)>1:
-                pp_dict["Name"] = self.filepath.stem[:6] + f"_{num+1}"
-            elif self.rename!="auto" and len(self.particle_pair_cards)==1:
-                pp_dict["Name"] = self.filepath.stem[:8]
-            elif self.rename!="auto" and len(self.particle_pair_cards)>1:
-                pp_dict["Name"] = self.filepath.stem[:6] + f"_{num+1}"
+            if self._rename=="auto" and len(self._particle_pair_cards)==1:
+                pp_dict["Name"] = self._filepath.stem[:8]
+            elif self._rename=="auto" and len(self._particle_pair_cards)>1:
+                pp_dict["Name"] = self._filepath.stem[:6] + f"_{num+1}"
+            elif self._rename!="auto" and len(self._particle_pair_cards)==1:
+                pp_dict["Name"] = self._filepath.stem[:8]
+            elif self._rename!="auto" and len(self._particle_pair_cards)>1:
+                pp_dict["Name"] = self._filepath.stem[:6] + f"_{num+1}"
             pp_dicts.append(pp_dict)
     
         self.particle_pair_data = pp_dicts
@@ -147,7 +148,7 @@ class ParFile:
             Returns: (list of dicts): list containing groups, each group is a dictionary containing key-value dicts for spingroups and channels
         """
         spingroups = []
-        lines = (line for line in self.spingroup_cards) # convert to a generator object
+        lines = (line for line in self._spingroup_cards) # convert to a generator object
         
         for line in lines:
             # read each line
@@ -180,7 +181,7 @@ class ParFile:
         """
         cr_pattern = r'Radii=\s*([\d.]+),\s*([\d.]+)\s*Flags=\s*([\d]+),\s*([\d]+)'
         # Using re.search to find the pattern in the line
-        match = re.search(cr_pattern, self.channel_radii_cards)
+        match = re.search(cr_pattern, self._channel_radii_cards)
 
         cr_data = {"radius": [match.group(1),match.group(2)],
                    "flags": [match.group(3),match.group(4)]}
@@ -191,7 +192,7 @@ class ParFile:
         cg_pattern = r'Group=(\d+) (?:Chan|Channel)=([\d, ]+),'
 
         cg_data = []
-        for channel_group in self.channel_group_cards:
+        for channel_group in self._channel_group_cards:
             # assign key-word pairs according to regex pattern
             match = re.search(cg_pattern, channel_group)
 
@@ -240,7 +241,7 @@ if __name__=="__main__":
 
     par = ParFile("/sammy/samexm/samexm/endf_to_par/archive/Ar_40/results/Ar_40.par")
     par.read()
-    print(par.spingroup_data)
+    print(par._spingroup_data)
 
 
 
