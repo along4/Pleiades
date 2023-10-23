@@ -175,6 +175,35 @@ class ParFile:
         self.spingroup_data = spingroups
 
 
+    def _parse_channel_radii_cards(self) -> None:
+        """ parse a list of channel-radii and channel-groups cards and sort the key-word pairs
+        """
+        cr_pattern = r'Radii=\s*([\d.]+),\s*([\d.]+)\s*Flags=\s*([\d]+),\s*([\d]+)'
+        # Using re.search to find the pattern in the line
+        match = re.search(cr_pattern, self.channel_radii_cards)
+
+        cr_data = {"radius": [match.group(1),match.group(2)],
+                   "flags": [match.group(3),match.group(4)]}
+
+        self.channel_radii_data = cr_data
+
+        # parse channel groups using regex
+        cg_pattern = r'Group=(\d+) (?:Chan|Channel)=([\d, ]+),'
+
+        cg_data = []
+        for channel_group in self.channel_group_cards:
+            # assign key-word pairs according to regex pattern
+            match = re.search(cg_pattern, channel_group)
+
+            group = int(match.group(1))  # Extract Group as an integer
+            channels = [int(ch) for ch in match.group(2).split(',')]  # Extract Channels as a list of integers
+
+            cg_data.append({"Group": group,"Channels": channels})
+                           
+        self.channel_group_data = cg_data
+
+
+
     def _read_spingroup(self,spingroup_line: str) -> dict:
         # parse key-word pairs from a spingroup line
         spingroup_dict = {key:spingroup_line[value] for key,value in self.SPINGROUP_FORMAT.items()}
