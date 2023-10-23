@@ -13,30 +13,33 @@ def test_read_and_parse_par_file():
         par.read()
 
         # tests if the naming of the particle pair is correct in "auto" rename mode
-        assert par.particle_pair_data[0]["Name"].startswith((PWD / filename).stem)
+        assert par._particle_pair_data[0]["Name"].startswith((PWD / filename).stem)
+
+        for key in ['particle_pair', 'spingroup', 'channel_group', 'channel_radii']:
+            assert key in par.par_file_data.keys() 
 
 def test_spingroup_loopback():
     # tests if I can read and write a particle pair card and get the same card back
     par = sammyParFile.ParFile(PWD / "Ta_181.par")
     par.read()
 
-    sg_dict = par._read_spingroup(par.spingroup_cards[0])
+    sg_dict = par._read_spingroup(par._spingroup_cards[0])
     loopback = par._write_spingroup(sg_dict)
-    assert loopback.strip()==par.spingroup_cards[0].strip()
+    assert loopback.strip()==par._spingroup_cards[0].strip()
 
-    sc_dict = par._read_spinchannel(par.spingroup_cards[1])
+    sc_dict = par._read_spinchannel(par._spingroup_cards[1])
     loopback = par._write_spinchannel(sc_dict)
-    assert loopback.strip()==par.spingroup_cards[1].strip()
+    assert loopback.strip()==par._spingroup_cards[1].strip()
 
     # another group from another isotope
     par = sammyParFile.ParFile(PWD / "U_235.par")
     par.read()
 
-    sg_dict = par._read_spingroup(par.spingroup_cards[0])
+    sg_dict = par._read_spingroup(par._spingroup_cards[0])
     loopback = par._write_spingroup(sg_dict)
-    assert loopback.strip()==par.spingroup_cards[0].strip()
+    assert loopback.strip()==par._spingroup_cards[0].strip()
 
-    sc_dict = par._read_spinchannel(par.spingroup_cards[3])
+    sc_dict = par._read_spinchannel(par._spingroup_cards[3])
     loopback = par._write_spinchannel(sc_dict)
-    assert loopback.strip()==par.spingroup_cards[3].strip()   
+    assert loopback.strip()==par._spingroup_cards[3].strip()   
 

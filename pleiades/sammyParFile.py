@@ -18,6 +18,8 @@ class ParFile:
         """
         self._filename = filename
         self._rename = rename
+
+        self.par_file_data = {}
                         
         # Same column numbers from card 10.2 of SAMMY manual
         # removing 1 from the starting index, since python index starts with 0 
@@ -137,7 +139,9 @@ class ParFile:
                 pp_dict["Name"] = self._filepath.stem[:6] + f"_{num+1}"
             pp_dicts.append(pp_dict)
     
-        self.particle_pair_data = pp_dicts
+        self._particle_pair_data = pp_dicts
+
+        self.par_file_data.update({"particle_pair":self._particle_pair_data})
 
     def _parse_spingroup_cards(self) -> None:
         """ parse a list of spingroup cards, sort the key-word pairs of groups and channels
@@ -173,7 +177,9 @@ class ParFile:
 
             spingroups.append(spingroup)
 
-        self.spingroup_data = spingroups
+        self._spingroup_data = spingroups
+
+        self.par_file_data.update({"spingroup":self._spingroup_data})
 
 
     def _parse_channel_radii_cards(self) -> None:
@@ -186,7 +192,7 @@ class ParFile:
         cr_data = {"radius": [match.group(1),match.group(2)],
                    "flags": [match.group(3),match.group(4)]}
 
-        self.channel_radii_data = cr_data
+        self._channel_radii_data = cr_data
 
         # parse channel groups using regex
         cg_pattern = r'Group=(\d+) (?:Chan|Channel)=([\d, ]+),'
@@ -201,7 +207,10 @@ class ParFile:
 
             cg_data.append({"Group": group,"Channels": channels})
                            
-        self.channel_group_data = cg_data
+        self._channel_group_data = cg_data
+
+        self.par_file_data.update({"channel_group":self._channel_group_data,
+                                   "channel_radii":self._channel_radii_data})
 
 
 
@@ -241,7 +250,7 @@ if __name__=="__main__":
 
     par = ParFile("/sammy/samexm/samexm/endf_to_par/archive/Ar_40/results/Ar_40.par")
     par.read()
-    print(par._spingroup_data)
+    print(par.par_file_data)
 
 
 
