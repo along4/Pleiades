@@ -98,9 +98,9 @@ class ParFile:
                     
         self.particle_pair_cards = particle_pairs
         self.spingroup_cards = spin_groups
-        self.resonance_params = resonance_params
-        self.channel_radii = channel_radii
-        self.channel_groups = channel_groups
+        self.resonance_param_cards = resonance_params
+        self.channel_radii_cards = channel_radii
+        self.channel_group_cards = channel_groups
     
         # parse cards
         self._parse_particle_pair_cards()
