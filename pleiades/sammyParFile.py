@@ -71,9 +71,20 @@ class ParFile:
                     while line.strip():
                         spin_groups.append(line.replace("\n","")) 
                         line = next(fid)
+                
+                # read resonance data cards
+                if line.upper().startswith("RESONANCE PARAM"):
+                    # loop until the end of resonance params
+                    resonance_params = []
+                    line = next(fid)
+                    while line.strip():
+                        resonance_params.append(line.replace("\n","")) 
+                        line = next(fid)
+
                     
         self.particle_pair_cards = particle_pairs
         self.spingroup_cards = spin_groups
+        self.resonance_params = resonance_params
     
         # parse cards
         self._parse_particle_pair_cards()
