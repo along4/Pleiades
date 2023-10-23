@@ -81,10 +81,26 @@ class ParFile:
                         resonance_params.append(line.replace("\n","")) 
                         line = next(fid)
 
+                # read channel radii cards
+                if line.upper().startswith('CHANNEL RADII IN KEY') or \
+                   line.upper().startswith('CHANNEL RADIUS PARAMETERS FOLLOW'):
+                    
+                    # next line is the channel radii card
+                    channel_radii = line = next(fid).replace("\n"," ").strip() 
+
+                    channel_groups = [] # empty holders for channel-group mapping cards
+                    # loop until the end of the channel groups cards
+                    while line.strip():
+                        if line.strip().startswith("Group"):
+                            channel_groups.append(line.replace("\n"," ").strip()) 
+                        line = next(fid)
+
                     
         self.particle_pair_cards = particle_pairs
         self.spingroup_cards = spin_groups
         self.resonance_params = resonance_params
+        self.channel_radii = channel_radii
+        self.channel_groups = channel_groups
     
         # parse cards
         self._parse_particle_pair_cards()
