@@ -287,7 +287,7 @@ class ParFile:
         for key,slice_value in self._PARTICLE_PAIRS_FORMAT.items():
             word_length = slice_value.stop - slice_value.start
             # assign the fixed-format position with the corresponding key-word value
-            new_text[slice_value] = list(str(particle_pairs_dict[key])[:word_length])
+            new_text[slice_value] = list(str(particle_pairs_dict[key]).ljust(word_length))
         return "".join(new_text).replace("\n ","\n")
 
 
@@ -303,7 +303,7 @@ class ParFile:
         for key,slice_value in self._SPIN_GROUP_FORMAT.items():
             word_length = slice_value.stop - slice_value.start
             # assign the fixed-format position with the corresponding key-word value
-            new_text[slice_value] = list(str(spin_group_dict[key])[:word_length])
+            new_text[slice_value] = list(str(spin_group_dict[key]).ljust(word_length))
         return "".join(new_text)
 
     
@@ -319,7 +319,7 @@ class ParFile:
         for key,slice_value in self._SPIN_CHANNEL_FORMAT.items():
             word_length = slice_value.stop - slice_value.start
             # assign the fixed-format position with the corresponding key-word value
-            new_text[slice_value] = list(str(spin_channel_dict[key])[:word_length])
+            new_text[slice_value] = list(str(spin_channel_dict[key]).ljust(word_length))
         return "".join(new_text)
     
 
@@ -349,7 +349,7 @@ class ParFile:
         for key,slice_value in self._RESONANCE_PARAMS_FORMAT.items():
             word_length = slice_value.stop - slice_value.start
             # assign the fixed-format position with the corresponding key-word value
-            new_text[slice_value] = list(str(resonance_params_dict[key])[:word_length])
+            new_text[slice_value] = list(str(resonance_params_dict[key]).ljust(word_length))
         return "".join(new_text)
 
 
