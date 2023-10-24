@@ -23,14 +23,14 @@ class ParFile:
                         
         # Same column numbers from card 10.2 of SAMMY manual
         # removing 1 from the starting index, since python index starts with 0 
-        self.SPINGROUP_FORMAT = {"group_number":slice(1-1,3),
+        self._SPIN_GROUP_FORMAT = {"group_number":slice(1-1,3),
                                  "exclude":slice(5-1,5),
                                  "n_entrance_channel":slice(8-1,10),
                                  "n_exit_channel":slice(13-1,15),
                                  "spin":slice(16-1,20),
                                  "isotopic_abundance":slice(21-1,30)}
 
-        self.SPINCHANNEL_FORMAT = {"channel_number":slice(3-1,5),
+        self._SPIN_CHANNEL_FORMAT = {"channel_number":slice(3-1,5),
                                    "channel_name":slice(8-1,15),
                                    "exclude":slice(18-1,18),
                                    "L_spin":slice(19-1,20),
@@ -99,14 +99,14 @@ class ParFile:
 
                     
         self._particle_pair_cards = particle_pairs
-        self._spingroup_cards = spin_groups
-        self._resonance_param_cards = resonance_params
+        self._spin_group_cards = spin_groups
+        self._resonance_params_cards = resonance_params
         self._channel_radii_cards = channel_radii
         self._channel_group_cards = channel_groups
     
         # parse cards
         self._parse_particle_pair_cards()
-        self._parse_spingroup_cards()
+        self._parse_spin_group_cards()
         self._parse_channel_radii_cards()
 
         return
@@ -143,43 +143,43 @@ class ParFile:
 
         self.par_file_data.update({"particle_pair":self._particle_pair_data})
 
-    def _parse_spingroup_cards(self) -> None:
-        """ parse a list of spingroup cards, sort the key-word pairs of groups and channels
+    def _parse_spin_group_cards(self) -> None:
+        """ parse a list of spin_group cards, sort the key-word pairs of groups and channels
 
             Args: 
-                - spingroup_cards (list): list of strings containing the lines associated with spin-groups and/or spin-channels
+                - spin_group_cards (list): list of strings containing the lines associated with spin-groups and/or spin-channels
 
-            Returns: (list of dicts): list containing groups, each group is a dictionary containing key-value dicts for spingroups and channels
+            Returns: (list of dicts): list containing groups, each group is a dictionary containing key-value dicts for spin_groups and channels
         """
-        spingroups = []
-        lines = (line for line in self._spingroup_cards) # convert to a generator object
+        spin_groups = []
+        lines = (line for line in self._spin_group_cards) # convert to a generator object
         
         for line in lines:
             # read each line
-            spingroup_dict = self._read_spingroup(line)
+            spin_group_dict = self._read_spin_group(line)
             # prepare a key-label for the dict entry in the format "group 1"
-            group_label = f"group {int(spingroup_dict['group_number'])}"
-            # store the spingroup and later the associate channels
-            spingroup = {group_label:spingroup_dict}
+            group_label = f"group {int(spin_group_dict['group_number'])}"
+            # store the spin_group and later the associate channels
+            spin_group = {group_label:spin_group_dict}
             
             # number of channels for this group
-            n_channels = int(spingroup_dict['n_entrance_channel']) + int(spingroup_dict['n_exit_channel'])
+            n_channels = int(spin_group_dict['n_entrance_channel']) + int(spin_group_dict['n_exit_channel'])
             
             # loop over channels
             for n in range(n_channels):
                 line = next(lines)
                 # read the spin-channel line
-                spinchannel_dict = self._read_spinchannel(line)
+                spin_channel_dict = self._read_spin_channel(line)
                 # prepare a key-label for the dict entry in the format "channel 1"
-                channel_label = f"channel {int(spinchannel_dict['channel_number'])}"
+                channel_label = f"channel {int(spin_channel_dict['channel_number'])}"
                 # store the associate channels
-                spingroup[channel_label] = spinchannel_dict
+                spin_group[channel_label] = spin_channel_dict
 
-            spingroups.append(spingroup)
+            spin_groups.append(spin_group)
 
-        self._spingroup_data = spingroups
+        self._spin_group_data = spin_groups
 
-        self.par_file_data.update({"spingroup":self._spingroup_data})
+        self.par_file_data.update({"spin_group":self._spin_group_data})
 
 
     def _parse_channel_radii_cards(self) -> None:
@@ -214,35 +214,35 @@ class ParFile:
 
 
 
-    def _read_spingroup(self,spingroup_line: str) -> dict:
-        # parse key-word pairs from a spingroup line
-        spingroup_dict = {key:spingroup_line[value] for key,value in self.SPINGROUP_FORMAT.items()}
-        return spingroup_dict
+    def _read_spin_group(self,spin_group_line: str) -> dict:
+        # parse key-word pairs from a spin_group line
+        spin_group_dict = {key:spin_group_line[value] for key,value in self._SPIN_GROUP_FORMAT.items()}
+        return spin_group_dict
     
 
-    def _write_spingroup(self,spingroup_dict: dict) -> str:
-        # write a formated spingroup line from dict with the key-word spingroup values
+    def _write_spin_group(self,spin_group_dict: dict) -> str:
+        # write a formated spin_group line from dict with the key-word spin_group values
         new_text = [" "]*40 # 40 characters long list of spaces to be filled
-        for key,slice_value in self.SPINGROUP_FORMAT.items():
+        for key,slice_value in self._SPIN_GROUP_FORMAT.items():
             word_length = slice_value.stop - slice_value.start
             # assign the fixed-format position with the corresponding key-word value
-            new_text[slice_value] = list(str(spingroup_dict[key])[:word_length])
+            new_text[slice_value] = list(str(spin_group_dict[key])[:word_length])
         return "".join(new_text)
 
     
-    def _read_spinchannel(self,spinchannel_line: str) -> dict:
+    def _read_spin_channel(self,spin_channel_line: str) -> dict:
         # parse key-word pairs from a spin-channel line
-        spinchannel_dict = {key:spinchannel_line[value] for key,value in self.SPINCHANNEL_FORMAT.items()}
-        return spinchannel_dict
+        spin_channel_dict = {key:spin_channel_line[value] for key,value in self._SPIN_CHANNEL_FORMAT.items()}
+        return spin_channel_dict
 
 
-    def _write_spinchannel(self,spinchannel_dict: dict) -> str:
+    def _write_spin_channel(self,spin_channel_dict: dict) -> str:
         # write a formated spin-channel line from dict with the key-word channel values
         new_text = [" "]*70 # 70 characters long list of spaces to be filled
-        for key,slice_value in self.SPINCHANNEL_FORMAT.items():
+        for key,slice_value in self._SPIN_CHANNEL_FORMAT.items():
             word_length = slice_value.stop - slice_value.start
             # assign the fixed-format position with the corresponding key-word value
-            new_text[slice_value] = list(str(spinchannel_dict[key])[:word_length])
+            new_text[slice_value] = list(str(spin_channel_dict[key])[:word_length])
         return "".join(new_text)
     
 
