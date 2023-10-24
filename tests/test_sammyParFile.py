@@ -69,5 +69,22 @@ def test_channel_radii_loopback():
     original_line = par._channel_radii_cards
     converted_line = par._write_channel_radii(par.par_file_data["channel_radii"])
     assert original_line==converted_line
+
+
+def test_resonance_params_loopback():
+    # tests if I can read and write a resonance_params card and get the same card back
+    par = sammyParFile.ParFile(PWD / "U_235.par")
+    par.read()
+
+    # original line: '-0.48262240 25.4361900 0.10938900 129.801900 -86.354100           1             '
+    original_line = par._resonance_params_cards[1]
+    converted_line = par._write_resonance_params(par.par_file_data["resonance_params"][1])
+    assert original_line==converted_line
+
+    # original line: '8.807442000 79.4633000 0.18864900 -259.56180 159.029900           1             '
+    original_line = par._resonance_params_cards[10]
+    converted_line = par._write_resonance_params(par.par_file_data["resonance_params"][10])
+    assert original_line==converted_line
     
+
 
