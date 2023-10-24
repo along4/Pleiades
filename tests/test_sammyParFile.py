@@ -71,6 +71,7 @@ def test_channel_radii_loopback():
     assert original_line==converted_line
 
 
+
 def test_resonance_params_loopback():
     # tests if I can read and write a resonance_params card and get the same card back
     par = sammyParFile.ParFile(PWD / "U_235.par")
