@@ -160,7 +160,7 @@ class ParFile:
             # read each line
             spin_group_dict = self._read_spin_group(line)
             # prepare a key-label for the dict entry in the format "group 1"
-            group_label = f"group {int(spin_group_dict['group_number'])}"
+            group_label = "group"
             # store the spin_group and later the associate channels
             spin_group = {group_label:spin_group_dict}
             
@@ -173,7 +173,7 @@ class ParFile:
                 # read the spin-channel line
                 spin_channel_dict = self._read_spin_channel(line)
                 # prepare a key-label for the dict entry in the format "channel 1"
-                channel_label = f"channel {int(spin_channel_dict['channel_number'])}"
+                channel_label = "channel"
                 # store the associate channels
                 spin_group[channel_label] = spin_channel_dict
 
@@ -236,7 +236,6 @@ class ParFile:
             # assign the fixed-format position with the corresponding key-word value
             new_text[slice_value] = list(str(particle_pairs_dict[key])[:word_length])
         return "".join(new_text)
-
 
 
     def _read_spin_group(self,spin_group_line: str) -> dict:
