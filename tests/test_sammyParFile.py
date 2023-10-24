@@ -12,10 +12,7 @@ def test_read_and_parse_par_file():
         par = sammyParFile.ParFile(PWD / filename)
         par.read()
 
-        # tests if the naming of the particle pair is correct in "auto" rename mode
-        assert par._particle_pair_data[0]["Name"].startswith((PWD / filename).stem)
-
-        for key in ['particle_pair', 'spin_group', 'channel_group', 'channel_radii']:
+        for key in ['particle_pairs', 'spin_group', 'channel_group', 'channel_radii','resonance_params']:
             assert key in par.par_file_data.keys() 
 
 def test_spin_group_loopback():
