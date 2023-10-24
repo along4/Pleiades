@@ -120,6 +120,7 @@ class ParFile:
         self._parse_particle_pair_cards()
         self._parse_spin_group_cards()
         self._parse_channel_radii_cards()
+        self._parse_resonance_params_cards()
 
         return
 
@@ -219,14 +220,14 @@ class ParFile:
                                    "channel_radii":cr_data})
         
 
-    def _parse_resonanace_params_cards(self) -> None:
+    def _parse_resonance_params_cards(self) -> None:
         """ parse a list of resonance_params cards, sort the key-word values
         """
         rp_dicts = []
-        for card in self._resonanace_params_cards:
+        for card in self._resonance_params_cards:
             rp_dicts.append(self._read_resonance_params(card))
 
-        self.par_file_data.update({"resonanace_params":rp_dicts})
+        self.par_file_data.update({"resonance_params":rp_dicts})
 
 
 
@@ -285,7 +286,7 @@ class ParFile:
     
     def _write_resonance_params(self,resonance_params_dict: dict) -> str:
         # write a formated spin-channel line from dict with the key-word channel values
-        new_text = [" "]*70 # 70 characters long list of spaces to be filled
+        new_text = [" "]*80 # 80 characters long list of spaces to be filled
         for key,slice_value in self._RESONANCE_PARAMS_FORMAT.items():
             word_length = slice_value.stop - slice_value.start
             # assign the fixed-format position with the corresponding key-word value
