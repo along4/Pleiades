@@ -86,6 +86,24 @@ def test_resonance_params_loopback():
     original_line = par._resonance_params_cards[10]
     converted_line = par._write_resonance_params(par.par_file_data["resonance_params"][10])
     assert original_line==converted_line
+
+
+def test_particle_pairs_loopback():
+    # tests if I can read and write a resonance_params card and get the same card back
+    par = sammyParFile.ParFile(PWD / "U_235.par")
+    par.read()
+
+    # original lines:
+    # Name=PPair1       Particle a=neutron       Particle b=Other   
+    #   Za= 0        Zb=63         Pent=1     Shift=0
+    #   Sa=  0.5     Sb=   2.5     Ma=   1.008664915780000     Mb= 152.921671000000003'''
+
+    original_line = par._particle_pairs_cards[1]
+    converted_line = par._write_particle_pairs(par.par_file_data["particle_pairs"][1])
+    assert original_line.strip()==converted_line.strip()
+
+
+
     
 
 

@@ -52,6 +52,18 @@ class ParFile:
                                         "vary_fission1_width":slice(62-1,63),
                                         "vary_fission2_width":slice(64-1,65),
                                         "igroup":slice(56-1,67)}
+        
+        self._PARTICLE_PAIRS_FORMAT = {"name": slice(6-1,14),
+                                       "particle_a": slice(30-1,38),
+                                       "particle_b": slice(55-1,62),
+                                       "charge_a": slice(9-1+64,10+64), # 64 is the length of raw1
+                                       "charge_b": slice(22-1+64,23+64),
+                                       "vary_penetrability": slice(38-1+64,38+64),
+                                       "vary_shift": slice(50-1+64,50+64),
+                                       "spin_a": slice(9-1+116,13+116),
+                                       "spin_b": slice(22-1+116,27+116),
+                                       "mass_a": slice(36-1+116,55+116),
+                                       "mass_b": slice(64-1+116,83+116)} # 116 is the lengths of raw1 + raw2
 
 
     def read(self) -> None:
@@ -69,12 +81,12 @@ class ParFile:
                     while line.strip():
                         if line.startswith("Name"):
                             if particle_pair:
-                                particle_pair = " ".join(particle_pair).replace("\n"," ").strip()
+                                particle_pair = " ".join(particle_pair)
                                 particle_pairs.append(particle_pair) # stack particle pairs in list
                             particle_pair = []
                         particle_pair.append(line) 
                         line = next(fid)
-                    particle_pair = " ".join(particle_pair).replace("\n"," ").strip()
+                    particle_pair = " ".join(particle_pair)
                     particle_pairs.append(particle_pair) # stack the final particle pairs in list
 
                 # read spin group and channel cards
@@ -110,51 +122,28 @@ class ParFile:
                         line = next(fid)
 
                     
-        self._particle_pair_cards = particle_pairs
+        self._particle_pairs_cards = particle_pairs
         self._spin_group_cards = spin_groups
         self._resonance_params_cards = resonance_params
         self._channel_radii_cards = channel_radii
         self._channel_group_cards = channel_groups
     
         # parse cards
-        self._parse_particle_pair_cards()
+        self._parse_particle_pairs_cards()
         self._parse_spin_group_cards()
         self._parse_channel_radii_cards()
         self._parse_resonance_params_cards()
 
         return
 
-    def _parse_particle_pair_cards(self) -> None:
-        """ parse a list of particle pair cards, sort the key-word pairs specifying reactions
-
-            Args: 
-                - particle_pair_cards (list): list of strings containing the lines associated with particle-pair cards
-                - name (string): if "auto", the particle pair is assigned according to the par filename, 
-                                otherwise, the upto 6 characters long 'name' will be assigned.  
-
-            Returns: (list of dicts): list containing particle pairs, each entry is a dictionary containing key-value dicts with the associate parameters
+    def _parse_particle_pairs_cards(self) -> None:
+        """ parse a list of particle_pairs cards, sort the key-word values
         """
-        pp_pattern = r'\s*(\b[\w\s]+\b)\s*=\s*([\w.]+)'
-        # Find all key-value pairs using regex
-        pp_dicts = []
-        for num, particle_pair in enumerate(self._particle_pair_cards):
-            # assign key-word pairs according to regex pattern
-            pp_dict = dict(re.findall(pp_pattern, particle_pair))
+        rp_dicts = []
+        for card in self._particle_pairs_cards:
+            rp_dicts.append(self._read_particle_pairs(card))
 
-            # assign new name for the particle-pair reaction
-            if self._rename=="auto" and len(self._particle_pair_cards)==1:
-                pp_dict["Name"] = self._filepath.stem[:8]
-            elif self._rename=="auto" and len(self._particle_pair_cards)>1:
-                pp_dict["Name"] = self._filepath.stem[:6] + f"_{num+1}"
-            elif self._rename!="auto" and len(self._particle_pair_cards)==1:
-                pp_dict["Name"] = self._filepath.stem[:8]
-            elif self._rename!="auto" and len(self._particle_pair_cards)>1:
-                pp_dict["Name"] = self._filepath.stem[:6] + f"_{num+1}"
-            pp_dicts.append(pp_dict)
-    
-        self._particle_pair_data = pp_dicts
-
-        self.par_file_data.update({"particle_pair":self._particle_pair_data})
+        self.par_file_data.update({"particle_pairs":rp_dicts})
 
     def _parse_spin_group_cards(self) -> None:
         """ parse a list of spin_group cards, sort the key-word pairs of groups and channels
@@ -228,6 +217,25 @@ class ParFile:
             rp_dicts.append(self._read_resonance_params(card))
 
         self.par_file_data.update({"resonance_params":rp_dicts})
+
+
+    def _read_particle_pairs(self,particle_pairs_line: str) -> dict:
+        # parse key-word pairs from a particle_pairs line
+        particle_pairs_dict = {key:particle_pairs_line[value] for key,value in self._PARTICLE_PAIRS_FORMAT.items()}
+        return particle_pairs_dict
+    
+    def _write_particle_pairs(self,particle_pairs_dict: dict) -> str:
+        # write a formated spin-channel line from dict with the key-word channel values
+        new_text = """Name=             Particle a=              Particle b=        
+      Za=          Zb=           Pent=1     Shift=0
+      Sa=          Sb=           Ma=                         Mb=                    
+      """
+        new_text = list(str(new_text))
+        for key,slice_value in self._PARTICLE_PAIRS_FORMAT.items():
+            word_length = slice_value.stop - slice_value.start
+            # assign the fixed-format position with the corresponding key-word value
+            new_text[slice_value] = list(str(particle_pairs_dict[key])[:word_length])
+        return "".join(new_text)
 
 
 
