@@ -159,10 +159,9 @@ class ParFile:
         for line in lines:
             # read each line
             spin_group_dict = self._read_spin_group(line)
-            # prepare a key-label for the dict entry in the format "group 1"
-            group_label = "group"
-            # store the spin_group and later the associate channels
-            spin_group = {group_label:spin_group_dict}
+
+            # first entry is the spin_group
+            spin_group = [spin_group_dict]
             
             # number of channels for this group
             n_channels = int(spin_group_dict['n_entrance_channel']) + int(spin_group_dict['n_exit_channel'])
@@ -172,10 +171,8 @@ class ParFile:
                 line = next(lines)
                 # read the spin-channel line
                 spin_channel_dict = self._read_spin_channel(line)
-                # prepare a key-label for the dict entry in the format "channel 1"
-                channel_label = "channel"
                 # store the associate channels
-                spin_group[channel_label] = spin_channel_dict
+                spin_group.append(spin_channel_dict)
 
             sg_dict.append(spin_group)
 
