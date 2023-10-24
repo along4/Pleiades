@@ -163,7 +163,7 @@ class ParFile:
 
             Returns: (list of dicts): list containing groups, each group is a dictionary containing key-value dicts for spin_groups and channels
         """
-        spin_groups = []
+        sg_dict = []
         lines = (line for line in self._spin_group_cards) # convert to a generator object
         
         for line in lines:
@@ -187,11 +187,9 @@ class ParFile:
                 # store the associate channels
                 spin_group[channel_label] = spin_channel_dict
 
-            spin_groups.append(spin_group)
+            sg_dict.append(spin_group)
 
-        self._spin_group_data = spin_groups
-
-        self.par_file_data.update({"spin_group":self._spin_group_data})
+        self.par_file_data.update({"spin_group":sg_dict})
 
 
     def _parse_channel_radii_cards(self) -> None:
@@ -203,8 +201,6 @@ class ParFile:
 
         cr_data = {"radii": [match.group(1).strip(),match.group(2).strip()],
                    "flags": [match.group(3).strip(),match.group(4).strip()]}
-
-        self._channel_radii_data = cr_data
 
         # parse channel groups using regex
         cg_pattern = r'Group=(\d+) (?:Chan|Channel)=([\d, ]+),'
@@ -218,11 +214,19 @@ class ParFile:
             channels = [int(ch) for ch in match.group(2).split(',')]  # Extract Channels as a list of integers
 
             cg_data.append({"Group": group,"Channels": channels})
-                           
-        self._channel_group_data = cg_data
 
-        self.par_file_data.update({"channel_group":self._channel_group_data,
-                                   "channel_radii":self._channel_radii_data})
+        self.par_file_data.update({"channel_group":cg_data,
+                                   "channel_radii":cr_data})
+        
+
+    def _parse_resonanace_params_cards(self) -> None:
+        """ parse a list of resonance_params cards, sort the key-word values
+        """
+        rp_dicts = []
+        for card in self._resonanace_params_cards:
+            rp_dicts.append(self._read_resonance_params(card))
+
+        self.par_file_data.update({"resonanace_params":rp_dicts})
 
 
 
@@ -272,6 +276,21 @@ class ParFile:
         radii_string = ", ".join(channel_radii_dict["radii"])
         flag_string = ", ".join(channel_radii_dict["flags"])
         return f"Radii= {radii_string}    Flags= {flag_string}"
+    
+
+    def _read_resonance_params(self,resonance_params_line: str) -> dict:
+        # parse key-word pairs from a resonance_params line
+        resonance_params_dict = {key:resonance_params_line[value] for key,value in self._RESONANCE_PARAMS_FORMAT.items()}
+        return resonance_params_dict
+    
+    def _write_resonance_params(self,resonance_params_dict: dict) -> str:
+        # write a formated spin-channel line from dict with the key-word channel values
+        new_text = [" "]*70 # 70 characters long list of spaces to be filled
+        for key,slice_value in self._RESONANCE_PARAMS_FORMAT.items():
+            word_length = slice_value.stop - slice_value.start
+            # assign the fixed-format position with the corresponding key-word value
+            new_text[slice_value] = list(str(resonance_params_dict[key])[:word_length])
+        return "".join(new_text)
 
 
 
