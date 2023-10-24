@@ -40,6 +40,18 @@ class ParFile:
                                    "effective_radius":slice(42-1,52),
                                    #"true_radius":slice(51-1,60)}
                                    "true_radius":slice(53-1,63)}
+        
+        self._RESONANCE_PARAMS_FORMAT = {"reosnance_energy":slice(1-1,11),
+                                        "capture_width":slice(12-1,22),
+                                        "neutron_width":slice(23-1,33),
+                                        "fission1_width":slice(34-1,44),
+                                        "fission2_width":slice(45-1,55),
+                                        "vary_energy":slice(56-1,57),
+                                        "vary_capture_width":slice(58-1,59),
+                                        "vary_neutron_width":slice(60-1,61),
+                                        "vary_fission1_width":slice(62-1,63),
+                                        "vary_fission2_width":slice(64-1,65),
+                                        "igroup":slice(56-1,67)}
 
 
     def read(self) -> None:
