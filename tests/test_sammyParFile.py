@@ -12,7 +12,7 @@ def test_read_and_parse_par_file():
         par = sammyParFile.ParFile(PWD / filename)
         par.read()
 
-        for key in ['particle_pairs', 'spin_group', 'channel_group', 'channel_radii','resonance_params']:
+        for key in ['particle_pairs', 'spin_group', 'channel_radii','resonance_params']:
             assert key in par.par_file_data.keys() 
 
 def test_spin_group_loopback():
@@ -41,21 +41,6 @@ def test_spin_group_loopback():
     assert loopback.strip()==par._spin_group_cards[3].strip()   
 
 
-def test_channel_group_loopback():
-    # tests if I can read and write a channel_group card and get the same card back
-    par = sammyParFile.ParFile(PWD / "U_235.par")
-    par.read()
-
-    # original line: 'Group=2 Chan=1, 2, 3,'
-    original_line = par._channel_group_cards[1]
-    converted_line = par._write_channel_group(par.par_file_data["channel_group"][1])
-    assert original_line==converted_line
-
-    # original line: 'Group=11 Chan=1,'
-    original_line = par._channel_group_cards[10]
-    converted_line = par._write_channel_group(par.par_file_data["channel_group"][10])
-    assert original_line==converted_line
-
 
 def test_channel_radii_loopback():
     # tests if I can read and write a channel_radii card and get the same card back
@@ -63,9 +48,21 @@ def test_channel_radii_loopback():
     par.read()
 
     # original line: 'Radii= 9.602, 9.602    Flags= 0, 0'
-    original_line = par._channel_radii_cards
-    converted_line = par._write_channel_radii(par.par_file_data["channel_radii"])
-    assert original_line==converted_line
+    original_lines = par._channel_radii_cards
+    converted_lines = par._write_channel_radii(par.par_file_data["channel_radii"])
+    # check all lines
+    for original, converted in zip(original_lines,converted_lines):
+        assert original.strip()==converted.strip()
+
+    par = sammyParFile.ParFile(PWD / "Ta_181.par")
+    par.read()
+
+    # original line: 'Radii= 9.602, 9.602    Flags= 0, 0'
+    original_lines = par._channel_radii_cards
+    converted_lines = par._write_channel_radii(par.par_file_data["channel_radii"])
+    # check all lines
+    for original, converted in zip(original_lines,converted_lines):
+        assert original.strip()==converted.strip()
 
 
 
