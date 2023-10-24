@@ -96,6 +96,23 @@ def test_particle_pairs_loopback():
     converted_line = par._write_particle_pairs(par.par_file_data["particle_pairs"][1])
     assert original_line.strip()==converted_line.strip()
 
+def test_read_write_par_file():
+    # reads a par file into data and writes to a new par file
+
+    files = ["Ta_181.par","Eu_151.par","Eu_153.par","U_235.par"]
+
+    for filename in files:
+        par = sammyParFile.ParFile(PWD / filename)
+        par.read()
+
+        par.write(PWD / "compound.par")
+
+        with open(PWD / filename,"r") as input_par:
+            with open(PWD / "compound.par","r") as output_par:
+                assert input_par.read()==output_par.read()
+
+        
+
 
 
     

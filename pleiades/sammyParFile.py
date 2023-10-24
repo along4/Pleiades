@@ -134,6 +134,62 @@ class ParFile:
         self._parse_resonance_params_cards()
 
         return
+    
+
+    def write(self,filename: str="compound.par") -> None:
+        """ writes the data stored in self.par_file_data dictionary into a SAMMY .par file
+
+            Args:
+                - filename (string): the par file name to write to
+        """
+        
+        if not self.par_file_data:
+            raise RuntimeError("self.par_file_data is emtpy, please run the self.read() method first")
+        
+        lines = []
+
+        # particle pairs
+        lines.append("PARTICLE PAIR DEFINITIONS")
+
+        for card in self.par_file_data["particle_pairs"]:
+            lines.append(self._write_particle_pairs(card))
+        lines.append(" ")
+
+        # spin_groups
+        lines.append("SPIN GROUP INFORMATION")
+
+        for card in self.par_file_data["spin_group"]:
+            # first line is the spin group info
+            lines.append(self._write_spin_group(card[0]))
+            # number of channels for this group
+            n_channels = int(card[0]['n_entrance_channel']) + int(card[0]['n_exit_channel'])
+            for channel in range(1,n_channels+1):
+                lines.append(self._write_spin_channel(card[channel]))
+        lines.append(" ")   
+
+        # resonance params
+        lines.append("RESONANCE PARAMETERS")
+
+        for card in self.par_file_data["resonance_params"]:
+            lines.append(self._write_resonance_params(card))
+        lines.append(" "*80)
+        lines.append(" "*80)
+
+        # channel radii
+        lines.append("Channel radii in key-word format".ljust(80))
+
+        cards = self.par_file_data["channel_radii"]
+        for card in self._write_channel_radii(cards):
+            lines.append(card.ljust(80))
+
+        lines.append(" "*80)
+        lines.append("")
+        
+        with open(filename,"w") as fid:
+            fid.write("\n".join(lines))    
+        
+
+
 
     def _parse_particle_pairs_cards(self) -> None:
         """ parse a list of particle_pairs cards, sort the key-word values
@@ -232,7 +288,7 @@ class ParFile:
             word_length = slice_value.stop - slice_value.start
             # assign the fixed-format position with the corresponding key-word value
             new_text[slice_value] = list(str(particle_pairs_dict[key])[:word_length])
-        return "".join(new_text)
+        return "".join(new_text).replace("\n ","\n")
 
 
     def _read_spin_group(self,spin_group_line: str) -> dict:
@@ -243,7 +299,7 @@ class ParFile:
 
     def _write_spin_group(self,spin_group_dict: dict) -> str:
         # write a formated spin_group line from dict with the key-word spin_group values
-        new_text = [" "]*40 # 40 characters long list of spaces to be filled
+        new_text = [" "]*80 # 80 characters long list of spaces to be filled
         for key,slice_value in self._SPIN_GROUP_FORMAT.items():
             word_length = slice_value.stop - slice_value.start
             # assign the fixed-format position with the corresponding key-word value
@@ -259,7 +315,7 @@ class ParFile:
 
     def _write_spin_channel(self,spin_channel_dict: dict) -> str:
         # write a formated spin-channel line from dict with the key-word channel values
-        new_text = [" "]*70 # 70 characters long list of spaces to be filled
+        new_text = [" "]*80 # 80 characters long list of spaces to be filled
         for key,slice_value in self._SPIN_CHANNEL_FORMAT.items():
             word_length = slice_value.stop - slice_value.start
             # assign the fixed-format position with the corresponding key-word value
