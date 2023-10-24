@@ -86,7 +86,7 @@ class ParFile:
                             particle_pair = []
                         particle_pair.append(line) 
                         line = next(fid)
-                    particle_pair = " ".join(particle_pair)
+                    particle_pair = " ".join(particle_pair)[:-1] # remove the last '\n' character
                     particle_pairs.append(particle_pair) # stack the final particle pairs in list
 
                 # read spin group and channel cards
@@ -225,8 +225,7 @@ class ParFile:
         # write a formated spin-channel line from dict with the key-word channel values
         new_text = """Name=             Particle a=              Particle b=        
       Za=          Zb=           Pent=1     Shift=0
-      Sa=          Sb=           Ma=                         Mb=                    
-      """
+      Sa=          Sb=           Ma=                         Mb=                    """
         new_text = list(str(new_text))
         for key,slice_value in self._PARTICLE_PAIRS_FORMAT.items():
             word_length = slice_value.stop - slice_value.start
