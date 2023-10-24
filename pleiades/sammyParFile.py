@@ -108,17 +108,17 @@ class ParFile:
                         line = next(fid)
 
                 # read channel radii cards
-                if line.upper().startswith('CHANNEL RADII IN KEY') or \
-                   line.upper().startswith('CHANNEL RADIUS PARAMETERS FOLLOW'):
+                if line.upper().startswith('CHANNEL RADII IN KEY'):
                     
                     # next line is the channel radii card
-                    channel_radii = line = next(fid).replace("\n"," ").strip() 
+                    
+                    line = next(fid).replace("\n"," ") 
+                    channel_radii = [line]
 
-                    channel_groups = [] # empty holders for channel-group mapping cards
                     # loop until the end of the channel groups cards
                     while line.strip():
                         if line.strip().startswith("Group"):
-                            channel_groups.append(line.replace("\n"," ").strip()) 
+                            channel_radii.append(line.replace("\n"," ")) 
                         line = next(fid)
 
                     
@@ -126,7 +126,6 @@ class ParFile:
         self._spin_group_cards = spin_groups
         self._resonance_params_cards = resonance_params
         self._channel_radii_cards = channel_radii
-        self._channel_group_cards = channel_groups
     
         # parse cards
         self._parse_particle_pairs_cards()
@@ -183,8 +182,9 @@ class ParFile:
         """ parse a list of channel-radii and channel-groups cards and sort the key-word pairs
         """
         cr_pattern = r'Radii=\s*([\d.]+),\s*([\d.]+)\s*Flags=\s*([\d]+),\s*([\d]+)'
+
         # Using re.search to find the pattern in the line
-        match = re.search(cr_pattern, self._channel_radii_cards)
+        match = re.search(cr_pattern, self._channel_radii_cards[0])
 
         cr_data = {"radii": [match.group(1).strip(),match.group(2).strip()],
                    "flags": [match.group(3).strip(),match.group(4).strip()]}
@@ -193,17 +193,18 @@ class ParFile:
         cg_pattern = r'Group=(\d+) (?:Chan|Channel)=([\d, ]+),'
 
         cg_data = []
-        for channel_group in self._channel_group_cards:
+        for card in self._channel_radii_cards[1:]:
             # assign key-word pairs according to regex pattern
-            match = re.search(cg_pattern, channel_group)
+            match = re.search(cg_pattern, card)
 
             group = int(match.group(1))  # Extract Group as an integer
             channels = [int(ch) for ch in match.group(2).split(',')]  # Extract Channels as a list of integers
 
-            cg_data.append({"Group": group,"Channels": channels})
+            cg_data.append([group] + channels)
 
-        self.par_file_data.update({"channel_group":cg_data,
-                                   "channel_radii":cr_data})
+        cr_data["groups"] = cg_data
+
+        self.par_file_data.update({"channel_radii":cr_data})
         
 
     def _parse_resonance_params_cards(self) -> None:
@@ -266,20 +267,18 @@ class ParFile:
         return "".join(new_text)
     
 
-    def _write_channel_group(self,channel_group_dict: dict) -> str:
-        # write a formated channel-group line from dict with the channel-group key-word
-        # this is a free format key-word so there is no template
-        group_string = f"{channel_group_dict['Group']}"
-        channel_string = ", ".join([f"{ch}" for ch in channel_group_dict["Channels"]])
-        return f"Group={group_string} Chan={channel_string},"
-    
-
     def _write_channel_radii(self,channel_radii_dict: dict) -> str:
         # write a formated channel_radii line from dict with the channel_radii key-word
-        # this is a free format key-word so there is no template
         radii_string = ", ".join(channel_radii_dict["radii"])
         flag_string = ", ".join(channel_radii_dict["flags"])
-        return f"Radii= {radii_string}    Flags= {flag_string}"
+        cards = [f"Radii= {radii_string}    Flags= {flag_string}"]
+
+        for card in channel_radii_dict['groups']:
+            group_string = f"{card[0]}"
+            channel_string = ", ".join([f"{ch}" for ch in card[1:]])
+            cards.append(f"    Group={group_string} Chan={channel_string},")
+            
+        return cards
     
 
     def _read_resonance_params(self,resonance_params_line: str) -> dict:
@@ -287,6 +286,7 @@ class ParFile:
         resonance_params_dict = {key:resonance_params_line[value] for key,value in self._RESONANCE_PARAMS_FORMAT.items()}
         return resonance_params_dict
     
+
     def _write_resonance_params(self,resonance_params_dict: dict) -> str:
         # write a formated spin-channel line from dict with the key-word channel values
         new_text = [" "]*80 # 80 characters long list of spaces to be filled
