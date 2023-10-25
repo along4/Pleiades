@@ -144,6 +144,8 @@ class ParFile:
         if self.name!="none":
             self._rename()
 
+        self._update_isotopic_weight()
+
         return self
     
 
@@ -467,6 +469,13 @@ class ParFile:
         # bump resonance_params
         for res in self.data["resonance_params"]:
             res["igroup"] = f"{int(res['igroup'])+increment:>12}"    
+
+
+    def _update_isotopic_weight(self) -> None:
+        """Update the isotopic weight in the spin_group data
+        """
+        for group in self.data["spin_group"]:
+            group[0]["isotopic_abundance"] = f"{f'{self.weight:.7f}':>10}"
 
 
 
