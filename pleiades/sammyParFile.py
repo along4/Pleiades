@@ -121,12 +121,11 @@ class ParFile:
                     # next line is the channel radii card
                     
                     line = next(fid).replace("\n"," ") 
-                    channel_radii = [line]
+                    channel_radii = []
 
                     # loop until the end of the channel groups cards
                     while line.strip():
-                        if line.strip().startswith("Group"):
-                            channel_radii.append(line.replace("\n"," ")) 
+                        channel_radii.append(line.replace("\n"," ")) 
                         line = next(fid)
 
                     
@@ -316,10 +315,10 @@ class ParFile:
         cr_pattern = r'Radii=\s*([\d.]+),\s*([\d.]+)\s*Flags=\s*([\d]+),\s*([\d]+)'
         cg_pattern = r'Group=(\d+) (?:Chan|Channel)=([\d, ]+),'
 
-        for card in cards:
-            # Using re.search to find the pattern in the line
-            if match:=re.search(cr_pattern, card):
-                cr_dict = {"radii": [match.group(1).strip(),match.group(2).strip()],
+        card = next(cards)
+        # Using re.search to find the pattern in the line
+        while match:=re.search(cr_pattern, card):
+            cr_dict = {"radii": [match.group(1).strip(),match.group(2).strip()],
                         "flags": [match.group(3).strip(),match.group(4).strip()]}
 
 
@@ -331,7 +330,10 @@ class ParFile:
 
                 cg_data.append([group] + channels)
 
-                card = next(cards,"")
+                try:
+                    card = next(cards)
+                except StopIteration:
+                    break
 
 
             cr_dict["groups"] = cg_data
