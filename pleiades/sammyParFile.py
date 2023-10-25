@@ -7,7 +7,7 @@ class ParFile:
     """
 
     
-    def __init__(self,filename: str="Ar_40.par", rename: str="auto") -> None:
+    def __init__(self,filename: str="Ar_40.par") -> None:
         """
         Class utility to read, parse and combine par files to allow fitting of compounds
             
@@ -17,7 +17,6 @@ class ParFile:
                                otherwise, reaction name will be renamed according to 'name'
         """
         self._filename = filename
-        self._rename = rename
 
         self.par_file_data = {}
                         
@@ -188,7 +187,36 @@ class ParFile:
         with open(filename,"w") as fid:
             fid.write("\n".join(lines))    
         
+    def _rename(self,name: str="auto") -> None:
+        """rename the isotope and particle-pair names
 
+        Args:
+            name (str, optional): 'auto' will pick a name automatically based on the filename
+                               otherwise, reaction name will be renamed according to 'name'
+        """
+
+        pp_count = len(self.par_file_data["particle_pairs"])
+            
+
+        for num, reaction in enumerate(self.par_file_data["particle_pairs"]):
+            old_name = reaction["name"]
+            if   name == "auto" and pp_count==1:
+                new_name = self._filepath.stem[:8]
+            elif name == "auto" and pp_count>1:
+                new_name = self._filepath.stem[:6] + f"_{num+1}"
+            elif name != "auto" and pp_count==1:
+                new_name = name[:8]
+            elif name != "auto" and pp_count>1:
+                new_name = name[:6] + f"_{num+1}"
+            
+            for group in self.par_file_data["spin_group"]:
+                for channel in group[1:]:
+                    if channel["channel_name"].strip()==old_name.strip():
+                        channel["channel_name"] = new_name
+
+
+        for reaction in self.par_file_data["particle_pairs"]:
+            reaction["name"] = new_name
 
 
     def _parse_particle_pairs_cards(self) -> None:
