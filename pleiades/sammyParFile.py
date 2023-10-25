@@ -70,7 +70,7 @@ class ParFile:
                                        "mass_b": slice(64-1+116,83+116)} # 116 is the lengths of raw1 + raw2
 
 
-    def read(self) -> ParFile:
+    def read(self) -> 'ParFile':
         """Reads SAMMY .par file into data-structure that allows updating values
 
         Returns:
@@ -188,9 +188,8 @@ class ParFile:
         # channel radii
         lines.append("Channel radii in key-word format".ljust(80))
 
-        cards = self.data["channel_radii"]
-        for card in self._write_channel_radii(cards):
-            lines.append(card.ljust(80))
+        for card in self.data["channel_radii"]:
+            lines += self._write_channel_radii(card)
 
         lines.append(" "*80)
         lines.append("")
@@ -282,28 +281,35 @@ class ParFile:
     def _parse_channel_radii_cards(self) -> None:
         """ parse a list of channel-radii and channel-groups cards and sort the key-word pairs
         """
+
+        cr_data = []
+        cards = (card for card in self._channel_radii_cards) # convert to a generator object
+
+        # parse channel radii and groups using regex
         cr_pattern = r'Radii=\s*([\d.]+),\s*([\d.]+)\s*Flags=\s*([\d]+),\s*([\d]+)'
-
-        # Using re.search to find the pattern in the line
-        match = re.search(cr_pattern, self._channel_radii_cards[0])
-
-        cr_data = {"radii": [match.group(1).strip(),match.group(2).strip()],
-                   "flags": [match.group(3).strip(),match.group(4).strip()]}
-
-        # parse channel groups using regex
         cg_pattern = r'Group=(\d+) (?:Chan|Channel)=([\d, ]+),'
 
-        cg_data = []
-        for card in self._channel_radii_cards[1:]:
-            # assign key-word pairs according to regex pattern
-            match = re.search(cg_pattern, card)
+        for card in cards:
+            # Using re.search to find the pattern in the line
+            if match:=re.search(cr_pattern, card):
+                cr_dict = {"radii": [match.group(1).strip(),match.group(2).strip()],
+                        "flags": [match.group(3).strip(),match.group(4).strip()]}
 
-            group = int(match.group(1))  # Extract Group as an integer
-            channels = [int(ch) for ch in match.group(2).split(',')]  # Extract Channels as a list of integers
 
-            cg_data.append([group] + channels)
+            cg_data = []
+            while match:=re.search(cg_pattern, card):
+                group = int(match.group(1))  # Extract Group as an integer
+                channels = [int(ch) for ch in match.group(2).split(',')]  # Extract Channels as a list of integers
 
-        cr_data["groups"] = cg_data
+                cg_data.append([group] + channels)
+                try:
+                    card = next(cards)
+                except StopIteration:
+                    break
+
+            cr_dict["groups"] = cg_data
+
+            cr_data.append(cr_dict)
 
         self.data.update({"channel_radii":cr_data})
         
@@ -372,12 +378,12 @@ class ParFile:
         # write a formated channel_radii line from dict with the channel_radii key-word
         radii_string = ", ".join(channel_radii_dict["radii"])
         flag_string = ", ".join(channel_radii_dict["flags"])
-        cards = [f"Radii= {radii_string}    Flags= {flag_string}"]
+        cards = [f"Radii= {radii_string}    Flags= {flag_string}".ljust(80)]
 
         for card in channel_radii_dict['groups']:
             group_string = f"{card[0]}"
             channel_string = ", ".join([f"{ch}" for ch in card[1:]])
-            cards.append(f"    Group={group_string} Chan={channel_string},")
+            cards.append(f"    Group={group_string} Chan={channel_string},".ljust(80))
             
         return cards
     
