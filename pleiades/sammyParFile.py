@@ -427,6 +427,26 @@ class ParFile:
             # assign the fixed-format position with the corresponding key-word value
             new_text[slice_value] = list(str(resonance_params_dict[key]).ljust(word_length))
         return "".join(new_text)
+    
+    def _bump_group_number(self, increment: int = 0) -> None:
+        """bump up the group number in the data in a constant increment
+
+        Args:
+            increment (int, optional): a constant increment to add to all group numbers
+        """
+
+        # bump spin group data
+        for group in self.data["spin_group"]:
+            group[0]["group_number"] = f"{int(group[0]['group_number'])+increment:>3}"
+
+        # bump resonance_params
+        for res in self.data["resonance_params"]:
+            res["igroup"] = f"{int(res['igroup'])+increment:>12}"
+
+        # bump channel radii
+        for rad in self.data["channel_radii"]:
+            for channel in rad["groups"]:
+                channel[0] = channel[0] + increment      
 
 
 
