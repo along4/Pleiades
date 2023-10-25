@@ -322,15 +322,15 @@ class ParFile:
 
 
             cg_data = []
+            card = next(cards)
             while match:=re.search(cg_pattern, card):
                 group = int(match.group(1))  # Extract Group as an integer
                 channels = [int(ch) for ch in match.group(2).split(',')]  # Extract Channels as a list of integers
 
                 cg_data.append([group] + channels)
-                try:
-                    card = next(cards)
-                except StopIteration:
-                    break
+
+                card = next(cards,"")
+
 
             cr_dict["groups"] = cg_data
 
