@@ -13,7 +13,7 @@ def test_read_and_parse_par_file():
         par.read()
 
         for key in ['particle_pairs', 'spin_group', 'channel_radii','resonance_params']:
-            assert key in par.par_file_data.keys() 
+            assert key in par.data.keys() 
 
 def test_spin_group_loopback():
     # tests if I can read and write a particle pair card and get the same card back
@@ -49,7 +49,7 @@ def test_channel_radii_loopback():
 
     # original line: 'Radii= 9.602, 9.602    Flags= 0, 0'
     original_lines = par._channel_radii_cards
-    converted_lines = par._write_channel_radii(par.par_file_data["channel_radii"])
+    converted_lines = par._write_channel_radii(par.data["channel_radii"])
     # check all lines
     for original, converted in zip(original_lines,converted_lines):
         assert original.strip()==converted.strip()
@@ -59,7 +59,7 @@ def test_channel_radii_loopback():
 
     # original line: 'Radii= 9.602, 9.602    Flags= 0, 0'
     original_lines = par._channel_radii_cards
-    converted_lines = par._write_channel_radii(par.par_file_data["channel_radii"])
+    converted_lines = par._write_channel_radii(par.data["channel_radii"])
     # check all lines
     for original, converted in zip(original_lines,converted_lines):
         assert original.strip()==converted.strip()
@@ -73,12 +73,12 @@ def test_resonance_params_loopback():
 
     # original line: '-0.48262240 25.4361900 0.10938900 129.801900 -86.354100           1             '
     original_line = par._resonance_params_cards[1]
-    converted_line = par._write_resonance_params(par.par_file_data["resonance_params"][1])
+    converted_line = par._write_resonance_params(par.data["resonance_params"][1])
     assert original_line==converted_line
 
     # original line: '8.807442000 79.4633000 0.18864900 -259.56180 159.029900           1             '
     original_line = par._resonance_params_cards[10]
-    converted_line = par._write_resonance_params(par.par_file_data["resonance_params"][10])
+    converted_line = par._write_resonance_params(par.data["resonance_params"][10])
     assert original_line==converted_line
 
 
@@ -93,7 +93,7 @@ def test_particle_pairs_loopback():
     #   Sa=  0.5     Sb=   2.5     Ma=   1.008664915780000     Mb= 152.921671000000003'''
 
     original_line = par._particle_pairs_cards[1]
-    converted_line = par._write_particle_pairs(par.par_file_data["particle_pairs"][1])
+    converted_line = par._write_particle_pairs(par.data["particle_pairs"][1])
     assert original_line.strip()==converted_line.strip()
 
 def test_read_write_par_file():

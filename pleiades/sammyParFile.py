@@ -23,7 +23,7 @@ class ParFile:
         self.weight = weight
         self.name = name
 
-        self.par_file_data = {}
+        self.data = {}
                         
         # Same column numbers from card 10.2 of SAMMY manual
         # removing 1 from the starting index, since python index starts with 0 
@@ -147,28 +147,28 @@ class ParFile:
     
 
     def write(self,filename: str="compound.par") -> None:
-        """ writes the data stored in self.par_file_data dictionary into a SAMMY .par file
+        """ writes the data stored in self.data dictionary into a SAMMY .par file
 
             Args:
                 - filename (string): the par file name to write to
         """
         
-        if not self.par_file_data:
-            raise RuntimeError("self.par_file_data is emtpy, please run the self.read() method first")
+        if not self.data:
+            raise RuntimeError("self.data is emtpy, please run the self.read() method first")
         
         lines = []
 
         # particle pairs
         lines.append("PARTICLE PAIR DEFINITIONS")
 
-        for card in self.par_file_data["particle_pairs"]:
+        for card in self.data["particle_pairs"]:
             lines.append(self._write_particle_pairs(card))
         lines.append(" ")
 
         # spin_groups
         lines.append("SPIN GROUP INFORMATION")
 
-        for card in self.par_file_data["spin_group"]:
+        for card in self.data["spin_group"]:
             # first line is the spin group info
             lines.append(self._write_spin_group(card[0]))
             # number of channels for this group
@@ -180,7 +180,7 @@ class ParFile:
         # resonance params
         lines.append("RESONANCE PARAMETERS")
 
-        for card in self.par_file_data["resonance_params"]:
+        for card in self.data["resonance_params"]:
             lines.append(self._write_resonance_params(card))
         lines.append(" "*80)
         lines.append(" "*80)
@@ -188,7 +188,7 @@ class ParFile:
         # channel radii
         lines.append("Channel radii in key-word format".ljust(80))
 
-        cards = self.par_file_data["channel_radii"]
+        cards = self.data["channel_radii"]
         for card in self._write_channel_radii(cards):
             lines.append(card.ljust(80))
 
@@ -202,10 +202,10 @@ class ParFile:
         """rename the isotope and particle-pair names
         """
 
-        pp_count = len(self.par_file_data["particle_pairs"])
+        pp_count = len(self.data["particle_pairs"])
             
 
-        for num, reaction in enumerate(self.par_file_data["particle_pairs"]):
+        for num, reaction in enumerate(self.data["particle_pairs"]):
             old_name = reaction["name"]
             if   self.name == "auto" and pp_count==1:
                 name = self._filepath.stem[:8]
@@ -221,13 +221,13 @@ class ParFile:
                 new_name = name + f"_{num+1}"
                 
             
-            for group in self.par_file_data["spin_group"]:
+            for group in self.data["spin_group"]:
                 for channel in group[1:]:
                     if channel["channel_name"].strip()==old_name.strip():
                         channel["channel_name"] = new_name
 
 
-        for reaction in self.par_file_data["particle_pairs"]:
+        for reaction in self.data["particle_pairs"]:
             reaction["name"] = new_name
 
         self.name = name
@@ -243,7 +243,7 @@ class ParFile:
         for card in self._particle_pairs_cards:
             rp_dicts.append(self._read_particle_pairs(card))
 
-        self.par_file_data.update({"particle_pairs":rp_dicts})
+        self.data.update({"particle_pairs":rp_dicts})
 
     def _parse_spin_group_cards(self) -> None:
         """ parse a list of spin_group cards, sort the key-word pairs of groups and channels
@@ -276,7 +276,7 @@ class ParFile:
 
             sg_dict.append(spin_group)
 
-        self.par_file_data.update({"spin_group":sg_dict})
+        self.data.update({"spin_group":sg_dict})
 
 
     def _parse_channel_radii_cards(self) -> None:
@@ -305,7 +305,7 @@ class ParFile:
 
         cr_data["groups"] = cg_data
 
-        self.par_file_data.update({"channel_radii":cr_data})
+        self.data.update({"channel_radii":cr_data})
         
 
     def _parse_resonance_params_cards(self) -> None:
@@ -315,7 +315,7 @@ class ParFile:
         for card in self._resonance_params_cards:
             rp_dicts.append(self._read_resonance_params(card))
 
-        self.par_file_data.update({"resonance_params":rp_dicts})
+        self.data.update({"resonance_params":rp_dicts})
 
 
     def _read_particle_pairs(self,particle_pairs_line: str) -> dict:
@@ -403,7 +403,7 @@ if __name__=="__main__":
 
     par = ParFile("/sammy/samexm/samexm/endf_to_par/archive/Ar_40/results/Ar_40.par")
     par.read()
-    print(par.par_file_data)
+    print(par.data)
 
 
 
