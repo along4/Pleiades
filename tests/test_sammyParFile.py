@@ -44,7 +44,7 @@ def test_spin_group_loopback():
 
 def test_channel_radii_loopback():
     # tests if I can read and write a channel_radii card and get the same card back
-    par = sammyParFile.ParFile(PWD / "U_235.par")
+    par = sammyParFile.ParFile(PWD / "U_235.par",name="none")
     par.read()
 
     # original line: 'Radii= 9.602, 9.602    Flags= 0, 0'
@@ -54,7 +54,7 @@ def test_channel_radii_loopback():
     for original, converted in zip(original_lines,converted_lines):
         assert original.strip()==converted.strip()
 
-    par = sammyParFile.ParFile(PWD / "Ta_181.par")
+    par = sammyParFile.ParFile(PWD / "Ta_181.par",name="none")
     par.read()
 
     # original line: 'Radii= 9.602, 9.602    Flags= 0, 0'
@@ -84,7 +84,7 @@ def test_resonance_params_loopback():
 
 def test_particle_pairs_loopback():
     # tests if I can read and write a resonance_params card and get the same card back
-    par = sammyParFile.ParFile(PWD / "U_235.par")
+    par = sammyParFile.ParFile(PWD / "U_235.par",name="none")
     par.read()
 
     # original lines:
@@ -102,7 +102,7 @@ def test_read_write_par_file():
     files = ["Ta_181.par","Eu_151.par","Eu_153.par","U_235.par"]
 
     for filename in files:
-        par = sammyParFile.ParFile(PWD / filename)
+        par = sammyParFile.ParFile(PWD / filename,name="none")
         par.read()
 
         par.write(PWD / "compound.par")

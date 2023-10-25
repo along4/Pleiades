@@ -16,6 +16,7 @@ class ParFile:
         Args:
             - filename (string): parameter file , e.g. 'U_238/results/U_238.par'
             - name (string):  (str, optional): 'auto' will pick a name automatically based on the filename
+                                "none" will keep the original name (PPair1 usually)
                                otherwise, reaction name will be renamed according to 'name'
             - weight (float): the weight/abundance of the isotope in the target
         """
@@ -141,7 +142,8 @@ class ParFile:
         self._parse_resonance_params_cards()
 
         # rename
-        self._rename()
+        if self.name!="none":
+            self._rename()
 
         return self
     
