@@ -70,8 +70,11 @@ class ParFile:
                                        "mass_b": slice(64-1+116,83+116)} # 116 is the lengths of raw1 + raw2
 
 
-    def read(self) -> None:
-        """ Reads SAMMY .par file into data-structures that allow updating values
+    def read(self) -> ParFile:
+        """Reads SAMMY .par file into data-structure that allows updating values
+
+        Returns:
+            ParFile: the ParFile instance
         """
         self._filepath = pathlib.Path(self.filename)
         with open(self._filepath,"r") as fid:
@@ -140,7 +143,7 @@ class ParFile:
         # rename
         self._rename()
 
-        return
+        return self
     
 
     def write(self,filename: str="compound.par") -> None:
