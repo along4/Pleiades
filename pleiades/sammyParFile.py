@@ -9,7 +9,7 @@ class ParFile:
     
     def __init__(self,filename: str="Ar_40.par", 
                       name: str="auto",
-    def __init__(self,filename: str="Ar_40.par") -> None:
+                      weight: float = 1.) -> None:
         """
         Class utility to read, parse and combine par files to allow fitting of compounds
             
@@ -20,7 +20,7 @@ class ParFile:
             - weight (float): the weight/abundance of the isotope in the target
         """
         self.filename = filename
-        self._filename = filename
+        self.weight = weight
         self.name = name
 
         self.par_file_data = {}
