@@ -69,6 +69,12 @@ class ParFile:
                                        "spin_b": slice(22-1+116,27+116),
                                        "mass_a": slice(36-1+116,55+116),
                                        "mass_b": slice(64-1+116,83+116)} # 116 is the lengths of raw1 + raw2
+        
+        self._ISOTOPIC_MASSES_FORMAT = {"atomic_mass":slice(1-1,10),
+                                        "abundance":slice(11-1,20),
+                                        "abundance_uncertainty":slice(21-1,30),
+                                        "vary_abundance":slice(31-1,32),
+                                        "spin_groups":slice(33-1,78)}
 
 
     def read(self) -> 'ParFile':
@@ -78,13 +84,21 @@ class ParFile:
             ParFile: the ParFile instance
         """
         self._filepath = pathlib.Path(self.filename)
+
+        particle_pair = particle_pairs = [] # empty holders for particle pairs
+        resonance_params = []  
+        spin_groups = []
+        channel_radii = []
+        isotopic_masses = []
+
         with open(self._filepath,"r") as fid:
             for line in fid:
                 
                 # read particle pair cards
+
                 if line.upper().startswith("PARTICLE PAIR DEF"):
+
                     # loop until the end of the P-Pair cards
-                    particle_pair = particle_pairs = [] # empty holders for particle pairs
                     line = next(fid)
                     while line.strip():
                         if line.startswith("Name"):
@@ -98,18 +112,18 @@ class ParFile:
                     particle_pairs.append(particle_pair) # stack the final particle pairs in list
 
                 # read spin group and channel cards
+                
                 if line.upper().startswith("SPIN GROUP INFO"):
                     # loop until the end of spin groups info
-                    spin_groups = []
                     line = next(fid)
                     while line.strip():
                         spin_groups.append(line.replace("\n","")) 
                         line = next(fid)
                 
                 # read resonance data cards
+              
                 if line.upper().startswith("RESONANCE PARAM"):
                     # loop until the end of resonance params
-                    resonance_params = []
                     line = next(fid)
                     while line.strip():
                         resonance_params.append(line.replace("\n","")) 
@@ -117,34 +131,42 @@ class ParFile:
 
                 # read channel radii cards
                 if line.upper().startswith('CHANNEL RADII IN KEY'):
-                    
                     # next line is the channel radii card
-                    
                     line = next(fid).replace("\n"," ") 
-                    channel_radii = []
-
                     # loop until the end of the channel groups cards
                     while line.strip():
                         channel_radii.append(line.replace("\n"," ")) 
                         line = next(fid)
 
-                    
+                # read isotopic_masses cards
+                if line.upper().startswith("ISOTOPIC MASSES"):
+                    # loop until the end of isotopic_masses cards
+                    line = next(fid)
+                    while line.strip():
+                        isotopic_masses.append(line.replace("\n","")) 
+                        line = next(fid)
+           
         self._particle_pairs_cards = particle_pairs
         self._spin_group_cards = spin_groups
         self._resonance_params_cards = resonance_params
         self._channel_radii_cards = channel_radii
+        self._isotopic_masses_cards = isotopic_masses
     
         # parse cards
         self._parse_particle_pairs_cards()
         self._parse_spin_group_cards()
         self._parse_channel_radii_cards()
         self._parse_resonance_params_cards()
+        self._parse_isotopic_masses_cards()
 
         # rename
+        # the option name=="none" is saved for the purpose of tests
         if self.name!="none":
             self._rename()
+            self._update_isotopic_weight()
+            self._update_isotopic_masses_abundance()
 
-        self._update_isotopic_weight()
+ 
 
         return self
     
@@ -196,6 +218,14 @@ class ParFile:
 
         lines.append(" "*80)
         lines.append("")
+
+        # isotopic masses
+        if self.data["isotopic_masses"]:
+            lines.append("ISOTOPIC MASSES AND ABUNDANCES FOLLOW".ljust(80))
+            for card in self.data["isotopic_masses"]:
+                lines.append(self._write_isotopic_masses(card))
+            lines.append("")
+
         
         with open(filename,"w") as fid:
             fid.write("\n".join(lines))    
@@ -265,6 +295,9 @@ class ParFile:
 
         # update channel_radii
         compound.data["channel_radii"] += isotope.data["channel_radii"]
+
+        # update isotopic_masses
+        compound.data["isotopic_masses"] += isotope.data["isotopic_masses"]
 
         return compound
 
@@ -362,6 +395,16 @@ class ParFile:
         self.data.update({"resonance_params":rp_dicts})
 
 
+    def _parse_isotopic_masses_cards(self) -> None:
+        """ parse a list of isotopic_masses cards, sort the key-word values
+        """
+        im_dicts = []
+        for card in self._isotopic_masses_cards:
+            im_dicts.append(self._read_isotopic_masses(card))
+
+        self.data.update({"isotopic_masses":im_dicts})
+
+
     def _read_particle_pairs(self,particle_pairs_line: str) -> dict:
         # parse key-word pairs from a particle_pairs line
         particle_pairs_dict = {key:particle_pairs_line[value] for key,value in self._PARTICLE_PAIRS_FORMAT.items()}
@@ -441,6 +484,20 @@ class ParFile:
             new_text[slice_value] = list(str(resonance_params_dict[key]).ljust(word_length))
         return "".join(new_text)
     
+    def _read_isotopic_masses(self,isotopic_masses_line: str) -> None:
+        # parse key-word pairs from a isotopic-masses line
+        isotopic_masses_dict = {key:isotopic_masses_line[value] for key,value in self._ISOTOPIC_MASSES_FORMAT.items()}
+        return isotopic_masses_dict
+    
+    def _write_isotopic_masses(self,isotopic_masses_dict: dict) -> str:
+        # write a formated isotopic_masses line from dict with the key-word channel values
+        new_text = [" "]*80 # 80 characters long list of spaces to be filled
+        for key,slice_value in self._ISOTOPIC_MASSES_FORMAT.items():
+            word_length = slice_value.stop - slice_value.start
+            # assign the fixed-format position with the corresponding key-word value
+            new_text[slice_value] = list(str(isotopic_masses_dict[key]).ljust(word_length))
+        return "".join(new_text)
+    
     def _bump_group_number(self, increment: int = 0) -> None:
         """bump up the group number in the data in a constant increment
 
@@ -478,6 +535,27 @@ class ParFile:
             group[0]["isotopic_abundance"] = f"{f'{self.weight:.7f}':>10}"
 
 
+    def _update_isotopic_masses_abundance(self) -> None:
+        """Update the isotopic masses data
+        """
+        if self.data["isotopic_masses"]:
+            for card in self.data["isotopic_masses"]:
+                card["abundance"] = f"{f'{self.weight:.7f}':>10}"
+        else:
+            spin_groups = "".join([f"{group[0]['group_number'].strip():>2}" for group in self.data["spin_group"]])
+            # format according to the rules in page 
+            L = len(spin_groups)//46
+            sg_formatted = spin_groups[:46]
+            for l in range(1,L):
+                sg_formatted += "-1\n" + " "*32 + spin_groups[46*l:46*(l+1)]
+
+            iso_dict = {"atomic_mass":self.data["particle_pairs"][0]["mass_b"],
+                        "abundance":f"{f'{self.weight:.7f}':<10}",
+                        "abundance_uncertainty":f"{f'{self.weight*0.1:.7f}':<10}",
+                        "vary_abundance":"1",
+                        "spin_groups":sg_formatted}
+            self.data["isotopic_masses"].append(iso_dict)
+     
 
 if __name__=="__main__":
 
