@@ -232,6 +232,31 @@ class ParFile:
         self.name = name
 
 
+    def __add__(self,isotope: 'ParFile') -> 'ParFile':
+        """adds the data of another ParFile instance to form a nuclei
+
+        Args:
+            isotope (parFile): a parFile instance of another isotope
+
+        Returns:
+            parFile: combined parFile instance
+        """
+        from copy import deepcopy
+        compound = deepcopy(self)
+
+        # update particle pairs
+        compound.data["particle_pairs"] += isotope.data["particle_pairs"]
+
+        # update spin_groups
+        compound.data["spin_group"] += isotope.data["spin_group"]
+
+        # update resonance_params
+        compound.data["resonance_params"] += isotope.data["resonance_params"]
+
+        # update channel_radii
+        compound.data["channel_radii"] += isotope.data["channel_radii"]
+
+        return compound
 
 
 
