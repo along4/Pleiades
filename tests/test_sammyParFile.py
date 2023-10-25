@@ -49,7 +49,7 @@ def test_channel_radii_loopback():
 
     # original line: 'Radii= 9.602, 9.602    Flags= 0, 0'
     original_lines = par._channel_radii_cards
-    converted_lines = par._write_channel_radii(par.data["channel_radii"])
+    converted_lines = par._write_channel_radii(par.data["channel_radii"][0])
     # check all lines
     for original, converted in zip(original_lines,converted_lines):
         assert original.strip()==converted.strip()
@@ -59,7 +59,7 @@ def test_channel_radii_loopback():
 
     # original line: 'Radii= 9.602, 9.602    Flags= 0, 0'
     original_lines = par._channel_radii_cards
-    converted_lines = par._write_channel_radii(par.data["channel_radii"])
+    converted_lines = par._write_channel_radii(par.data["channel_radii"][0])
     # check all lines
     for original, converted in zip(original_lines,converted_lines):
         assert original.strip()==converted.strip()
@@ -110,6 +110,27 @@ def test_read_write_par_file():
         with open(PWD / filename,"r") as input_par:
             with open(PWD / "compound.par","r") as output_par:
                 assert input_par.read()==output_par.read()
+
+
+def test_read_write_compound_file():
+    # create a compound, write it into a file, than read it and write the same file again
+
+    par1 = sammyParFile.ParFile(PWD / "Eu_151.par",weight=0.6).read()
+
+    par2 = sammyParFile.ParFile(PWD / "Eu_153.par",weight=0.4).read()
+
+    (par1 + par2).write(PWD / "compound.par") # create compound and write to file
+    
+    com = sammyParFile.ParFile(PWD / "compound.par",name="none").read() # read compound file
+
+    com.write(PWD / "new_compound.par")
+
+    with open(PWD / "compound.par","r") as input_par:
+        with open(PWD / "new_compound.par","r") as output_par:
+            assert input_par.read()==output_par.read()
+
+
+
 
         
 
