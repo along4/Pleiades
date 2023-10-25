@@ -237,13 +237,20 @@ class ParFile:
         """adds the data of another ParFile instance to form a nuclei
 
         Args:
-            isotope (parFile): a parFile instance of another isotope
+            isotope (parFile): a parFile instance of another isotope to be added
 
         Returns:
             parFile: combined parFile instance
         """
         from copy import deepcopy
         compound = deepcopy(self)
+
+        # find the last group number and bump up the group number of the added isotope
+        last_group_number = int(compound.data["spin_group"][-1][0]["group_number"])
+        isotope._bump_group_number(increment=last_group_number)
+
+        last_igroup_number = int(compound.data["resonance_params"][-1]["igroup"])
+        isotope._bump_igroup_number(increment=last_igroup_number)
 
         # update particle pairs
         compound.data["particle_pairs"] += isotope.data["particle_pairs"]
@@ -443,14 +450,23 @@ class ParFile:
         for group in self.data["spin_group"]:
             group[0]["group_number"] = f"{int(group[0]['group_number'])+increment:>3}"
 
-        # bump resonance_params
-        for res in self.data["resonance_params"]:
-            res["igroup"] = f"{int(res['igroup'])+increment:>12}"
 
         # bump channel radii
         for rad in self.data["channel_radii"]:
             for channel in rad["groups"]:
-                channel[0] = channel[0] + increment      
+                channel[0] = channel[0] + increment  
+
+    def _bump_igroup_number(self, increment: int = 0) -> None:
+        """bump up the igroup number in the data in a constant increment
+
+        igroup is a variable in resonance params, it has a differnet meaning than spin group
+
+        Args:
+            increment (int, optional): a constant increment to add to all group numbers
+        """
+        # bump resonance_params
+        for res in self.data["resonance_params"]:
+            res["igroup"] = f"{int(res['igroup'])+increment:>12}"    
 
 
 
