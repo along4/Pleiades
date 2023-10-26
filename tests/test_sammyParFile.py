@@ -3,7 +3,7 @@ from numpy import testing
 import pytest
 import pathlib
 
-PWD = pathlib.Path(__file__).parent
+PWD = pathlib.Path(__file__).parent / "files"
 
 def test_read_and_parse_par_file():
     files = ["Ta_181.par","Eu_151.par","Eu_153.par","U_235.par"]

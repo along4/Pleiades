@@ -165,3 +165,4 @@ cython_debug/
 #.idea/
 tests/compound.par
 tests/new_compound.par
+tests/files/compound.par
