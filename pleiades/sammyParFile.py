@@ -59,7 +59,7 @@ class ParFile:
                                         "vary_neutron_width":slice(60-1,61),
                                         "vary_fission1_width":slice(62-1,63),
                                         "vary_fission2_width":slice(64-1,65),
-                                        "igroup":slice(56-1,67)}
+                                        "igroup":slice(66-1,67)}
         
         self._PARTICLE_PAIRS_FORMAT = {"name": slice(6-1,14),
                                        "particle_a": slice(30-1,38),
