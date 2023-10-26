@@ -570,6 +570,22 @@ class Update():
                         "spin_groups":sg_formatted}
             self.parent.data["isotopic_masses"].append(iso_dict)
 
+
+    def toggle_vary_all_resonances(self,vary: bool=False) -> None:
+        """toggles the vary flag on all resonances
+
+        Args:
+            vary (bool, optional): True will flag all resonances to vary
+        """
+        for card in self.parent.data["resonance_params"]:
+            card["vary_energy"] = f"{1:<2}" if vary else f"{0:<2}"
+            card["vary_capture_width"] = f"{1:<2}" if vary else f"{0:<2}"
+            card["vary_neutron_width"] = f"{1:<2}" if vary else f"{0:<2}"
+            if card["fission1_width"].strip():
+                card["vary_fission1_width"] = f"{1:<2}" if vary else f"{0:<2}"
+            if card["fission2_width"].strip():
+                card["vary_fission2_width"] = f"{1:<2}" if vary else f"{0:<2}"
+
      
 
 if __name__=="__main__":
