@@ -74,3 +74,53 @@ def run(archivename: str="example",
     filelist = glob.glob(f"{archivepath}/SAM*")
     for f in filelist:
         os.remove(f)
+
+def lpt_stats(lptfile: str) -> dict:
+    """parse and collect statistical data from a SAMMY.LPT file
+
+        Args: 
+            - lptfile (str): file name of the lpt file produced in a succesful SAMMY run
+    
+        Returns (dict): formatted statistical data from the run
+    """        
+    stats = {}
+
+    with open(lptfile,"r") as fid:
+        for line in fid:
+            if line.startswith(" Name of input file"):
+                line = next(fid)
+                stats["input_file"] = line.split()[1]
+            
+            if line.startswith(" Name of parameter file"):
+                line = next(fid)
+                stats["par_file"] = line.split()[1]
+
+            if line.startswith(" Emin and Emax"):
+                stats["E_min"] = float(line.split()[4])
+                stats["E_max"] = float(line.split()[5])
+
+            if line.startswith(" *********** Alphanumeric Control Information"):
+                line = next(fid)
+                cards = []
+                while not line.startswith(" **** end"):
+                    if line.strip():
+                        cards.append(line.replace("\n","").strip())
+                    line = next(fid)
+                    
+                stats["commands"] = cards
+
+            if line.startswith(" Target Thickness="):
+                stats["thickness"] = float(line.split()[2])
+
+            if line.startswith(" Number of varied parameters"):
+                stats["varied_params"] = int(line.split()[5])
+
+            if line.startswith(" CUSTOMARY CHI SQUARED DIVIDED"):
+                stats["red_chi2"] = float(line.split()[7])
+
+
+
+    return stats
+            
+    
+
