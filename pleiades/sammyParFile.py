@@ -223,7 +223,8 @@ class ParFile:
         if self.data["isotopic_masses"]:
             lines.append("ISOTOPIC MASSES AND ABUNDANCES FOLLOW".ljust(80))
             for card in self.data["isotopic_masses"]:
-                lines.append(self._write_isotopic_masses(card))
+                lines.append(self._write_isotopic_masses(card)[:80])
+            lines.append(" "*80)
             lines.append("")
 
         
