@@ -166,3 +166,4 @@ cython_debug/
 tests/compound.par
 tests/new_compound.par
 tests/files/compound.par
+tests/files/SAM*
