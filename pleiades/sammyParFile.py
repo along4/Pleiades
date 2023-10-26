@@ -168,6 +168,7 @@ class ParFile:
             self._rename()
             self.update.isotopic_weight()
             self.update.isotopic_masses_abundance()
+            self.update.toggle_vary_all_resonances(False)
 
         return self
     
@@ -529,6 +530,15 @@ class Update():
             for channel in rad["groups"]:
                 channel[0] = channel[0] + increment  
 
+        # bump isotopic masses
+        if self.parent.data["isotopic_masses"]:
+            for isotope in self.parent.data["isotopic_masses"]:
+                L = len(isotope["spin_groups"])
+                spin_groups = [isotope["spin_groups"][slice(2*l,2*l+2)] for l in range(L//2)]
+                spin_groups = [f"{int(sg)+increment:>2}" for sg in spin_groups if sg not in ("\n", "-1")]
+                isotope["spin_groups"] = "".join(spin_groups)
+
+
     def bump_igroup_number(self, increment: int = 0) -> None:
         """bump up the igroup number in the data in a constant increment
 
@@ -539,7 +549,7 @@ class Update():
         """
         # bump resonance_params
         for res in self.parent.data["resonance_params"]:
-            res["igroup"] = f"{int(res['igroup'])+increment:>12}"    
+            res["igroup"] = f"{int(res['igroup'])+increment:>2}"    
 
 
     def isotopic_weight(self) -> None:
