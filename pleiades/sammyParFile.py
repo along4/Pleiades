@@ -25,6 +25,9 @@ class ParFile:
         self.name = name
 
         self.data = {}
+
+        # group all update methods in the Update class (and the `update`` namespace)
+        self.update = Update(self)
                         
         # Same column numbers from card 10.2 of SAMMY manual
         # removing 1 from the starting index, since python index starts with 0 
@@ -163,10 +166,8 @@ class ParFile:
         # the option name=="none" is saved for the purpose of tests
         if self.name!="none":
             self._rename()
-            self._update_isotopic_weight()
-            self._update_isotopic_masses_abundance()
-
- 
+            self.update.isotopic_weight()
+            self.update.isotopic_masses_abundance()
 
         return self
     
@@ -280,10 +281,10 @@ class ParFile:
 
         # find the last group number and bump up the group number of the added isotope
         last_group_number = int(compound.data["spin_group"][-1][0]["group_number"])
-        isotope._bump_group_number(increment=last_group_number)
+        isotope.update.bump_group_number(increment=last_group_number)
 
         last_igroup_number = int(compound.data["resonance_params"][-1]["igroup"])
-        isotope._bump_igroup_number(increment=last_igroup_number)
+        isotope.update.bump_igroup_number(increment=last_igroup_number)
 
         # update particle pairs
         compound.data["particle_pairs"] += isotope.data["particle_pairs"]
@@ -499,7 +500,19 @@ class ParFile:
             new_text[slice_value] = list(str(isotopic_masses_dict[key]).ljust(word_length))
         return "".join(new_text)
     
-    def _bump_group_number(self, increment: int = 0) -> None:
+
+
+
+
+
+
+class Update():
+# stores all the data updating methods of ParFile class
+    def __init__(self,parent: "ParFile") -> None:
+        self.parent = parent
+
+    
+    def bump_group_number(self, increment: int = 0) -> None:
         """bump up the group number in the data in a constant increment
 
         Args:
@@ -507,16 +520,16 @@ class ParFile:
         """
 
         # bump spin group data
-        for group in self.data["spin_group"]:
+        for group in self.parent.data["spin_group"]:
             group[0]["group_number"] = f"{int(group[0]['group_number'])+increment:>3}"
 
 
         # bump channel radii
-        for rad in self.data["channel_radii"]:
+        for rad in self.parent.data["channel_radii"]:
             for channel in rad["groups"]:
                 channel[0] = channel[0] + increment  
 
-    def _bump_igroup_number(self, increment: int = 0) -> None:
+    def bump_igroup_number(self, increment: int = 0) -> None:
         """bump up the igroup number in the data in a constant increment
 
         igroup is a variable in resonance params, it has a differnet meaning than spin group
@@ -525,37 +538,38 @@ class ParFile:
             increment (int, optional): a constant increment to add to all group numbers
         """
         # bump resonance_params
-        for res in self.data["resonance_params"]:
+        for res in self.parent.data["resonance_params"]:
             res["igroup"] = f"{int(res['igroup'])+increment:>12}"    
 
 
-    def _update_isotopic_weight(self) -> None:
+    def isotopic_weight(self) -> None:
         """Update the isotopic weight in the spin_group data
         """
-        for group in self.data["spin_group"]:
-            group[0]["isotopic_abundance"] = f"{f'{self.weight:.7f}':>10}"
+        for group in self.parent.data["spin_group"]:
+            group[0]["isotopic_abundance"] = f"{f'{self.parent.weight:.7f}':>10}"
 
 
-    def _update_isotopic_masses_abundance(self) -> None:
+    def isotopic_masses_abundance(self) -> None:
         """Update the isotopic masses data
         """
-        if self.data["isotopic_masses"]:
-            for card in self.data["isotopic_masses"]:
-                card["abundance"] = f"{f'{self.weight:.7f}':>10}"
+        if self.parent.data["isotopic_masses"]:
+            for card in self.parent.data["isotopic_masses"]:
+                card["abundance"] = f"{f'{self.parent.weight:.7f}':>10}"
         else:
-            spin_groups = "".join([f"{group[0]['group_number'].strip():>2}" for group in self.data["spin_group"]])
+            spin_groups = "".join([f"{group[0]['group_number'].strip():>2}" for group in self.parent.data["spin_group"]])
             # format according to the rules in page 
             L = len(spin_groups)//46
             sg_formatted = spin_groups[:46]
             for l in range(1,L):
                 sg_formatted += "-1\n" + " "*32 + spin_groups[46*l:46*(l+1)]
 
-            iso_dict = {"atomic_mass":self.data["particle_pairs"][0]["mass_b"],
-                        "abundance":f"{f'{self.weight:.7f}':<10}",
-                        "abundance_uncertainty":f"{f'{self.weight*0.1:.7f}':<10}",
+            iso_dict = {"atomic_mass":self.parent.data["particle_pairs"][0]["mass_b"],
+                        "abundance":f"{f'{self.parent.weight:.7f}':<10}",
+                        "abundance_uncertainty":f"{f'{self.parent.weight*0.1:.7f}':<10}",
                         "vary_abundance":"1",
                         "spin_groups":sg_formatted}
-            self.data["isotopic_masses"].append(iso_dict)
+            self.parent.data["isotopic_masses"].append(iso_dict)
+
      
 
 if __name__=="__main__":
