@@ -3,8 +3,36 @@ import inspect
 import glob
 import time
 
-
-
+LPT_SEARCH_PATTERNS = {
+    "input_file":dict(
+        start_text=" Name of input file",
+        skipped_rows=1,
+        line_format="line.split()[1]"),
+    "par_file":dict(
+        start_text=" Name of parameter file",
+        skipped_rows=1,
+        line_format="line.split()[1]"),
+    "Emin":dict(
+        start_text=" Emin and Emax",
+        skipped_rows=0,
+        line_format="float(line.split()[4])"),
+    "Emax":dict(
+        start_text=" Emin and Emax",
+        skipped_rows=0,
+        line_format="float(line.split()[5])"),
+    "thickness":dict(
+        start_text=" Target Thickness=",
+        skipped_rows=0,
+        line_format="float(line.split()[2])"),
+    "varied_params":dict(
+        start_text=" Number of varied parameters",
+        skipped_rows=0,
+        line_format="int(line.split()[5])"),
+    "reduced_chi2":dict(
+        start_text=" CUSTOMARY CHI SQUARED DIVIDED",
+        skipped_rows=0,
+        line_format="float(line.split()[7])"),
+    }
 
 
 def run(archivename: str="example",
@@ -75,6 +103,9 @@ def run(archivename: str="example",
     for f in filelist:
         os.remove(f)
 
+    return
+
+
 def lpt_stats(lptfile: str) -> dict:
     """parse and collect statistical data from a SAMMY.LPT file
 
@@ -87,18 +118,27 @@ def lpt_stats(lptfile: str) -> dict:
 
     with open(lptfile,"r") as fid:
         for line in fid:
-            if line.startswith(" Name of input file"):
-                line = next(fid)
-                stats["input_file"] = line.split()[1]
-            
-            if line.startswith(" Name of parameter file"):
-                line = next(fid)
-                stats["par_file"] = line.split()[1]
+            for pattern_key in LPT_SEARCH_PATTERNS:
+                pattern = LPT_SEARCH_PATTERNS[pattern_key]    
+                if line.startswith(pattern["start_text"]):
+                    [line:=next(fid) for row in range(pattern["skipped_rows"])]
+                    stats[pattern_key] = eval(pattern["line_format"])
 
-            if line.startswith(" Emin and Emax"):
-                stats["E_min"] = float(line.split()[4])
-                stats["E_max"] = float(line.split()[5])
+    return stats
 
+
+
+
+def lpt_command_cards(lptfile: str) -> list:
+    """parse and collect the alphanumeric command cards from a SAMMY.LPT file
+
+        Args: 
+            - lptfile (str): file name of the lpt file produced in a succesful SAMMY run
+    
+        Returns (list): of alphanumeric commands used in SAMMY run
+    """        
+    with open(lptfile,"r") as fid:
+        for line in fid:
             if line.startswith(" *********** Alphanumeric Control Information"):
                 line = next(fid)
                 cards = []
@@ -107,20 +147,5 @@ def lpt_stats(lptfile: str) -> dict:
                         cards.append(line.replace("\n","").strip())
                     line = next(fid)
                     
-                stats["commands"] = cards
-
-            if line.startswith(" Target Thickness="):
-                stats["thickness"] = float(line.split()[2])
-
-            if line.startswith(" Number of varied parameters"):
-                stats["varied_params"] = int(line.split()[5])
-
-            if line.startswith(" CUSTOMARY CHI SQUARED DIVIDED"):
-                stats["red_chi2"] = float(line.split()[7])
-
-
-
-    return stats
-            
-    
+    return cards
 
