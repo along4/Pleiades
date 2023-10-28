@@ -1,4 +1,5 @@
 import pathlib
+from typing import List, Str, Int, Union, Dict
 
 class LptFile:
     # utilities to read and parse an LPT output file
@@ -65,8 +66,28 @@ class LptFile:
                         stats[pattern_key] = eval(pattern["line_format"])
 
         return stats
+    
 
+    def register_new_stats(self,keyname: str, first_line: str, skipped_rows: str, line_format: str ) -> None:
+        """
+        Registers a search pattern for parsing statistical values from the .lpt file.
 
+        Args:
+            - keyname (str): The name of the requested parameter.
+            - first_line (str): A string used for line.startswith search to identify relevant lines.
+            - skipped_rows (int): The number of rows to skip from the 'first_line' during parsing.
+            - line_format (str): Python code snippet used to parse the line for the requested value.
+                                Typically, this would be a split method on the input `line` variable.
+
+        Example:
+        Register a search pattern for temperature values in the .lpt file:
+        >>> from pleiades import sammyOutput
+        >>> sammyOutput.register_search_pattern(keyname="temperature", first_line="  TEMPERATURE",
+                                                skipped_rows=1, line_format="float(line.split()[0])")
+        """
+        self.LPT_SEARCH_PATTERNS[keyname] = dict(first_line=first_line,
+                                                 skipped_rows=skipped_rows,
+                                                 line_format=line_format)
 
     def commands(self) -> list:
         """parse and collect the alphanumeric command cards from a SAMMY.LPT file
