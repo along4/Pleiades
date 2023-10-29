@@ -1,5 +1,7 @@
 import configparser
+from pleiades import nucData as pnd
 from typing import List, Dict
+from contextlib import suppress
 
 class InputFile:
     """ InputFile class for the Sammy input file.
@@ -21,7 +23,7 @@ class InputFile:
         # TODO: right now Card10 is not required 
         # since we are specifing spin group data in the par file
         # so I'm just ignoring this part of config file right now        
-        del self._config_data["Card10"] 
+        with suppress(KeyError): del self._config_data["Card10"] 
 
         # populate the default database at self.data
         self._set_default_params()
@@ -32,18 +34,22 @@ class InputFile:
         # populate the database of predefined commands 
         self._set_predefined_commands()
 
+        # update auto values
+        self._update_and_calculate_values()
+
         return
 
 
-    def write_cards(self, filename: str = "sammy.inp") -> None:
+    def process(self) -> "InputFile":
         """
-        Writes input cards to a specified file.
+        Process input data and format the cards.
 
-        Args:
-            filename (str, optional): Name of the output file. Defaults to "sammy.inp".
+        This function processes the data in the self.data dictionary, formats the input
+        cards according to specified parameters, and stores the formatted cards in the
+        self.inp_cards attribute. It handles different card types and their respective
+        parameters, ensuring proper formatting for later use.
 
-        Raises:
-            ValueError: Raised if a parameter has a type other than float, int, or str.
+        Returns: the InputFIle instance
         """
         # List to store formatted input card lines
         lines = []
@@ -88,13 +94,24 @@ class InputFile:
             lines.append(line)
 
         # Add a newline at the end of the input cards
-        self.inp_cards = lines + ["\n"]
+        self.processed_cards = lines + ["\n"]
 
-        # Write input cards into the specified file
+        return self
+
+
+    def write(self, filename: str = "sammy.inp") -> "InputFile":
+        """
+        Write formatted input cards to a specified file.
+
+        Args:
+            filename (str, optional): Name of the output file. Defaults to "sammy.inp".
+
+        Returns: the InputFIle instance
+        """
         with open(filename, 'w') as fid:
-            fid.write("\n".join(self.inp_cards))
+            fid.write("\n".join(self.processed_cards))
 
-        return
+        return self
 
     def _set_default_params(self) -> None:
         # set default for each parameter three entries specify the default value, type, and width
@@ -186,6 +203,42 @@ class InputFile:
             CHI_SQUARED = "CHI SQUARED IS WANTEd",
             NO_CHI_SQUARED = "CHI SQUARED IS NOT Wanted"
             )
+        
+    def _update_and_calculate_values(self) -> None:
+        """
+        Update and calculate values in the self.data dictionary.
+
+        This function iterates through the self.data dictionary, updates existing
+        values, and performs calculations where necessary. It modifies the
+        dictionary in-place.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+        # get atomic weight
+        isotopic_str = self.data["Card2"]["elmnt"]
+        atomic_weight = pnd.get_mass_from_ame(isotopic_str.replace("_","-"))
+
+        #replace atomic weight based on the isotope name
+        if self.data["Card2"]["aw"] == "auto":
+            self.data["Card2"]["aw"] = f"{atomic_weight:.8f}"
+
+        # get mat number
+        mat_number = pnd.get_mat_number(isotopic_str)
+
+        # update mat number in ENDF command
+        commands = self.data["Card3"]["commands"].split(',')
+        for i, command in enumerate(commands):
+            if command.startswith("INPUT IS ENDF"):
+                if command.count("MAT="):
+                    commands[i] = f"INPUT IS ENDF/B FILE MAT={mat_number}"
+
+        self.data["Card3"]["commands"] = ",".join(commands)
+
+        return
     
    
     @staticmethod
