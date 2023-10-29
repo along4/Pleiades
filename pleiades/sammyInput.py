@@ -51,6 +51,9 @@ class InputFile:
 
         Returns: the InputFIle instance
         """
+        # update auto values
+        self._update_and_calculate_values()
+
         # List to store formatted input card lines
         lines = []
 
@@ -233,8 +236,7 @@ class InputFile:
         commands = self.data["Card3"]["commands"].split(',')
         for i, command in enumerate(commands):
             if command.startswith("INPUT IS ENDF"):
-                if command.count("MAT="):
-                    commands[i] = f"INPUT IS ENDF/B FILE MAT={mat_number}"
+                commands[i] = f"INPUT IS ENDF/B FILE MAT={mat_number}"
 
         self.data["Card3"]["commands"] = ",".join(commands)
 
