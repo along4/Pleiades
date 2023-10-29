@@ -4,7 +4,6 @@ from typing import List, Dict
 class InputFile:
     """ InputFile class for the Sammy input file.
     """
-    MAX_COLUMNS = 80
 
     def __init__(self, config_file: str) -> None:
         """Reads an .ini config file to create a structured SAMMY inp file
