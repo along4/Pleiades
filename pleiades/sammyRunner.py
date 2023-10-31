@@ -111,6 +111,11 @@ def run_endf(archivename: str="example",
 
 
     endffile = pathlib.Path(__file__).parent.parent / "nucDataLibs/resonanceTables/res_endf8.endf"
+    try:
+        os.symlink(endffile,archivepath / 'res_endf8.endf')
+    except FileExistsError:
+        pass
+    endffile = archivepath / 'res_endf8.endf'
 
     outputfile = f'{archivename}.out'
 
@@ -125,7 +130,7 @@ def run_endf(archivename: str="example",
     
     pwd = pathlib.Path.cwd()
 
-    os.chdir(archivepath)
+    os.chdir(pwd / archivepath)
     os.system(run_command) # run sammy
     os.chdir(pwd)
 
