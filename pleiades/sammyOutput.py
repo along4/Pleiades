@@ -1,5 +1,5 @@
 import pathlib
-from typing import List, Str, Int, Union, Dict
+from typing import List, Union, Dict
 
 class LptFile:
     # utilities to read and parse an LPT output file

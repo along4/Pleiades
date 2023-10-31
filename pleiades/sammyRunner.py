@@ -61,7 +61,7 @@ def run(archivename: str="example",
     os.chdir(pwd)
 
     # move files
-    shutil.move(archivepath /'SAMQUA.PAR', archivepath / f'results/{archivename}.par')
+    shutil.move(archivepath /'SAMMY.PAR', archivepath / f'results/{archivename}.par')
     shutil.move(archivepath /'SAMMY.LST', archivepath / f'results/{archivename}.lst')
     shutil.move(archivepath /'SAMMY.LPT', archivepath / f'results/{archivename}.lpt')
     shutil.move(archivepath /'SAMMY.IO', archivepath / f'results/{archivename}.io')
