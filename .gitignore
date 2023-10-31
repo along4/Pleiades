@@ -168,3 +168,7 @@ tests/new_compound.par
 tests/files/compound.par
 tests/files/SAM*
 examples/makeCompoundFit/archive/*
+examples/makeCompoundFit/Eu_151.inp
+examples/makeCompoundFit/Eu_153.inp
+examples/makeCompoundFit/Eu_nat.inp
+examples/makeCompoundFit/Eu_nat.par
