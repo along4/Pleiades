@@ -74,27 +74,20 @@ def run(archivename: str="example",
     return
 
 
-def run_endf(archivename: str="example",
-            inpfile: str = "",
-            datafile: str = "") -> None:
+def run_endf(inpfile: str = "") -> None:
     """
     run sammy input with endf isotopes tables file to create a par file
     - This can only be done for a single isotope at a time
+    - we don't need a data file, we create a fake dat file with only Emin and Emax data points
+    - archive path name will be deducd from input name
 
     Args:
-        archivename (str): archive directory name. If only archivename is provided
-                           the other file names will be assumed to have the same name 
-                           at the archive has with the associate extension, e.g. {archivename}.inp
-        inpfile (str, optional): input file name
-        datafile (str, optional): data file name
+        inpfile (str): input file name
     """    
     import os
     import shutil
 
-    if not inpfile:
-        inpfile = f"{archivename}.inp"
-    if not datafile:
-        datafile = f"{archivename}.dat"
+    archivename = inpfile.split(".")[0]
 
     archivepath = pathlib.Path(f"archive/{archivename}") 
 
@@ -106,16 +99,25 @@ def run_endf(archivename: str="example",
     # copy files into archive
     shutil.copy(inpfile, archivepath / f'{archivename}.inp')
     inpfile = f'{archivename}.inp'
-    shutil.copy(datafile, archivepath / f'{archivename}.dat')
-    datafile = f'{archivename}.dat'
 
+    # read the input file to get the Emin and Emax:
+    with open(inpfile) as fid:
+        next(fid)
+        Emin, Emax = next(fid).split()[2:4]
+
+    # write a fake datafile with two entries of Emin and Emax
+    with open(archivepath / f'{archivename}.dat',"w") as fid:
+        fid.write(f"{Emax} 0 0\n")
+        fid.write(f"{Emin} 0 0\n")
+    
+    datafile = f'{archivename}.dat'
 
     endffile = pathlib.Path(__file__).parent.parent / "nucDataLibs/resonanceTables/res_endf8.endf"
     try:
         os.symlink(endffile,archivepath / 'res_endf8.endf')
     except FileExistsError:
         pass
-    endffile = archivepath / 'res_endf8.endf'
+    endffile = 'res_endf8.endf'
 
     outputfile = f'{archivename}.out'
 
@@ -130,15 +132,15 @@ def run_endf(archivename: str="example",
     
     pwd = pathlib.Path.cwd()
 
-    os.chdir(pwd / archivepath)
+    os.chdir(archivepath)
     os.system(run_command) # run sammy
     os.chdir(pwd)
 
     # move files
-    shutil.move(archivepath /'SAMQUA.PAR', archivepath / f'results/{archivename}.par')
-    shutil.move(archivepath /'SAMMY.LST', archivepath / f'results/{archivename}.lst')
+    shutil.move(archivepath /'SAMNDF.PAR', archivepath / f'results/{archivename}.par')
+    shutil.move(archivepath /'SAMNDF.INP', archivepath / f'results/{archivename}.inp')
     shutil.move(archivepath /'SAMMY.LPT', archivepath / f'results/{archivename}.lpt')
-    shutil.move(archivepath /'SAMMY.IO', archivepath / f'results/{archivename}.io')
+
 
     # remove SAM*.*
     filelist = glob.glob(f"{archivepath}/SAM*")
