@@ -73,3 +73,73 @@ def run(archivename: str="example",
 
     return
 
+
+def run_endf(archivename: str="example",
+            inpfile: str = "",
+            datafile: str = "") -> None:
+    """
+    run sammy input with endf isotopes tables file to create a par file
+    - This can only be done for a single isotope at a time
+
+    Args:
+        archivename (str): archive directory name. If only archivename is provided
+                           the other file names will be assumed to have the same name 
+                           at the archive has with the associate extension, e.g. {archivename}.inp
+        inpfile (str, optional): input file name
+        datafile (str, optional): data file name
+    """    
+    import os
+    import shutil
+
+    if not inpfile:
+        inpfile = f"{archivename}.inp"
+    if not datafile:
+        datafile = f"{archivename}.dat"
+
+    archivepath = pathlib.Path(f"archive/{archivename}") 
+
+    # create an archive directory
+    os.makedirs(archivepath,exist_ok=True)
+    os.makedirs(archivepath / "results",exist_ok=True)
+
+
+    # copy files into archive
+    shutil.copy(inpfile, archivepath / f'{archivename}.inp')
+    inpfile = f'{archivename}.inp'
+    shutil.copy(datafile, archivepath / f'{archivename}.dat')
+    datafile = f'{archivename}.dat'
+
+
+    endffile = pathlib.Path(__file__).parent.parent / "nucDataLibs/resonanceTables/res_endf8.endf"
+
+    outputfile = f'{archivename}.out'
+
+    run_command = f"""sammy > {outputfile} 2>/dev/null << EOF
+                      {inpfile}
+                      {endffile}
+                      {datafile}
+
+                      EOF 
+                      """
+    run_command = inspect.cleandoc(run_command) # remove indentation
+    
+    pwd = pathlib.Path.cwd()
+
+    os.chdir(archivepath)
+    os.system(run_command) # run sammy
+    os.chdir(pwd)
+
+    # move files
+    shutil.move(archivepath /'SAMQUA.PAR', archivepath / f'results/{archivename}.par')
+    shutil.move(archivepath /'SAMMY.LST', archivepath / f'results/{archivename}.lst')
+    shutil.move(archivepath /'SAMMY.LPT', archivepath / f'results/{archivename}.lpt')
+    shutil.move(archivepath /'SAMMY.IO', archivepath / f'results/{archivename}.io')
+
+    # remove SAM*.*
+    filelist = glob.glob(f"{archivepath}/SAM*")
+    for f in filelist:
+        os.remove(f)
+
+    return
+
+
