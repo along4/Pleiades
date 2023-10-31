@@ -7,11 +7,12 @@ class InputFile:
     """ InputFile class for the Sammy input file.
     """
 
-    def __init__(self, config_file: str) -> None:
+    def __init__(self, config_file: str, auto_update: bool = True) -> None:
         """Reads an .ini config file to create a structured SAMMY inp file
 
         Args:
-            config_file (str): config file name
+            - config_file (str): config file name
+            - auto_update (bool): True will replace atomic mass and values set to "auto" 
         """
         # read connfig file
         self._config = configparser.ConfigParser()
@@ -35,14 +36,18 @@ class InputFile:
         self._set_predefined_commands()
 
         # update auto values
-        self._update_and_calculate_values()
+        if auto_update:
+            self._update_and_calculate_values()
 
         return
 
 
-    def process(self) -> "InputFile":
+    def process(self, auto_update: bool=True) -> "InputFile":
         """
         Process input data and format the cards.
+
+        Args:
+            - auto_update (bool): True will replace atomic mass and values set to "auto" 
 
         This function processes the data in the self.data dictionary, formats the input
         cards according to specified parameters, and stores the formatted cards in the
@@ -52,7 +57,8 @@ class InputFile:
         Returns: the InputFIle instance
         """
         # update auto values
-        self._update_and_calculate_values()
+        if auto_update:
+            self._update_and_calculate_values()
 
         # List to store formatted input card lines
         lines = []
