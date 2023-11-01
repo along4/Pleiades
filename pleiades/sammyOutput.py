@@ -56,10 +56,9 @@ class LptFile:
         Returns (dict): formatted statistical data from the run
         """        
         stats = {}
-
-        with open(self._filename,"r") as fid:
-            for line in fid:
-                for pattern_key in self.LPT_SEARCH_PATTERNS:
+        for pattern_key in self.LPT_SEARCH_PATTERNS:
+            with open(self._filename,"r") as fid:
+                for line in fid:
                     pattern = self.LPT_SEARCH_PATTERNS[pattern_key]    
                     if line.startswith(pattern["start_text"]):
                         [line:=next(fid) for row in range(pattern["skipped_rows"])]
