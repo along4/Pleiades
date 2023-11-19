@@ -261,8 +261,6 @@ class ParFile:
                     if channel["channel_name"].strip()==old_name.strip():
                         channel["channel_name"] = new_name
 
-
-        for reaction in self.data["particle_pairs"]:
             reaction["name"] = new_name
 
         self.name = name
