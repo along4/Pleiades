@@ -286,27 +286,30 @@ class ParFile:
         from copy import deepcopy
         compound = deepcopy(self)
 
-        # find the last group number and bump up the group number of the added isotope
-        last_group_number = int(compound.data["spin_group"][-1][0]["group_number"])
-        isotope.update.bump_group_number(increment=last_group_number)
+        # only add an isotope if resonances exists in the specified energy range
+        if isotope.data["resonance_params"]:
 
-        last_igroup_number = int(compound.data["resonance_params"][-1]["igroup"])
-        isotope.update.bump_igroup_number(increment=last_igroup_number)
+            # find the last group number and bump up the group number of the added isotope
+            last_group_number = int(compound.data["spin_group"][-1][0]["group_number"])
+            isotope.update.bump_group_number(increment=last_group_number)
 
-        # update particle pairs
-        compound.data["particle_pairs"] += isotope.data["particle_pairs"]
+            last_igroup_number = int(compound.data["resonance_params"][-1]["igroup"])
+            isotope.update.bump_igroup_number(increment=last_igroup_number)
 
-        # update spin_groups
-        compound.data["spin_group"] += isotope.data["spin_group"]
+            # update particle pairs
+            compound.data["particle_pairs"] += isotope.data["particle_pairs"]
 
-        # update resonance_params
-        compound.data["resonance_params"] += isotope.data["resonance_params"]
+            # update spin_groups
+            compound.data["spin_group"] += isotope.data["spin_group"]
 
-        # update channel_radii
-        compound.data["channel_radii"] += isotope.data["channel_radii"]
+            # update resonance_params
+            compound.data["resonance_params"] += isotope.data["resonance_params"]
 
-        # update isotopic_masses
-        compound.data["isotopic_masses"] += isotope.data["isotopic_masses"]
+            # update channel_radii
+            compound.data["channel_radii"] += isotope.data["channel_radii"]
+
+            # update isotopic_masses
+            compound.data["isotopic_masses"] += isotope.data["isotopic_masses"]
 
         return compound
 
