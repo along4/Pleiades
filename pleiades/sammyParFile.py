@@ -31,6 +31,7 @@ class ParFile:
         self.emax = emax
 
         self.data = {}
+        self.data["fudge_factor"] = 0.1
 
         # group all update methods in the Update class (and the `update`` namespace)
         self.update = Update(self)
@@ -246,6 +247,7 @@ class ParFile:
         for card in self.data["resonance_params"]:
             lines.append(self._write_resonance_params(card))
         lines.append(" "*80)
+        lines.append(f"{self.data['fudge_factor']:<11}")
         lines.append(" "*80)
 
         # channel radii
