@@ -624,6 +624,15 @@ class Update():
                         "spin_groups":sg_formatted}
             self.parent.data["isotopic_masses"].append(iso_dict)
 
+    def toggle_vary_abundances(vary:bool =False) -> None:
+        """toggles the vary flag on all abundances
+
+        Args:
+            vary (bool, optional): True will flag all abundances to vary
+        """
+        for isotope in self.parent.data["isotopic_masses"]:
+            isotope["vary_abundance"] = f"{vary:<5}"
+
 
     def limit_energies_of_parfile(self) -> None:
         # remove all resonances and spin groups that are above or below the energy range specified in the inp file
