@@ -9,7 +9,9 @@ class ParFile:
     
     def __init__(self,filename: str="Ar_40.par", 
                       name: str="auto",
-                      weight: float = 1.) -> None:
+                      weight: float = 1.,
+                      emin: float = 0.001,
+                      emax: float = 100) -> None:
         """
         Class utility to read, parse and combine par files to allow fitting of compounds
             
@@ -19,10 +21,14 @@ class ParFile:
                                 "none" will keep the original name (PPair1 usually)
                                otherwise, reaction name will be renamed according to 'name'
             - weight (float): the weight/abundance of the isotope in the target
+            - emin (float): minimum energy [eV] to include in par file, default 1 meV
+            - emax (float): maximum energy [eV] to include in par file, default 100 eV
         """
         self.filename = filename
         self.weight = weight
         self.name = name
+        self.emin = emin
+        self.emax = emax
 
         self.data = {}
 
@@ -54,11 +60,11 @@ class ParFile:
                                         "neutron_width":slice(23-1,33),
                                         "fission1_width":slice(34-1,44),
                                         "fission2_width":slice(45-1,55),
-                                        "vary_energy":slice(55-1,57),
-                                        "vary_capture_width":slice(57-1,59),
-                                        "vary_neutron_width":slice(59-1,61),
-                                        "vary_fission1_width":slice(61-1,63),
-                                        "vary_fission2_width":slice(63-1,65),
+                                        "vary_energy":slice(56-1,57),
+                                        "vary_capture_width":slice(58-1,59),
+                                        "vary_neutron_width":slice(60-1,61),
+                                        "vary_fission1_width":slice(62-1,63),
+                                        "vary_fission2_width":slice(64-1,65),
                                         "igroup":slice(66-1,67)}
         
         self._PARTICLE_PAIRS_FORMAT = {"name": slice(6-1,14),
@@ -167,8 +173,10 @@ class ParFile:
         if self.name!="none":
             self._rename()
             self.update.isotopic_weight()
+            self.update.limit_energies_of_parfile()
             self.update.isotopic_masses_abundance()
             self.update.toggle_vary_all_resonances(False)
+            
 
         return self
     
@@ -531,10 +539,13 @@ class Update():
         # bump isotopic masses
         if self.parent.data["isotopic_masses"]:
             for isotope in self.parent.data["isotopic_masses"]:
-                L = len(isotope["spin_groups"])
-                spin_groups = [isotope["spin_groups"][slice(2*l,2*l+2)] for l in range(L//2)]
-                spin_groups = [f"{int(sg)+increment:>2}" for sg in spin_groups if sg not in ("\n", "-1")]
-                isotope["spin_groups"] = "".join(spin_groups)
+                spin_groups = [f"{group[0]['group_number'].strip():>5}" for group in self.parent.data["spin_group"]]
+                    
+                sg_formatted = "".join(spin_groups[:8]).ljust(43)
+                L = (len(spin_groups) - 8)//15 if len(spin_groups)>8 else -1 # number of extra lines needed
+                for l in range(0,L+1):
+                    sg_formatted += "-1\n" + "".join(spin_groups[8+15*l:8+15*(l+1)]).ljust(78)
+                isotope["spin_groups"] = sg_formatted
 
 
     def bump_igroup_number(self, increment: int = 0) -> None:
@@ -562,22 +573,79 @@ class Update():
         """
         if self.parent.data["isotopic_masses"]:
             for card in self.parent.data["isotopic_masses"]:
-                card["abundance"] = f"{f'{self.parent.weight:.7f}':>10}"
+                card["abundance"] = f"{f'{self.parent.weight:.7f}':>9}"
         else:
-            spin_groups = "".join([f"{group[0]['group_number'].strip():>2}" for group in self.parent.data["spin_group"]])
-            # format according to the rules in page 
-            L = len(spin_groups)//46
-            sg_formatted = spin_groups[:46]
-            for l in range(1,L):
-                sg_formatted += "-1\n" + " "*32 + spin_groups[46*l:46*(l+1)]
-
-            iso_dict = {"atomic_mass":self.parent.data["particle_pairs"][0]["mass_b"],
-                        "abundance":f"{f'{self.parent.weight:.7f}':<10}",
-                        "abundance_uncertainty":f"{f'{self.parent.weight*0.1:.7f}':<10}",
-                        "vary_abundance":"1",
+            spin_groups = [f"{group[0]['group_number'].strip():>5}" for group in self.parent.data["spin_group"]]
+                
+            sg_formatted = "".join(spin_groups[:8]).ljust(43)
+            L = (len(spin_groups) - 8)//15 if len(spin_groups)>8 else -1 # number of extra lines needed
+            for l in range(0,L+1):
+                sg_formatted += "-1\n" + "".join(spin_groups[8+15*l:8+15*(l+1)]).ljust(78)
+                
+            iso_dict = {"atomic_mass":f'{float(self.parent.data["particle_pairs"][0]["mass_b"]):>9}',
+                        "abundance":f"{f'{self.parent.weight:.7f}':>9}",
+                        "abundance_uncertainty":f"{f'{self.parent.weight*0.1:.7f}':>9}",
+                        "vary_abundance":"1".ljust(5),
                         "spin_groups":sg_formatted}
             self.parent.data["isotopic_masses"].append(iso_dict)
 
+
+    def limit_energies_of_parfile(self) -> None:
+        # remove all resonances and spin groups that are above or below the energy range specified in the inp file
+        new_res_params = []
+        igroups = set()
+        for num, res in enumerate(self.parent.data["resonance_params"]):
+            # cast all numbers such as "3.6700-5" to floats
+            energy = "e-".join(res['reosnance_energy'].split("-")).lstrip("e").replace("+","e+") if not "e" in res['reosnance_energy'] else res['reosnance_energy']
+            if self.parent.emin <=  float(energy) < self.parent.emax:
+                new_res_params.append(res)
+                igroups.add(res["igroup"].strip())
+        
+        self.parent.data["resonance_params"] = new_res_params
+
+        # go through the remaining resonances to see if we can omit spin groups
+        spin_groups = []
+        for group in self.parent.data["spin_group"]:
+            if group[0]['group_number'].strip() in igroups:
+                spin_groups.append(group)
+        self.parent.data["spin_group"] = spin_groups
+
+        # go through the channel radii and omit those that correspond to unued spin groups
+        channel_radii = []
+        for radii in self.parent.data["channel_radii"]:
+            useful_groups = []
+            for groups_and_channels in radii["groups"]:
+                if str(groups_and_channels[0]) in igroups:
+                    useful_groups.append(groups_and_channels)
+            if useful_groups:
+                radii.update({"groups":useful_groups})
+                channel_radii.append(radii)
+
+        self.parent.data["channel_radii"] = channel_radii
+
+        # reindex igroups
+        igroups = set([])
+        igroup = 0
+        index_map = {}
+        for res in self.parent.data["resonance_params"]:
+            if res["igroup"].strip() not in igroups:
+                igroups.add(res["igroup"].strip())
+                igroup += 1
+                index_map[res["igroup"].strip()] = f"{igroup}"
+            res["igroup"] = f"{index_map[res['igroup'].strip()]:>2}"
+
+        # reindex radii
+        for radii in self.parent.data["channel_radii"]:
+            for groups_and_channels in radii["groups"]:
+                groups_and_channels[0] = int(index_map[str(groups_and_channels[0])])
+
+        # reindex spin groups
+        for group in self.parent.data["spin_group"]:
+            group[0]['group_number'] = f"{index_map[group[0]['group_number'].strip()]:>3}"
+
+        return
+
+        
 
     def toggle_vary_all_resonances(self,vary: bool=False) -> None:
         """toggles the vary flag on all resonances
@@ -586,13 +654,13 @@ class Update():
             vary (bool, optional): True will flag all resonances to vary
         """
         for card in self.parent.data["resonance_params"]:
-            card["vary_energy"] = f"{1:<2}" if vary else f"{0:<2}"
-            card["vary_capture_width"] = f"{1:<2}" if vary else f"{0:<2}"
-            card["vary_neutron_width"] = f"{1:<2}" if vary else f"{0:<2}"
+            card["vary_energy"] = f"{1:>2}" if vary else f"{0:>2}"
+            card["vary_capture_width"] = f"{1:>2}" if vary else f"{0:>2}"
+            card["vary_neutron_width"] = f"{1:>2}" if vary else f"{0:>2}"
             if card["fission1_width"].strip():
-                card["vary_fission1_width"] = f"{1:<2}" if vary else f"{0:<2}"
+                card["vary_fission1_width"] = f"{1:>2}" if vary else f"{0:>2}"
             if card["fission2_width"].strip():
-                card["vary_fission2_width"] = f"{1:<2}" if vary else f"{0:<2}"
+                card["vary_fission2_width"] = f"{1:>2}" if vary else f"{0:>2}"
 
      
 
