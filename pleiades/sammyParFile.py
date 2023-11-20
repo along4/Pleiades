@@ -97,6 +97,19 @@ class ParFile:
                                      "vary_sqrt_energy_bg":slice(67-1,68),
                                      "vary_exponential_bg":slice(69-1,70),
                                      "vary_exp_decay_bg":slice(71-1,72)}
+        
+        self._BROADENING_FORMAT = {"channel_radius":slice(1-1,10),
+                                     "temperature":slice(11-1,20),
+                                     "thickness":slice(21-1,30),
+                                     "flight_path_spread":slice(31-1,40),
+                                     "deltag_fwhm":slice(41-1,50),
+                                     "deltae_us":slice(51-1,60),
+                                     "vary_channel_radius":slice(61-1,62),
+                                     "vary_temperature":slice(63-1,64),
+                                     "vary_thickness":slice(65-1,66),
+                                     "vary_flight_path_spread":slice(67-1,68),
+                                     "vary_deltag_fwhm":slice(69-1,70),
+                                     "vary_deltae_us":slice(71-1,72)}
 
 
     def read(self) -> 'ParFile':
@@ -190,6 +203,7 @@ class ParFile:
             self.update.isotopic_masses_abundance()
             self.update.toggle_vary_all_resonances(False)
             self.update.normalization()
+            self.update.broadening()
             
 
         return self
@@ -256,6 +270,14 @@ class ParFile:
             lines.append("NORMALIZATION AND BACKGROUND FOLLOW".ljust(80))
             card = self.data["normalization"]
             lines.append(self._write_normalization(card))
+            lines.append(" "*80)
+            lines.append("")
+
+        # broadening
+        if self.data["broadening"]:
+            lines.append("BROADENING PARAMETERS MAY BE VARIED".ljust(80))
+            card = self.data["broadening"]
+            lines.append(self._write_broadening(card))
             lines.append(" "*80)
             lines.append("")
 
@@ -540,6 +562,15 @@ class ParFile:
             # assign the fixed-format position with the corresponding key-word value
             new_text[slice_value] = list(str(normalization_dict[key]).ljust(word_length))
         return "".join(new_text)
+
+    def _write_broadening(self,broadening_dict: dict) -> str:
+        # write a formated broadening line from dict with the key-word broadening values
+        new_text = [" "]*80 # 80 characters long list of spaces to be filled
+        for key,slice_value in self._BROADENING_FORMAT.items():
+            word_length = slice_value.stop - slice_value.start
+            # assign the fixed-format position with the corresponding key-word value
+            new_text[slice_value] = list(str(broadening_dict[key]).ljust(word_length))
+        return "".join(new_text)
     
 
 
@@ -738,6 +769,38 @@ class Update():
                                                  "vary_exponential_bg":0,
                                                  "vary_exp_decay_bg":0,}
         self.parent.data["normalization"].update(**kwargs)
+
+    def broadening(self,**kwargs) -> None:
+        """change or vary broadening parameters and vary flags
+
+        Args:
+              - channel_radius (float) CRFN
+              - temperature (float) TEMP
+              - thickness (float) THICK
+              - flight_path_spread (float) DELTAL
+              - deltag_fwhm (float) DELTAG
+              - deltae_us (float) DELTAE
+              - vary_channel_radius (int) 0=fixed, 1=vary, 2=pup
+              - vary_temperature (int) 0=fixed, 1=vary, 2=pup
+              - vary_thickness (int) 0=fixed, 1=vary, 2=pup
+              - vary_flight_path_spread (int) 0=fixed, 1=vary, 2=pup
+              - vary_deltag_fwhm (int) 0=fixed, 1=vary, 2=pup
+              - vary_deltae_us (int) 0=fixed, 1=vary, 2=pup
+        """
+        if "broadening" not in self.parent.data:
+            self.parent.data["broadening"] = {"channel_radius":"",
+                                                 "temperature":"",
+                                                 "thickness":"",
+                                                 "flight_path_spread":"",
+                                                 "deltag_fwhm":"",
+                                                 "deltae_us":"",
+                                                 "vary_channel_radius":0,
+                                                 "vary_temperature":0,
+                                                 "vary_thickness":0,
+                                                 "vary_flight_path_spread":0,
+                                                 "vary_deltag_fwhm":0,
+                                                 "vary_deltae_us":0,}
+        self.parent.data["broadening"].update(**kwargs)
 
      
 
