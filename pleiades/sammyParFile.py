@@ -54,11 +54,11 @@ class ParFile:
                                         "neutron_width":slice(23-1,33),
                                         "fission1_width":slice(34-1,44),
                                         "fission2_width":slice(45-1,55),
-                                        "vary_energy":slice(56-1,57),
-                                        "vary_capture_width":slice(58-1,59),
-                                        "vary_neutron_width":slice(60-1,61),
-                                        "vary_fission1_width":slice(62-1,63),
-                                        "vary_fission2_width":slice(64-1,65),
+                                        "vary_energy":slice(55-1,57),
+                                        "vary_capture_width":slice(57-1,59),
+                                        "vary_neutron_width":slice(59-1,61),
+                                        "vary_fission1_width":slice(61-1,63),
+                                        "vary_fission2_width":slice(63-1,65),
                                         "igroup":slice(66-1,67)}
         
         self._PARTICLE_PAIRS_FORMAT = {"name": slice(6-1,14),
