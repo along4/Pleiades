@@ -84,6 +84,19 @@ class ParFile:
                                         "abundance_uncertainty":slice(21-1,30),
                                         "vary_abundance":slice(31-1,35),
                                         "spin_groups":slice(36-1,78)}
+        
+        self._NORMALIZATION_FORMAT = {"normalization":slice(1-1,10),
+                                     "constant_bg":slice(11-1,20),
+                                     "one_over_v_bg":slice(21-1,30),
+                                     "sqrt_energy_bg":slice(31-1,40),
+                                     "exponential_bg":slice(41-1,50),
+                                     "exp_decay_bg":slice(51-1,60),
+                                     "vary_normalization":slice(61-1,62),
+                                     "vary_constant_bg":slice(63-1,64),
+                                     "vary_one_over_v_bg":slice(65-1,66),
+                                     "vary_sqrt_energy_bg":slice(67-1,68),
+                                     "vary_exponential_bg":slice(69-1,70),
+                                     "vary_exp_decay_bg":slice(71-1,72)}
 
 
     def read(self) -> 'ParFile':
@@ -176,6 +189,7 @@ class ParFile:
             self.update.limit_energies_of_parfile()
             self.update.isotopic_masses_abundance()
             self.update.toggle_vary_all_resonances(False)
+            self.update.normalization()
             
 
         return self
@@ -234,6 +248,14 @@ class ParFile:
             lines.append("ISOTOPIC MASSES AND ABUNDANCES FOLLOW".ljust(80))
             for card in self.data["isotopic_masses"]:
                 lines.append(self._write_isotopic_masses(card))
+            lines.append(" "*80)
+            lines.append("")
+
+        # normalization
+        if self.data["normalization"]:
+            lines.append("NORMALIZATION AND BACKGROUND FOLLOW".ljust(80))
+            card = self.data["normalization"]
+            lines.append(self._write_normalization(card))
             lines.append(" "*80)
             lines.append("")
 
@@ -510,6 +532,15 @@ class ParFile:
             new_text[slice_value] = list(str(isotopic_masses_dict[key]).ljust(word_length))
         return "".join(new_text)
     
+    def _write_normalization(self,normalization_dict: dict) -> str:
+        # write a formated normalization line from dict with the key-word normalization values
+        new_text = [" "]*80 # 80 characters long list of spaces to be filled
+        for key,slice_value in self._NORMALIZATION_FORMAT.items():
+            word_length = slice_value.stop - slice_value.start
+            # assign the fixed-format position with the corresponding key-word value
+            new_text[slice_value] = list(str(normalization_dict[key]).ljust(word_length))
+        return "".join(new_text)
+    
 
 
 
@@ -665,6 +696,39 @@ class Update():
                 card["vary_fission1_width"] = f"{1:>2}" if vary else f"{0:>2}"
             if card["fission2_width"].strip():
                 card["vary_fission2_width"] = f"{1:>2}" if vary else f"{0:>2}"
+
+
+    def normalization(self,**kwargs) -> None:
+        """change or vary normalization parameters and vary flags
+
+        Args:
+              - normalization (float)
+              - constant_bg (float)
+              - one_over_v_bg (float)
+              - sqrt_energy_bg (float)
+              - exponential_bg (float)
+              - exp_decay_bg (float)
+              - vary_normalization (int) 0=fixed, 1=vary, 2=pup
+              - vary_constant_bg (int) 0=fixed, 1=vary, 2=pup
+              - vary_one_over_v_bg (int) 0=fixed, 1=vary, 2=pup
+              - vary_sqrt_energy_bg (int) 0=fixed, 1=vary, 2=pup
+              - vary_exponential_bg (int) 0=fixed, 1=vary, 2=pup
+              - vary_exp_decay_bg (int) 0=fixed, 1=vary, 2=pup
+        """
+        if "normalization" not in self.parent.data:
+            self.parent.data["normalization"] = {"normalization":1.,
+                                                 "constant_bg":0.,
+                                                 "one_over_v_bg":0.,
+                                                 "sqrt_energy_bg":0.,
+                                                 "exponential_bg":0.,
+                                                 "exp_decay_bg":0.,
+                                                 "vary_normalization":0,
+                                                 "vary_constant_bg":0,
+                                                 "vary_one_over_v_bg":0,
+                                                 "vary_sqrt_energy_bg":0,
+                                                 "vary_exponential_bg":0,
+                                                 "vary_exp_decay_bg":0,}
+        self.parent.data["normalization"].update(**kwargs)
 
      
 
