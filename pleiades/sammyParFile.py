@@ -82,8 +82,8 @@ class ParFile:
         self._ISOTOPIC_MASSES_FORMAT = {"atomic_mass":slice(1-1,10),
                                         "abundance":slice(11-1,20),
                                         "abundance_uncertainty":slice(21-1,30),
-                                        "vary_abundance":slice(31-1,32),
-                                        "spin_groups":slice(33-1,78)}
+                                        "vary_abundance":slice(31-1,35),
+                                        "spin_groups":slice(36-1,78)}
 
 
     def read(self) -> 'ParFile':
@@ -233,7 +233,7 @@ class ParFile:
         if self.data["isotopic_masses"]:
             lines.append("ISOTOPIC MASSES AND ABUNDANCES FOLLOW".ljust(80))
             for card in self.data["isotopic_masses"]:
-                lines.append(self._write_isotopic_masses(card)[:80])
+                lines.append(self._write_isotopic_masses(card))
             lines.append(" "*80)
             lines.append("")
 
@@ -535,6 +535,7 @@ class Update():
         for rad in self.parent.data["channel_radii"]:
             for channel in rad["groups"]:
                 channel[0] = channel[0] + increment  
+
 
         # bump isotopic masses
         if self.parent.data["isotopic_masses"]:
