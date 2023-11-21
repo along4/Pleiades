@@ -145,7 +145,7 @@ class InputFile:
                 'matnum': ('0',int,6),         # ENDF Material number. Defaults to 0.
                 },     
             Card3={
-                'commands': ('CHI_SQUARED,TWENTY,SOLVE_BAYES',str,None)
+                'commands': ('CHI_SQUARED,TWENTY,SOLVE_BAYES,PUT_QUANTUM_NUMS_IN_PARAM',str,None)
                 },
             Card5={
                 'temp':   ('300.5',float,10),
