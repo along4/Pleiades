@@ -9,7 +9,9 @@ class ParFile:
     
     def __init__(self,filename: str="Ar_40.par", 
                       name: str="auto",
-                      weight: float = 1.) -> None:
+                      weight: float = 1.,
+                      emin: float = 0.001,
+                      emax: float = 100) -> None:
         """
         Class utility to read, parse and combine par files to allow fitting of compounds
             
@@ -19,12 +21,20 @@ class ParFile:
                                 "none" will keep the original name (PPair1 usually)
                                otherwise, reaction name will be renamed according to 'name'
             - weight (float): the weight/abundance of the isotope in the target
+            - emin (float): minimum energy [eV] to include in par file, default 1 meV
+            - emax (float): maximum energy [eV] to include in par file, default 100 eV
         """
         self.filename = filename
         self.weight = weight
         self.name = name
+        self.emin = emin
+        self.emax = emax
 
         self.data = {}
+        self.data["fudge_factor"] = 0.1
+
+        # group all update methods in the Update class (and the `update`` namespace)
+        self.update = Update(self)
                         
         # Same column numbers from card 10.2 of SAMMY manual
         # removing 1 from the starting index, since python index starts with 0 
@@ -56,7 +66,7 @@ class ParFile:
                                         "vary_neutron_width":slice(60-1,61),
                                         "vary_fission1_width":slice(62-1,63),
                                         "vary_fission2_width":slice(64-1,65),
-                                        "igroup":slice(56-1,67)}
+                                        "igroup":slice(66-1,67)}
         
         self._PARTICLE_PAIRS_FORMAT = {"name": slice(6-1,14),
                                        "particle_a": slice(30-1,38),
@@ -73,8 +83,34 @@ class ParFile:
         self._ISOTOPIC_MASSES_FORMAT = {"atomic_mass":slice(1-1,10),
                                         "abundance":slice(11-1,20),
                                         "abundance_uncertainty":slice(21-1,30),
-                                        "vary_abundance":slice(31-1,32),
-                                        "spin_groups":slice(33-1,78)}
+                                        "vary_abundance":slice(31-1,35),
+                                        "spin_groups":slice(36-1,78)}
+        
+        self._NORMALIZATION_FORMAT = {"normalization":slice(1-1,10),
+                                     "constant_bg":slice(11-1,20),
+                                     "one_over_v_bg":slice(21-1,30),
+                                     "sqrt_energy_bg":slice(31-1,40),
+                                     "exponential_bg":slice(41-1,50),
+                                     "exp_decay_bg":slice(51-1,60),
+                                     "vary_normalization":slice(61-1,62),
+                                     "vary_constant_bg":slice(63-1,64),
+                                     "vary_one_over_v_bg":slice(65-1,66),
+                                     "vary_sqrt_energy_bg":slice(67-1,68),
+                                     "vary_exponential_bg":slice(69-1,70),
+                                     "vary_exp_decay_bg":slice(71-1,72)}
+        
+        self._BROADENING_FORMAT = {"channel_radius":slice(1-1,10),
+                                     "temperature":slice(11-1,20),
+                                     "thickness":slice(21-1,30),
+                                     "flight_path_spread":slice(31-1,40),
+                                     "deltag_fwhm":slice(41-1,50),
+                                     "deltae_us":slice(51-1,60),
+                                     "vary_channel_radius":slice(61-1,62),
+                                     "vary_temperature":slice(63-1,64),
+                                     "vary_thickness":slice(65-1,66),
+                                     "vary_flight_path_spread":slice(67-1,68),
+                                     "vary_deltag_fwhm":slice(69-1,70),
+                                     "vary_deltae_us":slice(71-1,72)}
 
 
     def read(self) -> 'ParFile':
@@ -163,10 +199,13 @@ class ParFile:
         # the option name=="none" is saved for the purpose of tests
         if self.name!="none":
             self._rename()
-            self._update_isotopic_weight()
-            self._update_isotopic_masses_abundance()
-
- 
+            self.update.isotopic_weight()
+            self.update.limit_energies_of_parfile()
+            self.update.isotopic_masses_abundance()
+            self.update.toggle_vary_all_resonances(False)
+            self.update.normalization()
+            self.update.broadening()
+            
 
         return self
     
@@ -208,6 +247,7 @@ class ParFile:
         for card in self.data["resonance_params"]:
             lines.append(self._write_resonance_params(card))
         lines.append(" "*80)
+        lines.append(f"{self.data['fudge_factor']:<11}")
         lines.append(" "*80)
 
         # channel radii
@@ -224,6 +264,23 @@ class ParFile:
             lines.append("ISOTOPIC MASSES AND ABUNDANCES FOLLOW".ljust(80))
             for card in self.data["isotopic_masses"]:
                 lines.append(self._write_isotopic_masses(card))
+            lines.append(" "*80)
+            lines.append("")
+
+        # normalization
+        if self.data["normalization"]:
+            lines.append("NORMALIZATION AND BACKGROUND FOLLOW".ljust(80))
+            card = self.data["normalization"]
+            lines.append(self._write_normalization(card))
+            lines.append(" "*80)
+            lines.append("")
+
+        # broadening
+        if self.data["broadening"]:
+            lines.append("BROADENING PARAMETERS MAY BE VARIED".ljust(80))
+            card = self.data["broadening"]
+            lines.append(self._write_broadening(card))
+            lines.append(" "*80)
             lines.append("")
 
         
@@ -258,8 +315,6 @@ class ParFile:
                     if channel["channel_name"].strip()==old_name.strip():
                         channel["channel_name"] = new_name
 
-
-        for reaction in self.data["particle_pairs"]:
             reaction["name"] = new_name
 
         self.name = name
@@ -277,27 +332,30 @@ class ParFile:
         from copy import deepcopy
         compound = deepcopy(self)
 
-        # find the last group number and bump up the group number of the added isotope
-        last_group_number = int(compound.data["spin_group"][-1][0]["group_number"])
-        isotope._bump_group_number(increment=last_group_number)
+        # only add an isotope if resonances exists in the specified energy range
+        if isotope.data["resonance_params"]:
 
-        last_igroup_number = int(compound.data["resonance_params"][-1]["igroup"])
-        isotope._bump_igroup_number(increment=last_igroup_number)
+            # find the last group number and bump up the group number of the added isotope
+            last_group_number = int(compound.data["spin_group"][-1][0]["group_number"])
+            isotope.update.bump_group_number(increment=last_group_number)
 
-        # update particle pairs
-        compound.data["particle_pairs"] += isotope.data["particle_pairs"]
+            last_igroup_number = int(compound.data["resonance_params"][-1]["igroup"])
+            isotope.update.bump_igroup_number(increment=last_igroup_number)
 
-        # update spin_groups
-        compound.data["spin_group"] += isotope.data["spin_group"]
+            # update particle pairs
+            compound.data["particle_pairs"] += isotope.data["particle_pairs"]
 
-        # update resonance_params
-        compound.data["resonance_params"] += isotope.data["resonance_params"]
+            # update spin_groups
+            compound.data["spin_group"] += isotope.data["spin_group"]
 
-        # update channel_radii
-        compound.data["channel_radii"] += isotope.data["channel_radii"]
+            # update resonance_params
+            compound.data["resonance_params"] += isotope.data["resonance_params"]
 
-        # update isotopic_masses
-        compound.data["isotopic_masses"] += isotope.data["isotopic_masses"]
+            # update channel_radii
+            compound.data["channel_radii"] += isotope.data["channel_radii"]
+
+            # update isotopic_masses
+            compound.data["isotopic_masses"] += isotope.data["isotopic_masses"]
 
         return compound
 
@@ -498,7 +556,37 @@ class ParFile:
             new_text[slice_value] = list(str(isotopic_masses_dict[key]).ljust(word_length))
         return "".join(new_text)
     
-    def _bump_group_number(self, increment: int = 0) -> None:
+    def _write_normalization(self,normalization_dict: dict) -> str:
+        # write a formated normalization line from dict with the key-word normalization values
+        new_text = [" "]*80 # 80 characters long list of spaces to be filled
+        for key,slice_value in self._NORMALIZATION_FORMAT.items():
+            word_length = slice_value.stop - slice_value.start
+            # assign the fixed-format position with the corresponding key-word value
+            new_text[slice_value] = list(str(normalization_dict[key]).ljust(word_length))
+        return "".join(new_text)
+
+    def _write_broadening(self,broadening_dict: dict) -> str:
+        # write a formated broadening line from dict with the key-word broadening values
+        new_text = [" "]*80 # 80 characters long list of spaces to be filled
+        for key,slice_value in self._BROADENING_FORMAT.items():
+            word_length = slice_value.stop - slice_value.start
+            # assign the fixed-format position with the corresponding key-word value
+            new_text[slice_value] = list(str(broadening_dict[key]).ljust(word_length))
+        return "".join(new_text)
+    
+
+
+
+
+
+
+class Update():
+# stores all the data updating methods of ParFile class
+    def __init__(self,parent: "ParFile") -> None:
+        self.parent = parent
+
+    
+    def bump_group_number(self, increment: int = 0) -> None:
         """bump up the group number in the data in a constant increment
 
         Args:
@@ -506,16 +594,29 @@ class ParFile:
         """
 
         # bump spin group data
-        for group in self.data["spin_group"]:
+        for group in self.parent.data["spin_group"]:
             group[0]["group_number"] = f"{int(group[0]['group_number'])+increment:>3}"
 
 
         # bump channel radii
-        for rad in self.data["channel_radii"]:
+        for rad in self.parent.data["channel_radii"]:
             for channel in rad["groups"]:
                 channel[0] = channel[0] + increment  
 
-    def _bump_igroup_number(self, increment: int = 0) -> None:
+
+        # bump isotopic masses
+        if self.parent.data["isotopic_masses"]:
+            for isotope in self.parent.data["isotopic_masses"]:
+                spin_groups = [f"{group[0]['group_number'].strip():>5}" for group in self.parent.data["spin_group"]]
+                    
+                sg_formatted = "".join(spin_groups[:8]).ljust(43)
+                L = (len(spin_groups) - 8)//15 if len(spin_groups)>8 else -1 # number of extra lines needed
+                for l in range(0,L+1):
+                    sg_formatted += "-1\n" + "".join(spin_groups[8+15*l:8+15*(l+1)]).ljust(78)
+                isotope["spin_groups"] = sg_formatted
+
+
+    def bump_igroup_number(self, increment: int = 0) -> None:
         """bump up the igroup number in the data in a constant increment
 
         igroup is a variable in resonance params, it has a differnet meaning than spin group
@@ -524,37 +625,185 @@ class ParFile:
             increment (int, optional): a constant increment to add to all group numbers
         """
         # bump resonance_params
-        for res in self.data["resonance_params"]:
-            res["igroup"] = f"{int(res['igroup'])+increment:>12}"    
+        for res in self.parent.data["resonance_params"]:
+            res["igroup"] = f"{int(res['igroup'])+increment:>2}"    
 
 
-    def _update_isotopic_weight(self) -> None:
+    def isotopic_weight(self) -> None:
         """Update the isotopic weight in the spin_group data
         """
-        for group in self.data["spin_group"]:
-            group[0]["isotopic_abundance"] = f"{f'{self.weight:.7f}':>10}"
+        for group in self.parent.data["spin_group"]:
+            group[0]["isotopic_abundance"] = f"{f'{self.parent.weight:.7f}':>10}"
 
 
-    def _update_isotopic_masses_abundance(self) -> None:
+    def isotopic_masses_abundance(self) -> None:
         """Update the isotopic masses data
         """
-        if self.data["isotopic_masses"]:
-            for card in self.data["isotopic_masses"]:
-                card["abundance"] = f"{f'{self.weight:.7f}':>10}"
+        if self.parent.data["isotopic_masses"]:
+            for card in self.parent.data["isotopic_masses"]:
+                card["abundance"] = f"{f'{self.parent.weight:.7f}':>9}"
         else:
-            spin_groups = "".join([f"{group[0]['group_number'].strip():>2}" for group in self.data["spin_group"]])
-            # format according to the rules in page 
-            L = len(spin_groups)//46
-            sg_formatted = spin_groups[:46]
-            for l in range(1,L):
-                sg_formatted += "-1\n" + " "*32 + spin_groups[46*l:46*(l+1)]
-
-            iso_dict = {"atomic_mass":self.data["particle_pairs"][0]["mass_b"],
-                        "abundance":f"{f'{self.weight:.7f}':<10}",
-                        "abundance_uncertainty":f"{f'{self.weight*0.1:.7f}':<10}",
-                        "vary_abundance":"1",
+            spin_groups = [f"{group[0]['group_number'].strip():>5}" for group in self.parent.data["spin_group"]]
+                
+            sg_formatted = "".join(spin_groups[:8]).ljust(43)
+            L = (len(spin_groups) - 8)//15 if len(spin_groups)>8 else -1 # number of extra lines needed
+            for l in range(0,L+1):
+                sg_formatted += "-1\n" + "".join(spin_groups[8+15*l:8+15*(l+1)]).ljust(78)
+                
+            iso_dict = {"atomic_mass":f'{float(self.parent.data["particle_pairs"][0]["mass_b"]):>9}',
+                        "abundance":f"{f'{self.parent.weight:.7f}':>9}",
+                        "abundance_uncertainty":f"{f'{self.parent.weight*0.1:.7f}':>9}",
+                        "vary_abundance":"1".ljust(5),
                         "spin_groups":sg_formatted}
-            self.data["isotopic_masses"].append(iso_dict)
+            self.parent.data["isotopic_masses"].append(iso_dict)
+
+    def toggle_vary_abundances(self,vary:bool =False) -> None:
+        """toggles the vary flag on all abundances
+
+        Args:
+            vary (bool, optional): True will flag all abundances to vary
+        """
+        for isotope in self.parent.data["isotopic_masses"]:
+            isotope["vary_abundance"] = f"{vary:<5}"
+
+
+    def limit_energies_of_parfile(self) -> None:
+        # remove all resonances and spin groups that are above or below the energy range specified in the inp file
+        new_res_params = []
+        igroups = set()
+        for num, res in enumerate(self.parent.data["resonance_params"]):
+            # cast all numbers such as "3.6700-5" to floats
+            energy = "e-".join(res['reosnance_energy'].split("-")).lstrip("e").replace("+","e+") if not "e" in res['reosnance_energy'] else res['reosnance_energy']
+            if self.parent.emin <=  float(energy) < self.parent.emax:
+                new_res_params.append(res)
+                igroups.add(res["igroup"].strip())
+        
+        self.parent.data["resonance_params"] = new_res_params
+
+        # go through the remaining resonances to see if we can omit spin groups
+        spin_groups = []
+        for group in self.parent.data["spin_group"]:
+            if group[0]['group_number'].strip() in igroups:
+                spin_groups.append(group)
+        self.parent.data["spin_group"] = spin_groups
+
+        # go through the channel radii and omit those that correspond to unued spin groups
+        channel_radii = []
+        for radii in self.parent.data["channel_radii"]:
+            useful_groups = []
+            for groups_and_channels in radii["groups"]:
+                if str(groups_and_channels[0]) in igroups:
+                    useful_groups.append(groups_and_channels)
+            if useful_groups:
+                radii.update({"groups":useful_groups})
+                channel_radii.append(radii)
+
+        self.parent.data["channel_radii"] = channel_radii
+
+        # reindex igroups
+        igroups = set([])
+        igroup = 0
+        index_map = {}
+        for res in self.parent.data["resonance_params"]:
+            if res["igroup"].strip() not in igroups:
+                igroups.add(res["igroup"].strip())
+                igroup += 1
+                index_map[res["igroup"].strip()] = f"{igroup}"
+            res["igroup"] = f"{index_map[res['igroup'].strip()]:>2}"
+
+        # reindex radii
+        for radii in self.parent.data["channel_radii"]:
+            for groups_and_channels in radii["groups"]:
+                groups_and_channels[0] = int(index_map[str(groups_and_channels[0])])
+
+        # reindex spin groups
+        for group in self.parent.data["spin_group"]:
+            group[0]['group_number'] = f"{index_map[group[0]['group_number'].strip()]:>3}"
+
+        return
+
+        
+
+    def toggle_vary_all_resonances(self,vary: bool=False) -> None:
+        """toggles the vary flag on all resonances
+
+        Args:
+            vary (bool, optional): True will flag all resonances to vary
+        """
+        for card in self.parent.data["resonance_params"]:
+            card["vary_energy"] = f"{1:>2}" if vary else f"{0:>2}"
+            card["vary_capture_width"] = f"{1:>2}" if vary else f"{0:>2}"
+            card["vary_neutron_width"] = f"{1:>2}" if vary else f"{0:>2}"
+            if card["fission1_width"].strip():
+                card["vary_fission1_width"] = f"{1:>2}" if vary else f"{0:>2}"
+            if card["fission2_width"].strip():
+                card["vary_fission2_width"] = f"{1:>2}" if vary else f"{0:>2}"
+
+
+    def normalization(self,**kwargs) -> None:
+        """change or vary normalization parameters and vary flags
+
+        Args:
+              - normalization (float)
+              - constant_bg (float)
+              - one_over_v_bg (float)
+              - sqrt_energy_bg (float)
+              - exponential_bg (float)
+              - exp_decay_bg (float)
+              - vary_normalization (int) 0=fixed, 1=vary, 2=pup
+              - vary_constant_bg (int) 0=fixed, 1=vary, 2=pup
+              - vary_one_over_v_bg (int) 0=fixed, 1=vary, 2=pup
+              - vary_sqrt_energy_bg (int) 0=fixed, 1=vary, 2=pup
+              - vary_exponential_bg (int) 0=fixed, 1=vary, 2=pup
+              - vary_exp_decay_bg (int) 0=fixed, 1=vary, 2=pup
+        """
+        if "normalization" not in self.parent.data:
+            self.parent.data["normalization"] = {"normalization":1.,
+                                                 "constant_bg":0.,
+                                                 "one_over_v_bg":0.,
+                                                 "sqrt_energy_bg":0.,
+                                                 "exponential_bg":0.,
+                                                 "exp_decay_bg":0.,
+                                                 "vary_normalization":0,
+                                                 "vary_constant_bg":0,
+                                                 "vary_one_over_v_bg":0,
+                                                 "vary_sqrt_energy_bg":0,
+                                                 "vary_exponential_bg":0,
+                                                 "vary_exp_decay_bg":0,}
+        self.parent.data["normalization"].update(**kwargs)
+
+    def broadening(self,**kwargs) -> None:
+        """change or vary broadening parameters and vary flags
+
+        Args:
+              - channel_radius (float) CRFN
+              - temperature (float) TEMP
+              - thickness (float) THICK
+              - flight_path_spread (float) DELTAL
+              - deltag_fwhm (float) DELTAG
+              - deltae_us (float) DELTAE
+              - vary_channel_radius (int) 0=fixed, 1=vary, 2=pup
+              - vary_temperature (int) 0=fixed, 1=vary, 2=pup
+              - vary_thickness (int) 0=fixed, 1=vary, 2=pup
+              - vary_flight_path_spread (int) 0=fixed, 1=vary, 2=pup
+              - vary_deltag_fwhm (int) 0=fixed, 1=vary, 2=pup
+              - vary_deltae_us (int) 0=fixed, 1=vary, 2=pup
+        """
+        if "broadening" not in self.parent.data:
+            self.parent.data["broadening"] = {"channel_radius":"",
+                                                 "temperature":"",
+                                                 "thickness":"",
+                                                 "flight_path_spread":"",
+                                                 "deltag_fwhm":"",
+                                                 "deltae_us":"",
+                                                 "vary_channel_radius":0,
+                                                 "vary_temperature":0,
+                                                 "vary_thickness":0,
+                                                 "vary_flight_path_spread":0,
+                                                 "vary_deltag_fwhm":0,
+                                                 "vary_deltae_us":0,}
+        self.parent.data["broadening"].update(**kwargs)
+
      
 
 if __name__=="__main__":

@@ -1,5 +1,5 @@
 import pathlib
-from typing import List, Str, Int, Union, Dict
+from typing import List, Union, Dict
 
 class LptFile:
     # utilities to read and parse an LPT output file
@@ -56,36 +56,38 @@ class LptFile:
         Returns (dict): formatted statistical data from the run
         """        
         stats = {}
-
-        with open(self._filename,"r") as fid:
-            for line in fid:
-                for pattern_key in self.LPT_SEARCH_PATTERNS:
+        # loop over all search patterns
+        for pattern_key in self.LPT_SEARCH_PATTERNS:
+            with open(self._filename,"r") as fid:
+                for line in fid:
                     pattern = self.LPT_SEARCH_PATTERNS[pattern_key]    
                     if line.startswith(pattern["start_text"]):
+                        # skip requested number of rows
                         [line:=next(fid) for row in range(pattern["skipped_rows"])]
+                        # update the stats dictionary
                         stats[pattern_key] = eval(pattern["line_format"])
 
         return stats
     
 
-    def register_new_stats(self,keyname: str, first_line: str, skipped_rows: str, line_format: str ) -> None:
+    def register_new_stats(self,keyname: str, start_text: str, skipped_rows: str, line_format: str ) -> None:
         """
         Registers a search pattern for parsing statistical values from the .lpt file.
 
         Args:
             - keyname (str): The name of the requested parameter.
-            - first_line (str): A string used for line.startswith search to identify relevant lines.
-            - skipped_rows (int): The number of rows to skip from the 'first_line' during parsing.
+            - start_text (str): A string used for line.startswith search to identify relevant lines.
+            - skipped_rows (int): The number of rows to skip from the 'start_text' during parsing.
             - line_format (str): Python code snippet used to parse the line for the requested value.
                                 Typically, this would be a split method on the input `line` variable.
 
         Example:
         Register a search pattern for temperature values in the .lpt file:
         >>> from pleiades import sammyOutput
-        >>> sammyOutput.register_search_pattern(keyname="temperature", first_line="  TEMPERATURE",
+        >>> sammyOutput.register_search_pattern(keyname="temperature", start_text="  TEMPERATURE",
                                                 skipped_rows=1, line_format="float(line.split()[0])")
         """
-        self.LPT_SEARCH_PATTERNS[keyname] = dict(first_line=first_line,
+        self.LPT_SEARCH_PATTERNS[keyname] = dict(start_text=start_text,
                                                  skipped_rows=skipped_rows,
                                                  line_format=line_format)
 

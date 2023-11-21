@@ -1,11 +1,254 @@
 import configparser
+from pleiades import nucData as pnd
+from typing import List, Dict
+from contextlib import suppress
 
 class InputFile:
     """ InputFile class for the Sammy input file.
     """
 
-    MAX_COLUMNS = 80
+    def __init__(self, config_file: str, auto_update: bool = True) -> None:
+        """Reads an .ini config file to create a structured SAMMY inp file
+
+        Args:
+            - config_file (str): config file name
+            - auto_update (bool): True will replace atomic mass and values set to "auto" 
+        """
+        # read connfig file
+        self._config = configparser.ConfigParser()
+        self._config.read(config_file)
+
+        # turn the configparser object into a dict of dicts data-structure
+        self._config_data = {section:dict(self._config[section]) for section in self._config.sections()}
+        
+        # TODO: right now Card10 is not required 
+        # since we are specifing spin group data in the par file
+        # so I'm just ignoring this part of config file right now        
+        with suppress(KeyError): del self._config_data["Card10"] 
+
+        # populate the default database at self.data
+        self._set_default_params()
+
+        # update the defaults with config file data
+        self.data.update(self._config_data)
+
+        # populate the database of predefined commands 
+        self._set_predefined_commands()
+
+        # update auto values
+        if auto_update:
+            self._update_and_calculate_values()
+
+        return
+
+
+    def process(self, auto_update: bool=True) -> "InputFile":
+        """
+        Process input data and format the cards.
+
+        Args:
+            - auto_update (bool): True will replace atomic mass and values set to "auto" 
+
+        This function processes the data in the self.data dictionary, formats the input
+        cards according to specified parameters, and stores the formatted cards in the
+        self.inp_cards attribute. It handles different card types and their respective
+        parameters, ensuring proper formatting for later use.
+
+        Returns: the InputFIle instance
+        """
+        # update auto values
+        if auto_update:
+            self._update_and_calculate_values()
+
+        # List to store formatted input card lines
+        lines = []
+
+        # Iterate through each card in the data dictionary
+        for card in self.data.keys():
+            line = ""
+
+            # Iterate through parameters of the current card
+            for parameter in self.data[card]:
+                # Extract parameter type and width information
+                par_type, par_width = self._default_data[card][parameter][1:3]
+
+                # Check if the parameter has a specific width
+                if par_width:
+                    # Format parameter based on its type and width
+                    if par_type == str:
+                        line += self.format_type_A(self.data[card][parameter], par_width)
+                    elif par_type == int:
+                        line += self.format_type_I(int(self.data[card][parameter]), par_width)
+                    elif par_type == float:
+                        line += self.format_type_F(float(self.data[card][parameter]), par_width)
+                    else:
+                        # Raise an error for unsupported parameter types
+                        raise ValueError("Parameter can only have float, int, or str types")
+                else:
+                    # Handle free format cards like Card3
+                    if card == "Card3":
+                        commands = []
+
+                        # Split and process individual commands
+                        for command in self.data[card][parameter].split(','):
+                            if command.strip() in self._commands_dict.keys():
+                                commands.append(self._commands_dict[command])
+                            else:
+                                commands.append(command)
+                        
+                        # Join commands with newline characters
+                        line = "\n".join(commands) + "\n"
+
+            # Add formatted line to the list of lines
+            lines.append(line)
+
+        # Add a newline at the end of the input cards
+        self.processed_cards = lines + ["\n"]
+
+        return self
+
+
+    def write(self, filename: str = "sammy.inp") -> "InputFile":
+        """
+        Write formatted input cards to a specified file.
+
+        Args:
+            filename (str, optional): Name of the output file. Defaults to "sammy.inp".
+
+        Returns: the InputFIle instance
+        """
+        with open(filename, 'w') as fid:
+            fid.write("\n".join(self.processed_cards))
+
+        return self
+
+    def _set_default_params(self) -> None:
+        # set default for each parameter three entries specify the default value, type, and width
+        self._default_data = dict(
+            Card1={
+                'title': ('GENERAL TITLE FOR SAMMY RUN',str,80) # title
+                  },
+            Card2={
+                'elmnt': ('Si_28',str,10),    # Element name. Defaults to None.
+                'aw':     ('auto',float,10),  # Atomic weight in amu. Defaults to 0.
+                'emin':   ('0.001',float,10), # Minimum energy. Defaults to 0.
+                'emax':   ('100.',float,10),  # Maximum energy. Defaults to 0.
+                'nepnts': ('10001',int,5),    # Number of points to be used in generating artificial energy grid. Defaults to 10001.
+                'itmax':  ('2',int,5),        # Number of iterations. Defaults to 2.
+                'icorr':  ('50',int,2),       # Correlation option. Defaults to 50.
+                'nxtra':  ('0',int,3),        # Number of extra points to be added between each pair of data points for auxiliary energy grid. Defaults to 0. 
+                'iptdop': ('9',int,2),        # Number of points to be added to auxiliary energy grid across small resonances. Defaults to 9.
+                'iptwid': ('5',int,2),        # Determines the number of points to be added to auxiliary grid in tails of small resonances. Defaults to 5
+                'ixxchn': ('0',int,10),       # Number of energy channels in ODF-type data file to be ignored 
+                'ndigit': ('2',int,2),        # Number of digits for compact format for covariance matrix (Default = 2)
+                'idropp': ('2',int,2),        # The input resonanceparameter covariance matrix will be modified before being used in the fitting procedure. Defaults to 2
+                'matnum': ('0',int,6),         # ENDF Material number. Defaults to 0.
+                },     
+            Card3={
+                'commands': ('CHI_SQUARED,TWENTY,SOLVE_BAYES',str,None)
+                },
+            Card5={
+                'temp':   ('300.5',float,10),
+                'dist':   ('100.2',float,10),
+                'deltal': ('0.0',float,10),
+                'deltae': ('0.0',float,10),
+                'deltag': ('0.0',float,10),
+                'delttt': ('0.0',float,10),
+                'elowbr': ('0.0',float,10),
+                },
+            # Card6={
+            #     'deltag': ("0.0",float,10),
+            #     'deltab': ("0.0",float,10),
+            #     'ncf':    ("0",int,5),
+            #     'bcf':    ('',float,None),
+            #     'cf':     ('',float,None),
+            # },
+            Card7={
+                'crfn':   ('1.0',float,10),
+                'thick':  ('1.0',float,10),
+                'dcova':  ('0.0',float,10),
+                'dcovb':  ('0.0',float,10),
+                'vmin':   ('0.0',float,10),
+                },
+            Card8={
+                'cross': ('TRANSMISSION',str,80),
+                },
+            # Card10={
+            #     'isotopes':   ('Si28,Si29,Si30',str,80),
+            #     'spingroups': ('7,10,5',str,80),
+            #     },
+            )
+        
+        # sets the default data dictionary
+        self.data = {}
+        for card in self._default_data:
+            self.data[card] = {}
+            for parameter in self._default_data[card]:
+                self.data[card][parameter] = self._default_data[card][parameter][0]
+
+        return
+
+    def _set_predefined_commands(self) -> None:
+        """dictoinary that holds keywords that expands to SAMMY alphanumerical commands
+        """
+        self._commands_dict = dict(
+            REICH_MOORE_FORM="REICH-MOORE FORMALISm is wanted",
+            ORIG_REICH_MOORE_FORM = "ORIGINAL REICH-MOORE formalism",
+            MULTI_BREIT = "MULTILEVEL BREITWIGner is wanted",
+            SINGLE_BREIT = "SINGLE LEVEL BREITWigner is wanted",
+            RED_WIDTH_AMPS = "REDUCED WIDTH AMPLITudes are used for input",
+            NEW_SPIN_FORMAT = "USE NEW SPIN GROUP Format",
+            PARTICL_PAIR_DEF = "PARTICLE PAIR DEFINItions are used",
+            KEY_WORD_PARTICLE_PAIR= "KEY-WORD PARTICLE-PAir definitions are given",
+            QUANTUM_NUMBERS = "QUANTUM NUMBERS ARE in parameter file",
+            PUT_QUANTUM_NUMS_IN_PARAM = "PUT QUANTUM NUMBERS into parameter file" ,   
+            INPUT_ENDF = "INPUT IS ENDF/B FILE",
+            USE_ENDF_ENERGY = "USE ENERGY RANGE FROm endf/b file",
+            FLAG_ALL_RES = "FLAG ALL RESONANCE Parameters",
+            SOLVE_BAYES = "SOLVE BAYES EQUATIONs",
+            NO_SOLVE_BAYES = "DO NOT SOLVE BAYES EQUATIONS",
+            TWENTY = "USE TWENTY SIGNIFICAnt digits",
+            BROADENING = "BROADENING IS WANTED",
+            CHI_SQUARED = "CHI SQUARED IS WANTEd",
+            NO_CHI_SQUARED = "CHI SQUARED IS NOT Wanted"
+            )
+        
+    def _update_and_calculate_values(self) -> None:
+        """
+        Update and calculate values in the self.data dictionary.
+
+        This function iterates through the self.data dictionary, updates existing
+        values, and performs calculations where necessary. It modifies the
+        dictionary in-place.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+        # get atomic weight
+        isotopic_str = self.data["Card2"]["elmnt"]
+        atomic_weight = pnd.get_mass_from_ame(isotopic_str.replace("_","-"))
+
+        #replace atomic weight based on the isotope name
+        if self.data["Card2"]["aw"] == "auto":
+            self.data["Card2"]["aw"] = f"{atomic_weight:.8f}"
+
+        # get mat number
+        mat_number = pnd.get_mat_number(isotopic_str)
+
+        # update mat number in ENDF command
+        commands = self.data["Card3"]["commands"].split(',')
+        for i, command in enumerate(commands):
+            if command.startswith("INPUT IS ENDF"):
+                commands[i] = f"INPUT IS ENDF/B FILE MAT={mat_number}"
+
+        self.data["Card3"]["commands"] = ",".join(commands)
+
+        return
     
+   
     @staticmethod
     def format_type_A(data, width):
         """ Format a string to be left-justified in a character field of the given width.
@@ -46,437 +289,3 @@ class InputFile:
         """
         return f"{data:>{width}d}"
 
-    class Card1:
-        """ Card1 class for the Sammy input file.
-        """
-        def __init__(self, config_file=None):
-            """ Initialize Card1 instance.
-
-            Args:
-                config_file (string, optional): Path to the configuration file. Defaults to None.
-            """
-            self.TITLE = "Blank Sammy Input File Title"
-            if config_file:
-                self._read_from_config(config_file)
-        
-        def set(self, TITLE):
-            """ Set the TITLE of the Card1 instance.
-
-            Args:
-                TITLE (string): The TITLE to set.
-            """
-            self.TITLE = TITLE
-        
-        def _read_from_config(self, config_file):
-            config = configparser.ConfigParser()
-            config.read(config_file)
-            self.TITLE = config.get('Card1', 'TITLE', fallback=self.TITLE)
-            
-        def __str__(self):
-            return InputFile.format_type_A(self.TITLE, InputFile.MAX_COLUMNS)
-
-    class Card2:
-        """ Card2 class for the Sammy input file. 
-        """
-        def __init__(self, config_file=None):
-            # Default values
-            self.ELMNT = "none"     # Element name
-            self.AW = 0             # Atomic weight in amu
-            self.EMIN = 0           # Minimum energy
-            self.EMAX = 0           # Maximum energy
-            self.NEPNTS = 10001     # Number of points to be used in generating artificial energy grid (default = 10001)
-            self.ITMAX = 2          # Number of iterations (default = 2)
-            self.ICORR = 50         # Correlation option (default = 50)
-            self.NXTRA = 0          # Number of extra points to be added between each pair of data points for auxiliary energy grid (Default = 0)
-            self.IPTDOP = 9         # Number of points to be added to auxiliary energy grid across small resonances (Default = 9)
-            self.IPTWID = 5         # Determines the number of points to be added to auxiliary grid in tails of small resonances (Default = 5)
-            self.IXXCHN = 0         # Number of energy channels in ODF-type data file to be ignored 
-            self.NDIGIT = 2         # Number of digits for compact format for covariance matrix (Default = 2)
-            self.IDROPP = 2         # The input resonanceparameter covariance matrix will be modified before being used in the fitting procedure. (Default = 2)
-            self.MATNUM = 0         # ENDF Material number
-
-            if config_file:
-                self._read_from_config(config_file)
-            
-        def set(self, ELMNT=None, AW=None, EMIN=None, EMAX=None, NEPNTS=None, ITMAX=None, ICORR=None, NXTRA=None, IPTDOP=None, IPTWID=None, IXXCHN=None, NDIGIT=None, IDROPP=None, MATNUM=None):
-            """ Set the Card2 instance values.
-
-            Args:
-                ELMNT (string, optional): Element name. Defaults to None.
-                AW (float, optional): Atomic weight in amu. Defaults to 0.
-                EMIN (float, optional): Minimum energy. Defaults to 0.
-                EMAX (float, optional): Maximum energy. Defaults to 0.
-                NEPNTS (int, optional): Number of points to be used in generating artificial energy grid. Defaults to 10001.
-                ITMAX (int, optional): Number of iterations. Defaults to 2.
-                ICORR (int, optional): Correlation option. Defaults to 50.
-                NXTRA (int, optional): Number of extra points to be added between each pair of data points for auxiliary energy grid. Defaults to 0. 
-                IPTDOP (int, optional): Number of points to be added to auxiliary energy grid across small resonances. Defaults to 9.
-                IPTWID (int, optional): Determines the number of points to be added to auxiliary grid in tails of small resonances. Defaults to 5
-                IXXCHN (int, optional): Number of energy channels in ODF-type data file to be ignored 
-                NDIGIT (int, optional): Number of digits for compact format for covariance matrix (Default = 2)
-                IDROPP (int, optional): The input resonanceparameter covariance matrix will be modified before being used in the fitting procedure. Defaults to 2
-                MATNUM (int, optional): ENDF Material number. Defaults to 0.
-            """
-            if ELMNT is not None: self.ELMNT = ELMNT
-            if AW is not None: self.AW = AW
-            if EMIN is not None: self.EMIN = EMIN
-            if EMAX is not None: self.EMAX = EMAX
-            if NEPNTS is not None: self.NEPNTS = NEPNTS
-            if ITMAX is not None: self.ITMAX = ITMAX
-            if ICORR is not None: self.ICORR = ICORR
-            if NXTRA is not None: self.NXTRA = NXTRA
-            if IPTDOP is not None: self.IPTDOP = IPTDOP
-            if IPTWID is not None: self.IPTWID = IPTWID
-            if IXXCHN is not None: self.IXXCHN = IXXCHN
-            if NDIGIT is not None: self.NDIGIT = NDIGIT
-            if IDROPP is not None: self.IDROPP = IDROPP
-            if MATNUM is not None: self.MATNUM = MATNUM
-
-        def _read_from_config(self, config_file):
-            config = configparser.ConfigParser()
-            config.read(config_file)
-            self.ELMNT = config.get('Card2', 'ELMNT', fallback=self.ELMNT)
-            self.AW = config.getfloat('Card2', 'AW', fallback=self.AW)
-            self.EMIN = config.getfloat('Card2', 'EMIN', fallback=self.EMIN)
-            self.EMAX = config.getfloat('Card2', 'EMAX', fallback=self.EMAX)    
-            self.AW = config.getfloat('Card2', 'AW', fallback=self.AW)
-            self.NEPNTS = config.getint('Card2', 'NEPNTS', fallback=self.NEPNTS)
-            self.ITMAX = config.getint('Card2', 'ITMAX', fallback=self.ITMAX)
-            self.ICORR = config.getint('Card2', 'ICORR', fallback=self.ICORR)
-            self.NXTRA = config.getint('Card2', 'NXTRA', fallback=self.NXTRA)
-            self.IPTDOP = config.getint('Card2', 'IPTDOP', fallback=self.IPTDOP)
-            self.IPTWID = config.getint('Card2', 'IPTWID', fallback=self.IPTWID)
-            self.IXXCHN = config.getint('Card2', 'IXXCHN', fallback=self.IXXCHN)
-            self.NDIGIT = config.getint('Card2', 'NDIGIT', fallback=self.NDIGIT)
-            self.IDROPP = config.getint('Card2', 'IDROPP', fallback=self.IDROPP)
-            self.MATNUM = config.getint('Card2', 'MATNUM', fallback=self.MATNUM)
-            
-        def __str__(self):
-            return (
-                InputFile.format_type_A(self.ELMNT, 10) +
-                InputFile.format_type_F(self.AW, 10) +
-                InputFile.format_type_F(self.EMIN, 10) +
-                InputFile.format_type_F(self.EMAX, 10) +
-                InputFile.format_type_I(self.NEPNTS, 5) +
-                InputFile.format_type_I(self.ITMAX, 5) +
-                InputFile.format_type_I(self.ICORR, 2) +
-                InputFile.format_type_I(self.NXTRA, 3) +
-                InputFile.format_type_I(self.IPTDOP, 2) +
-                InputFile.format_type_I(self.IPTWID, 2) +
-                InputFile.format_type_I(self.IXXCHN, 10) +
-                InputFile.format_type_I(self.NDIGIT, 2) +
-                InputFile.format_type_I(self.IDROPP, 2) +
-                InputFile.format_type_I(self.MATNUM, 6)
-            )
-
-    class Card3:
-        """ Card3 class for the Sammy input file.
-        """
-        
-        # Some predefined command statements
-        REICH_MOORE_FORM="REICH-MOORE FORMALISm is wanted"
-        ORIG_REICH_MOORE_FORM = "ORIGINAL REICH-MOORE formalism"
-        MULTI_BREIT = "MULTILEVEL BREITWIGner is wanted"
-        SINGLE_BREIT = "SINGLE LEVEL BREITWigner is wanted"
-        RED_WIDTH_AMPS = "REDUCED WIDTH AMPLITudes are used for input"
-        NEW_SPIN_FORMAT = "USE NEW SPIN GROUP Format"
-        PARTICL_PAIR_DEF = "PARTICLE PAIR DEFINItions are used"
-        KEY_WORD_PARTICLE_PAIR= "KEY-WORD PARTICLE-PAir definitions are given"
-        QUANTUM_NUMBERS = "QUANTUM NUMBERS ARE in parameter file"
-        PUT_QUANTUM_NUMS_IN_PARAM = "PUT QUANTUM NUMBERS into parameter file"    
-        INPUT_ENDF = "INPUT IS ENDF/B FILE"
-        USE_ENDF_ENERGY = "USE ENERGY RANGE FROm endf/b file"
-        FLAG_ALL_RES = "FLAG ALL RESONANCE Parameters"
-        SOLVE_BAYES = "SOLVE BAYES EQUATIONs"
-        NO_SOLVE_BAYES = "DO NOT SOLVE BAYES EQUATIONS"
-        TWENTY = "USE TWENTY SIGNIFICAnt digits"
-        BROADENING = "BROADENING IS WANTED"
-        CHI_SQUARED = "CHI SQUARED IS WANTEd"
-        NO_CHI_SQUARED = "CHI SQUARED IS NOT Wanted"
-        
-        
-        def __init__(self, config_file=None):
-            self.commands = []  # A list to hold the command statements
-            if config_file:
-                self._read_from_config(config_file)
-
-        def add_command(self, command):
-            """Add a command statement to the list."""
-            self.commands.append(command)
-
-        def _read_from_config(self, config_file):
-            """Read the Card3 values from the config file using configparser. """
-
-            config = configparser.ConfigParser()
-            config.read(config_file)
-            # Assuming the config file has a 'Card3' section with 'commands' that's a comma-separated list of commands
-            commands = config.get('Card3', 'commands', fallback='').split(',')
-            for command in commands:
-                command = command.strip()  # Remove any extra spaces
-                if hasattr(self, command):  # If it's one of our predefined commands
-                    self.add_command(getattr(self, command))
-                else:
-                    self.add_command(command)
-
-        def __str__(self):
-            return '\n'.join(self.commands) + '\n'
-        
-    class Card5:
-        """Card5 class for the Sammy input file.
-        """
-        
-        def __init__(self, config_file=None):
-            # Default values
-            self.TEMP = 0.0
-            self.DIST = 0.0
-            self.DELTAL = 0.0
-            self.DELTAE = 0.0
-            self.DELTAG = 0.0
-            self.DELTTT = 0.0
-            self.ELOWBR = 0.0
-
-            if config_file:
-                self._read_from_config(config_file)
-
-        def _read_from_config(self, config_file):
-            """Read the Card5 values from the config file using configparser.
-
-            Args:
-                config_file (string): Path to the configuration file.
-            """
-            config = configparser.ConfigParser()
-            config.read(config_file)
-            self.TEMP = config.getfloat('Card5', 'TEMP', fallback=self.TEMP)
-            self.DIST = config.getfloat('Card5', 'DIST', fallback=self.DIST)
-            self.DELTAL = config.getfloat('Card5', 'DELTAL', fallback=self.DELTAL)
-            self.DELTAE = config.getfloat('Card5', 'DELTAE', fallback=self.DELTAE)
-            self.DELTAG = config.getfloat('Card5', 'DELTAG', fallback=self.DELTAG)
-            self.DELTTT = config.getfloat('Card5', 'DELTTT', fallback=self.DELTTT)
-            self.ELOWBR = config.getfloat('Card5', 'ELOWBR', fallback=self.ELOWBR)
-
-        def __str__(self):
-            """String representation of Card5 for writing to the input file.
-
-            Returns:
-                string: String representation of Card5 for writing to the input file.
-            """
-            return (
-                InputFile.format_type_F(self.TEMP, 10) +
-                InputFile.format_type_F(self.DIST, 10) +
-                InputFile.format_type_F(self.DELTAL, 10) +
-                InputFile.format_type_F(self.DELTAE, 10) +
-                InputFile.format_type_F(self.DELTAG, 10) +
-                InputFile.format_type_F(self.DELTTT, 10) +
-                InputFile.format_type_F(self.ELOWBR, 10)
-            )
-
-    class Card6:
-        """Card6 class for the Sammy input file.
-        """
-        def __init__(self, card5_instance=None, config_file=None):
-            """Initialize Card6 instance.
-
-            Args:
-                card5_instance (card5_instance, optional): Card5 instance. Defaults to None.
-                config_file (string, optional): Path to the configuration file. Defaults to None.
-            """
-            self.DELTAG = card5_instance.DELTAG if card5_instance else 0.0
-            self.DELTAB = 0.0
-            self.NCF = 0
-            self.BCF = []  # List of maximum energies for each crunch factor
-            self.CF = []   # List of crunch factors
-
-            if self.DELTAG < 0:
-                if config_file:
-                    self._read_from_config(config_file)
-
-        def _read_from_config(self, config_file):
-            """Read the Card6 values from the config file using configparser.
-
-            Args:
-                config_file (string): Path to the configuration file.
-            """
-            config = configparser.ConfigParser()
-            config.read(config_file)
-            
-            self.DELTAB = config.getfloat('Card6', 'DELTAB', fallback=self.DELTAB)
-            self.NCF = config.getint('Card6', 'NCF', fallback=self.NCF)
-            
-            for i in range(1, self.NCF + 1):
-                bcf_key = f"BCF_{i}"
-                cf_key = f"CF_{i}"
-                
-                bcf_value = config.getfloat('Card6', bcf_key, fallback=0.0)
-                cf_value = config.getfloat('Card6', cf_key, fallback=0.0)
-                
-                self.BCF.append(bcf_value)
-                self.CF.append(cf_value)
-
-        def __str__(self):
-            """String representation of Card6 for writing to the input file.
-
-            Returns:
-                string: String representation of Card6 for writing to the input file.
-            """
-            if self.DELTAG >= 0:
-                return ""
-            
-            line1 = (
-                InputFile.format_type_F(self.DELTAB, 10) +
-                InputFile.format_type_I(self.NCF, 5)
-            )
-            
-            line2 = ""
-            for i in range(self.NCF):
-                line2 += (
-                    InputFile.format_type_F(self.BCF[i], 10) +
-                    InputFile.format_type_F(self.CF[i], 10)
-                )
-            return line1 + "\n" + line2
-
-
-    class Card7:
-        
-        def __init__(self, config_file=None):
-            # Default values
-            self.CRFN = 0.0
-            self.THICK = 0.0
-            self.DCOVA = 0.0
-            self.DCOVB = 0.0
-            self.VMIN = 0.0
-
-            if config_file:
-                self._read_from_config(config_file)
-
-        def _read_from_config(self, config_file):
-            config = configparser.ConfigParser()
-            config.read(config_file)
-            self.CRFN = config.getfloat('Card7', 'CRFN', fallback=self.CRFN)
-            self.THICK = config.getfloat('Card7', 'THICK', fallback=self.THICK)
-            self.DCOVA = config.getfloat('Card7', 'DCOVA', fallback=self.DCOVA)
-            self.DCOVB = config.getfloat('Card7', 'DCOVB', fallback=self.DCOVB)
-            self.VMIN = config.getfloat('Card7', 'VMIN', fallback=self.VMIN)
-
-        def __str__(self):
-            return (
-                InputFile.format_type_F(self.CRFN, 10) +
-                InputFile.format_type_F(self.THICK, 10) +
-                InputFile.format_type_F(self.DCOVA, 10) +
-                InputFile.format_type_F(self.DCOVB, 10) +
-                InputFile.format_type_F(self.VMIN, 10)
-            )
-    
-    class Card8:
-        def __init__(self, config_file=None):
-            """Initialize Card8 instance.
-
-            Parameters:
-            - config_file (str): Path to the configuration file.
-            """
-            self.CROSS = ""  # Default value
-            
-            if config_file:
-                self._read_from_config(config_file)
-
-        def _read_from_config(self, config_file):
-            """Read the CROSS values from the config file using configparser.
-
-            Args:
-                config_file (_type_): Path to the configuration file.
-            """
-
-            config = configparser.ConfigParser()
-            config.read(config_file)
-            
-            # Assuming the config file has a 'Card8' section with a single 'CROSS' key
-            self.CROSS = config.get('Card8', 'CROSS', fallback=self.CROSS)[:80]
-
-        def __str__(self):
-            """String representation of Card8 for writing to the input file.
-
-            Returns:
-                String: String representation of Card8 for writing to the input file.
-            """
-            return "{:<80}".format(self.CROSS)
-    
-    class Card10:
-        """ Card10 class for the Sammy input file.
-        """
-        def __init__(self, config_file=None):
-            """Initialize Card10 instance.
-
-            Args:
-                config_file (string, optional): Path to the configuration file. Defaults to None.
-
-            Raises:
-                ValueError: If the number of isotopes and spin groups in the configuration file do not match.
-            """
-            self.isotopes = []
-            self.spingroups = []
-            
-            if config_file:
-                config = self.read_config(config_file)
-                self.isotopes = config['Card10']['ISOTOPES'].split(',')
-                self.spingroups = list(map(int, config['Card10']['SPINGROUPS'].split(',')))
-
-                # Check if the lengths of isotopes and spin groups match
-                if len(self.isotopes) != len(self.spingroups):
-                    raise ValueError("The number of isotopes and spin groups in the configuration file do not match!")
-                
-        def read_config(self, config_file):
-            """Read the Card10 values from the config file using configparser.
-
-            Args:
-                config_file (string): Path to the configuration file.
-
-            Returns:
-                configparser.ConfigParser: ConfigParser instance with the config file loaded.
-            """
-            config = configparser.ConfigParser()
-            config.read(config_file)
-            return config
-
-        def create_spin_group_string(self):
-            """Create the string representation of the spin group data for writing to the input file.
-
-            Returns:
-                string: String representation of the spin group data for writing to the input file.
-            """
-            spin_group_str = ""
-            groupNum = 0
-            
-            for i, isotope in enumerate(self.isotopes):
-                for j in range(self.spingroups[i]):
-                    groupNum += 1
-                    JJ = groupNum 
-                    EXCL = " "  # Assuming a space for now, update if there's a default or provided value
-                    NENT = 0    # Assuming 0 for now, update if there's a default or provided value
-                    NEXT = 0    # Assuming 0 for now, update if there's a default or provided value
-                    SPINJ = 0.0 # Assuming 0.0 for now, update if there's a default or provided value
-                    ABNDNC = 0.0 # Assuming 0.0 for now, update if there's a default or provided value
-                    SPINI = 0.0  # Assuming 0.0 for now, update if there's a default or provided value
-                    Comments = isotope
-                    
-                    line = "{:3d}{}{:>5d}{:>5d}{:>5.2f}{:>10.2f}{:>5.2f}{:<35}\n".format(
-                        JJ, EXCL, NENT, NEXT, SPINJ, ABNDNC, SPINI, Comments
-                    )
-                    spin_group_str += line
-            
-            return spin_group_str
-
-        def __str__(self):
-            return self.create_spin_group_string()
-
-    
-    
-    
-    def write_to_file(self, filename, *cards):
-        """Write the input file to a file with the given filename and the given cards.
-
-        Args:
-            filename (string): file to write to
-            cards (array): array of cards to write to file
-        """
-        with open(filename, 'w') as f:
-            for card in cards:
-                f.write(str(card) + "\n")
