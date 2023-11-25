@@ -99,22 +99,22 @@ class LptFile:
         """
         register six normalization params to the `stats` method
         """
-        self.register_new_stats("normalization","   NORMALIZATION", 1, "float(line[2:13])")
-        self.register_new_stats("constant_bg","   NORMALIZATION", 1, "float(line[19:29])")
-        self.register_new_stats("one_over_v_bg","   NORMALIZATION", 1, "float(line[36:47])")
-        self.register_new_stats("sqrt_energy_bg","   NORMALIZATION", 1, "float(line[53:63])")
-        self.register_new_stats("exponential_bg","    BCKG*EXP(.)", 1, "float(line[2:13])")
-        self.register_new_stats("exp_decay_bg","    BCKG*EXP(.)", 1, "float(line[19:29])")
+        self.register_new_stats("normalization","   NORMALIZATION", 1, "float(line[1:12])")
+        self.register_new_stats("constant_bg","   NORMALIZATION", 1, "float(line[18:29])")
+        self.register_new_stats("one_over_v_bg","   NORMALIZATION", 1, "float(line[35:46])")
+        self.register_new_stats("sqrt_energy_bg","   NORMALIZATION", 1, "float(line[52:63])")
+        self.register_new_stats("exponential_bg","    BCKG*EXP(.)", 1, "float(line[1:12])")
+        self.register_new_stats("exp_decay_bg","    BCKG*EXP(.)", 1, "float(line[18:29])")
 
     def register_broadening_stats(self) -> None:
         """
         register five broadening params to the `stats` method
         """
-        self.register_new_stats("temperature","  TEMPERATURE      THICKNESS", 1, "float(line[2:13])")
-        self.register_new_stats("thickness","  TEMPERATURE      THICKNESS", 1, "float(line[19:29])")
-        self.register_new_stats("flight_path_spread","    DELTA-L         DELTA-T-GAUS", 1, "float(line[2:13])")
-        self.register_new_stats("deltag_fwhm","    DELTA-L         DELTA-T-GAUS", 1, "float(line[19:29])")
-        self.register_new_stats("deltae_us","    DELTA-L         DELTA-T-GAUS", 1, "float(line[36:47])")
+        self.register_new_stats("temperature","  TEMPERATURE      THICKNESS", 1, "float(line[1:12])")
+        self.register_new_stats("thickness","  TEMPERATURE      THICKNESS", 1, "float(line[18:29])")
+        self.register_new_stats("flight_path_spread","    DELTA-L         DELTA-T-GAUS", 1, "float(line[1:12])")
+        self.register_new_stats("deltag_fwhm","    DELTA-L         DELTA-T-GAUS", 1, "float(line[18:29])")
+        self.register_new_stats("deltae_us","    DELTA-L         DELTA-T-GAUS", 1, "float(line[35:46])")
 
 
     def register_abundances_stats(self,isotopes:list =[]) -> None:
