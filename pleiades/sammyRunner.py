@@ -44,7 +44,8 @@ def run(archivename: str="example",
         shutil.copy(datafile, archivepath / f'{archivename}.dat')
         datafile = f'{archivename}.dat'
     except FileNotFoundError:
-        print(f"grab files from within the {archivepath} directory")
+        # print(f"grab files from within the {archivepath} directory")
+        pass
 
     outputfile = f'{archivename}.out'
 
