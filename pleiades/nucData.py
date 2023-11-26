@@ -106,21 +106,30 @@ def get_info(isotopic_str):
     """
     
     # Extract the element and its atomic number from the isotopic string
-    match = re.match(r'([A-Za-z]+)-?(\d+)', isotopic_str)
+    match = re.match(r'([A-Za-z]+)[-_]?(\d+)', isotopic_str)
     if match:
         element_name = match.group(1)
-        atomic_number = match.group(2)
+        atomic_number = int(match.group(2))
 
     return element_name, atomic_number
 
-def get_mass_from_ame(isotopic_str: str='U-238',verbose: bool=False)->float:
-    import re
-    pattern = r"\b([A-Z][a-z]?)-(\d+)\b"
-    if not re.search(pattern,isotopic_str):
-        # raise ValueError(f"isotopic_str should be in the format of Element-AtomicMass (U-235)")
+def get_mass_from_ame(isotopic_str: str='U-238')->float:
+    """Returns the atomic mass from AME tables according to the isotope name (E.g. Eu-153)
+
+    Args:
+        isotopic_str (str, optional): isotope name. Defaults to 'U-238'.
+
+    Returns:
+        float: the atomic mass in amu
+    """
+    # import re
+    # pattern = r"\b([A-Z][a-z]?)-(\d+)\b"
+    # if not re.search(pattern,isotopic_str):
+    #     # raise ValueError(f"isotopic_str should be in the format of Element-AtomicMass (U-235)")
         
     
     possible_isotopes_data_list = []
+
 
     element, atomic_number = get_info(isotopic_str)
     # Load the file into a list of lines
@@ -138,7 +147,7 @@ def get_mass_from_ame(isotopic_str: str='U-238',verbose: bool=False)->float:
             if (element in line[:25]) and (str(atomic_number) in line[:25]):
                 possible_isotopes_data = parse_ame_line(line)
                 possible_isotopes_data_list.append(possible_isotopes_data)
-        
+
         # If we didn't find any data for the isotope
         if len(possible_isotopes_data_list) == 0:
             raise ValueError("No data found for {} in {}".format(isotopic_str, nucelar_masses_file))
@@ -158,11 +167,12 @@ def get_mat_number(isotopic_str: str='U-238')-> int:
     Returns:
         int: mat number 
     """  
-    import re
-    pattern = r"\b([A-Z][a-z]?)-(\d+)\b"
-    if not re.search(pattern,isotopic_str):
-        raise ValueError(f"isotopic_str should be in the format of Element-AtomicMass (e.g. U-238)")
-    
+    # import re
+    # pattern = r"\b([A-Z][a-z]?)-(\d+)\b"
+    # if not re.search(pattern,isotopic_str):
+    #     raise ValueError(f"isotopic_str should be in the format of Element-AtomicMass (e.g. U-238)")
+    element, atomic_number = get_info(isotopic_str)
+
     # open the file containing the endf summary table
     with open(PWD.parent / "nucDataLibs/isotopeInfo/neutrons.list","r") as fid:
         pattern = r'\b\s*(\d+)\s*-\s*([A-Za-z]+)\s*-\s*(\d+)([A-Za-z]*)\b' # match the isotope name 
@@ -170,7 +180,7 @@ def get_mat_number(isotopic_str: str='U-238')-> int:
             # find match for an isotope string in the line
             match = re.search(pattern,line)
 
-            if match and match.expand(r'\2-\3')==isotopic_str:
+            if match and match.expand(r'\2-\3')==f"{element}-{atomic_number}":
                 # the mat number is a 4 digits string at the end of each line
                 matnumber = int(line[-5:])
                 return matnumber

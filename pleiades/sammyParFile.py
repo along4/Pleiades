@@ -810,7 +810,7 @@ class Update():
         """
         if "broadening" not in self.parent.data:
             self.parent.data["broadening"] = {"channel_radius":"",
-                                                 "temperature":"",
+                                                 "temperature":"296.",
                                                  "thickness":"",
                                                  "flight_path_spread":"",
                                                  "deltag_fwhm":"",
