@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import pathlib
+import re
 
 # current file location
 PWD = pathlib.Path(__file__).parent
@@ -105,16 +106,19 @@ def get_info(isotopic_str):
     """
     
     # Extract the element and its atomic number from the isotopic string
-    element = ''.join([c for c in isotopic_str if not c.isdigit()]).strip("-")
-    atomic_number = int(''.join([c for c in isotopic_str if c.isdigit()]))
+    match = re.match(r'([A-Za-z]+)-?(\d+)', isotopic_str)
+    if match:
+        element_name = match.group(1)
+        atomic_number = match.group(2)
 
-    return element, atomic_number
+    return element_name, atomic_number
 
 def get_mass_from_ame(isotopic_str: str='U-238',verbose: bool=False)->float:
     import re
     pattern = r"\b([A-Z][a-z]?)-(\d+)\b"
     if not re.search(pattern,isotopic_str):
-        raise ValueError(f"isotopic_str should be in the format of Element-AtomicMass (U-235)")
+        # raise ValueError(f"isotopic_str should be in the format of Element-AtomicMass (U-235)")
+        
     
     possible_isotopes_data_list = []
 
