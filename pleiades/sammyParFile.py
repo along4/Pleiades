@@ -111,6 +111,7 @@ class ParFile:
                                      "vary_flight_path_spread":slice(67-1,68),
                                      "vary_deltag_fwhm":slice(69-1,70),
                                      "vary_deltae_us":slice(71-1,72)}
+        
 
 
     def read(self) -> 'ParFile':
@@ -740,10 +741,11 @@ class Update():
                 card["vary_fission2_width"] = f"{1:>2}" if vary else f"{0:>2}"
 
 
-    def normalization(self,**kwargs) -> None:
+    def normalization(self, vary:bool = False, **kwargs) -> None:
         """change or vary normalization parameters and vary flags
 
         Args:
+              - vary (bool): if True all parameters are set to "vary", otherwise all set to "fixed"
               - normalization (float)
               - constant_bg (float)
               - one_over_v_bg (float)
@@ -770,12 +772,29 @@ class Update():
                                                  "vary_sqrt_energy_bg":0,
                                                  "vary_exponential_bg":0,
                                                  "vary_exp_decay_bg":0,}
-        self.parent.data["normalization"].update(**kwargs)
+        if vary:
+            self.parent.data["normalization"].update({"vary_normalization":1,
+                                                 "vary_constant_bg":1,
+                                                 "vary_one_over_v_bg":1,
+                                                 "vary_sqrt_energy_bg":1,
+                                                 "vary_exponential_bg":1,
+                                                 "vary_exp_decay_bg":1,}) 
+        else:
+            self.parent.data["normalization"].update({"vary_normalization":0,
+                                                 "vary_constant_bg":0,
+                                                 "vary_one_over_v_bg":0,
+                                                 "vary_sqrt_energy_bg":0,
+                                                 "vary_exponential_bg":0,
+                                                 "vary_exp_decay_bg":0,})     
+                       
+        self.parent.data["normalization"].update(kwargs)
 
-    def broadening(self,**kwargs) -> None:
+
+    def broadening(self, vary: bool=False, **kwargs) -> None:
         """change or vary broadening parameters and vary flags
 
         Args:
+              - vary (bool): if True all parameters are set to "vary", otherwise all set to "fixed"
               - channel_radius (float) CRFN
               - temperature (float) TEMP
               - thickness (float) THICK
@@ -802,7 +821,22 @@ class Update():
                                                  "vary_flight_path_spread":0,
                                                  "vary_deltag_fwhm":0,
                                                  "vary_deltae_us":0,}
-        self.parent.data["broadening"].update(**kwargs)
+        if vary:
+            self.parent.data["broadening"].update({"vary_channel_radius":1,
+                                                 "vary_temperature":1,
+                                                 "vary_thickness":1,
+                                                 "vary_flight_path_spread":1,
+                                                 "vary_deltag_fwhm":1,
+                                                 "vary_deltae_us":1,}) 
+        else:
+            self.parent.data["broadening"].update({"vary_channel_radius":0,
+                                                 "vary_temperature":0,
+                                                 "vary_thickness":0,
+                                                 "vary_flight_path_spread":0,
+                                                 "vary_deltag_fwhm":0,
+                                                 "vary_deltae_us":0,})     
+
+        self.parent.data["broadening"].update(kwargs)
 
      
 
