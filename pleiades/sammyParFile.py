@@ -844,13 +844,11 @@ class Update():
         """change or vary broadening parameters and vary flags
 
         Args:
-              - channel_radius (float) CRFN
               - temperature (float) TEMP
               - thickness (float) THICK
               - flight_path_spread (float) DELTAL
               - deltag_fwhm (float) DELTAG
               - deltae_us (float) DELTAE
-              - vary_channel_radius (int) 0=fixed, 1=vary, 2=pup
               - vary_temperature (int) 0=fixed, 1=vary, 2=pup
               - vary_thickness (int) 0=fixed, 1=vary, 2=pup
               - vary_flight_path_spread (int) 0=fixed, 1=vary, 2=pup
