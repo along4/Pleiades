@@ -140,6 +140,32 @@ class LptFile:
             self.register_new_stats("vary_deltae_us","    DELTA-L         DELTA-T-GAUS", 1, "1 if line[47:51].strip() else 0")
 
 
+    def register_misc_stats(self, register_vary:bool = False) -> None:
+        """
+        register misc params to the `stats` method
+
+        Args:
+            - register_vary: (bool) if True register also the vary parameters
+        """
+        self.register_new_stats("t0","    t-zero", 0, "float(line[13:24])")
+        self.register_new_stats("L0","    t-zero", 0, "float(line[42:53])")
+        self.register_new_stats("delta_L0","    Delta-L", 0, "float(line[13:24])")
+        self.register_new_stats("delta_L1","    Delta-L", 0, "float(line[50:61])")
+        self.register_new_stats("DE","    Delta-E=", 0, "float(line[13:24])")
+        self.register_new_stats("D0","    Delta-E=", 0, "float(line[52:63])")
+        self.register_new_stats("DlnE","    Delta-E=", 1, "float(line[13:24])")
+
+
+        if register_vary:
+            self.register_new_stats("vary_t0","    t-zero", 0, "1 if line[24:29].strip() else 0")
+            self.register_new_stats("vary_L0","    t-zero", 0, "1 if line[53:58].strip() else 0")
+            self.register_new_stats("vary_delta_L0","    Delta-L", 0, "1 if line[24:29].strip() else 0")
+            self.register_new_stats("vary_delta_L1","    Delta-L", 0, "1 if line[61:66].strip() else 0")
+            self.register_new_stats("vary_DE","    Delta-E=", 0, "1 if line[24:29].strip() else 0")
+            self.register_new_stats("vary_D0","    Delta-E=", 0, "1 if line[63:68].strip() else 0")
+            self.register_new_stats("vary_DlnE","    Delta-E=", 1, "1 if line[24:29].strip() else 0")                            
+
+        
     def register_abundances_stats(self,isotopes:list =[]) -> None:
         """
         register final isotopic abundances
