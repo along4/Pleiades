@@ -111,6 +111,31 @@ class ParFile:
                                      "vary_flight_path_spread":slice(67-1,68),
                                      "vary_deltag_fwhm":slice(69-1,70),
                                      "vary_deltae_us":slice(71-1,72)}
+    
+        self._MISC_DELTA_FORMAT = {"vary_delta_L1":slice(7-1,7),
+                                   "vary_delta_L0":slice(9-1,9),
+                                   "delta_L1":slice(11-1,20),
+                                   "delta_L1_err":slice(21-1,30),
+                                   "delta_L0":slice(31-1,40),
+                                   "delta_L0_err":slice(41-1,50)}
+    
+        self._MISC_TZERO_FORMAT = {"vary_t0":slice(7-1,7),
+                                   "vary_L0":slice(9-1,9),
+                                   "t0":slice(11-1,20),
+                                   "t0_err":slice(21-1,30),
+                                   "L0":slice(31-1,40),
+                                   "L0_err":slice(41-1,50),
+                                   "flight_path_length":slice(51-1,60)}
+    
+        self._MISC_DELTE_FORMAT = {"vary_DE":slice(7-1,7),
+                                   "vary_D0":slice(9-1,9),
+                                   "vary_DlnE":slice(10-1,10),
+                                   "DE":slice(11-1,20),
+                                   "DE_err":slice(21-1,30),
+                                   "D0":slice(31-1,40),
+                                   "D0_err":slice(41-1,50),
+                                   "DlnE":slice(51-1,60),
+                                   "DlnE_err":slice(51-1,60)}
         
 
 
@@ -281,6 +306,16 @@ class ParFile:
             lines.append("BROADENING PARAMETERS MAY BE VARIED".ljust(80))
             card = self.data["broadening"]
             lines.append(self._write_broadening(card))
+            lines.append(" "*80)
+            lines.append("")
+
+        # misc
+        if self.data["misc"]:
+            lines.append('MISCELLANEOUS PARAMETERS FOLLOW'.ljust(80))
+            card = self.data["misc"]
+            lines.append(self._write_misc_delta(card))
+            lines.append(self._write_misc_tzero(card))
+            lines.append(self._write_misc_deltE(card))
             lines.append(" "*80)
             lines.append("")
 
@@ -575,6 +610,35 @@ class ParFile:
             new_text[slice_value] = list(str(broadening_dict[key]).ljust(word_length))
         return "".join(new_text)
     
+    def _write_misc_delta(self,misc_delta_dict: dict) -> str:
+        # write a formated misc_delta line from dict with the key-word misc_delta values
+        new_text = [" "]*80 # 80 characters long list of spaces to be filled
+        new_text[:5] = list("DELTA")
+        for key,slice_value in self._MISC_DELTA_FORMAT.items():
+            word_length = slice_value.stop - slice_value.start
+            # assign the fixed-format position with the corresponding key-word value
+            new_text[slice_value] = list(str(misc_delta_dict[key]).ljust(word_length))
+        return "".join(new_text)
+
+    def _write_misc_tzero(self,misc_tzero_dict: dict) -> str:
+        # write a formated misc_tzero line from dict with the key-word misc_tzero values
+        new_text = [" "]*80 # 80 characters long list of spaces to be filled
+        new_text[:5] = list("TZERO")
+        for key,slice_value in self._MISC_TZERO_FORMAT.items():
+            word_length = slice_value.stop - slice_value.start
+            # assign the fixed-format position with the corresponding key-word value
+            new_text[slice_value] = list(str(misc_tzero_dict[key]).ljust(word_length))
+        return "".join(new_text)
+    
+    def _write_misc_deltE(self,misc_deltE_dict: dict) -> str:
+        # write a formated misc_deltE line from dict with the key-word misc_deltE values
+        new_text = [" "]*80 # 80 characters long list of spaces to be filled
+        new_text[:5] = list("DELTE")
+        for key,slice_value in self._MISC_DELTE_FORMAT.items():
+            word_length = slice_value.stop - slice_value.start
+            # assign the fixed-format position with the corresponding key-word value
+            new_text[slice_value] = list(str(misc_deltE_dict[key]).ljust(word_length))
+        return "".join(new_text)
 
 
 
@@ -837,6 +901,62 @@ class Update():
                                                  "vary_deltae_us":0,})     
 
         self.parent.data["broadening"].update(kwargs)
+
+    def misc(self, **kwargs) -> None:
+        """change or vary misc parameters and vary flags
+
+        Args:
+              - delta_L1 (float) DELL11
+              - delta_L1_err (float) D1
+              - delta_L0 (float) DELL00
+              - delta_L0_err (float) D0
+              - t0 (float) TZERO
+              - L0 (float) LZERO
+              - t0_err (float) DTZERO
+              - L0_err (float) DLZERO
+              - flight_path_length (float) FPL
+              - D0 (float) DELE0
+              - DE (float) DELE1
+              - DlnE (float) DELEL
+              - D0_err (float) DD0
+              - DE_err (float) DD1
+              - DlnE_err (float) DDL
+
+
+              - vary_delta_L1 (int) 0=fixed, 1=vary, 2=pup
+              - vary_delta_L0 (int) 0=fixed, 1=vary, 2=pup
+              - vary_L0 (int) 0=fixed, 1=vary, 2=pup
+              - vary_t0 (int) 0=fixed, 1=vary, 2=pup
+              - vary_D0 (int) 0=fixed, 1=vary, 2=pup
+              - vary_DE (int) 0=fixed, 1=vary, 2=pup
+              - vary_DlnE (int) 0=fixed, 1=vary, 2=pup
+        """
+        if "misc" not in self.parent.data:
+            self.parent.data["misc"] = {"vary_delta_L1":       "0",                     
+                                        "vary_delta_L0":       "0",                     
+                                        "delta_L1":            "",             
+                                        "delta_L1_err":        "",                 
+                                        "delta_L0":            "",             
+                                        "delta_L0_err":        "",                 
+                                        "vary_t0":             "0",             
+                                        "vary_L0":             "0",             
+                                        "t0":                  "",         
+                                        "t0_err":              "",             
+                                        "L0":                  "",         
+                                        "L0_err":              "",             
+                                        "flight_path_length":  "",                         
+                                        "vary_DE":             "0",             
+                                        "vary_D0":             "0",             
+                                        "vary_DlnE":           "0",                 
+                                        "DE":                  "",         
+                                        "DE_err":              "",             
+                                        "D0":                  "",         
+                                        "D0_err":              "",             
+                                        "DlnE":                "",         
+                                        "DlnE_err":            "",             
+                                         }
+
+        self.parent.data["misc"].update(kwargs)
 
      
 
