@@ -133,11 +133,11 @@ class LptFile:
         self.register_new_stats("deltae_us","    DELTA-L         DELTA-T-GAUS", 1, "float(line[35:46])")
 
         if register_vary:
-            self.register_new_stats("vary_temperature","  TEMPERATURE      THICKNESS", 1, "1 if line[13:17].strip() else 0")
-            self.register_new_stats("vary_thickness","  TEMPERATURE      THICKNESS", 1, "1 if line[30:34].strip() else 0")
-            self.register_new_stats("vary_flight_path_spread","    DELTA-L         DELTA-T-GAUS", 1, "1 if line[13:17].strip() else 0")
-            self.register_new_stats("vary_deltag_fwhm","    DELTA-L         DELTA-T-GAUS", 1, "1 if line[30:34].strip() else 0")
-            self.register_new_stats("vary_deltae_us","    DELTA-L         DELTA-T-GAUS", 1, "1 if line[47:51].strip() else 0")
+            self.register_new_stats("vary_temperature","  TEMPERATURE      THICKNESS", 1, "1 if line[12:17].strip() else 0")
+            self.register_new_stats("vary_thickness","  TEMPERATURE      THICKNESS", 1, "1 if line[29:34].strip() else 0")
+            self.register_new_stats("vary_flight_path_spread","    DELTA-L         DELTA-T-GAUS", 1, "1 if line[12:17].strip() else 0")
+            self.register_new_stats("vary_deltag_fwhm","    DELTA-L         DELTA-T-GAUS", 1, "1 if line[29:34].strip() else 0")
+            self.register_new_stats("vary_deltae_us","    DELTA-L         DELTA-T-GAUS", 1, "1 if line[46:51].strip() else 0")
 
 
     def register_misc_stats(self, register_vary:bool = False) -> None:
