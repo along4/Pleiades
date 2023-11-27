@@ -308,12 +308,15 @@ class ParFile:
             lines.append("")
 
         # misc
-        if self.data["misc"]:
+        if any(self.data["misc"].values()):
             lines.append('MISCELLANEOUS PARAMETERS FOLLOW'.ljust(80))
             card = self.data["misc"]
-            lines.append(self._write_misc_delta(card))
-            lines.append(self._write_misc_tzero(card))
-            lines.append(self._write_misc_deltE(card))
+            if any([value for key,value in self.data["misc"].items() if key in self._MISC_DELTA_FORMAT]):
+                lines.append(self._write_misc_delta(card))
+            if any([value for key,value in self.data["misc"].items() if key in self._MISC_TZERO_FORMAT]):
+                lines.append(self._write_misc_tzero(card))
+            if any([value for key,value in self.data["misc"].items() if key in self._MISC_DELTE_FORMAT]):
+                lines.append(self._write_misc_deltE(card))
             lines.append(" "*80)
             lines.append("")
 
@@ -834,7 +837,7 @@ class Update():
                                                  "vary_exponential_bg":0,
                                                  "vary_exp_decay_bg":0,}    
                        
-        self.parent.data["normalization"].update(kwargs)
+        self.parent.data["normalization"].update({key:value for key,value in kwargs.items() if key in self.parent.data["normalization"]})
 
 
     def broadening(self, **kwargs) -> None:
@@ -866,7 +869,7 @@ class Update():
                                                  "vary_deltag_fwhm":0,
                                                  "vary_deltae_us":0,}
 
-        self.parent.data["broadening"].update(kwargs)
+        self.parent.data["broadening"].update({key:value for key,value in kwargs.items() if key in self.parent.data["broadening"]})
 
     def misc(self, **kwargs) -> None:
         """change or vary misc parameters and vary flags
@@ -898,22 +901,22 @@ class Update():
               - vary_DlnE (int) 0=fixed, 1=vary, 2=pup
         """
         if "misc" not in self.parent.data:
-            self.parent.data["misc"] = {"vary_delta_L1":       "0",                     
-                                        "vary_delta_L0":       "0",                     
+            self.parent.data["misc"] = {"vary_delta_L1":       "",                     
+                                        "vary_delta_L0":       "",                     
                                         "delta_L1":            "",             
                                         "delta_L1_err":        "",                 
                                         "delta_L0":            "",             
                                         "delta_L0_err":        "",                 
-                                        "vary_t0":             "0",             
-                                        "vary_L0":             "0",             
+                                        "vary_t0":             "",             
+                                        "vary_L0":             "",             
                                         "t0":                  "",         
                                         "t0_err":              "",             
                                         "L0":                  "",         
                                         "L0_err":              "",             
                                         "flight_path_length":  "",                         
-                                        "vary_DE":             "0",             
-                                        "vary_D0":             "0",             
-                                        "vary_DlnE":           "0",                 
+                                        "vary_DE":             "",             
+                                        "vary_D0":             "",             
+                                        "vary_DlnE":           "",                 
                                         "DE":                  "",         
                                         "DE_err":              "",             
                                         "D0":                  "",         
@@ -922,10 +925,10 @@ class Update():
                                         "DlnE_err":            "",             
                                          }
 
-        self.parent.data["misc"].update(kwargs)
+        self.parent.data["misc"].update({key:value for key,value in kwargs.items() if key in self.parent.data["misc"]})
 
                                                  
-    def set_all_vary(self,vary=True,data_key="misc_delta"):
+    def vary_all(self,vary=True,data_key="misc_delta"):
         """toggle all vary parameters in a data keyword to either vary/fixed
 
         Args:
@@ -937,8 +940,8 @@ class Update():
                         - 'broadeninig'
                         - 'normalization'
         """
-        key_word = data_key.split("_")[0]
-        data_dict = getattr(self,f"_{data_key.upper()}_FORMAT")
+        keyword = data_key.split("_")[0]
+        data_dict = getattr(self.parent,f"_{data_key.upper()}_FORMAT")
         self.parent.data[keyword].update({key:int(vary) for key in data_dict if key.startswith("vary_")})
 
 
