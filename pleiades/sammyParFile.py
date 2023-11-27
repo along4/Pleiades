@@ -133,7 +133,7 @@ class ParFile:
                                    "D0":slice(31-1,40),
                                    "D0_err":slice(41-1,50),
                                    "DlnE":slice(51-1,60),
-                                   "DlnE_err":slice(51-1,60)}
+                                   "DlnE_err":slice(61-1,70)}
         
 
 
