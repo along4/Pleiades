@@ -805,11 +805,10 @@ class Update():
                 card["vary_fission2_width"] = f"{1:>2}" if vary else f"{0:>2}"
 
 
-    def normalization(self, vary:bool = False, **kwargs) -> None:
+    def normalization(self, **kwargs) -> None:
         """change or vary normalization parameters and vary flags
 
         Args:
-              - vary (bool): if True all parameters are set to "vary", otherwise all set to "fixed"
               - normalization (float)
               - constant_bg (float)
               - one_over_v_bg (float)
@@ -835,30 +834,15 @@ class Update():
                                                  "vary_one_over_v_bg":0,
                                                  "vary_sqrt_energy_bg":0,
                                                  "vary_exponential_bg":0,
-                                                 "vary_exp_decay_bg":0,}
-        if vary:
-            self.parent.data["normalization"].update({"vary_normalization":1,
-                                                 "vary_constant_bg":1,
-                                                 "vary_one_over_v_bg":1,
-                                                 "vary_sqrt_energy_bg":1,
-                                                 "vary_exponential_bg":1,
-                                                 "vary_exp_decay_bg":1,}) 
-        else:
-            self.parent.data["normalization"].update({"vary_normalization":0,
-                                                 "vary_constant_bg":0,
-                                                 "vary_one_over_v_bg":0,
-                                                 "vary_sqrt_energy_bg":0,
-                                                 "vary_exponential_bg":0,
-                                                 "vary_exp_decay_bg":0,})     
+                                                 "vary_exp_decay_bg":0,}    
                        
         self.parent.data["normalization"].update(kwargs)
 
 
-    def broadening(self, vary: bool=False, **kwargs) -> None:
+    def broadening(self, **kwargs) -> None:
         """change or vary broadening parameters and vary flags
 
         Args:
-              - vary (bool): if True all parameters are set to "vary", otherwise all set to "fixed"
               - channel_radius (float) CRFN
               - temperature (float) TEMP
               - thickness (float) THICK
@@ -885,20 +869,6 @@ class Update():
                                                  "vary_flight_path_spread":0,
                                                  "vary_deltag_fwhm":0,
                                                  "vary_deltae_us":0,}
-        if vary:
-            self.parent.data["broadening"].update({"vary_channel_radius":1,
-                                                 "vary_temperature":1,
-                                                 "vary_thickness":1,
-                                                 "vary_flight_path_spread":1,
-                                                 "vary_deltag_fwhm":1,
-                                                 "vary_deltae_us":1,}) 
-        else:
-            self.parent.data["broadening"].update({"vary_channel_radius":0,
-                                                 "vary_temperature":0,
-                                                 "vary_thickness":0,
-                                                 "vary_flight_path_spread":0,
-                                                 "vary_deltag_fwhm":0,
-                                                 "vary_deltae_us":0,})     
 
         self.parent.data["broadening"].update(kwargs)
 
@@ -957,6 +927,24 @@ class Update():
                                          }
 
         self.parent.data["misc"].update(kwargs)
+
+                                                 
+    def set_all_vary(self,vary=True,data_key="misc_delta"):
+        """toggle all vary parameters in a data keyword to either vary/fixed
+
+        Args:
+            vary (bool, optional): If True the parameters are set to vary, else all are set to fixed
+            data_key (str, optional): choice of one of the followings:
+                        - 'misc_delta'
+                        - 'misc_tzero'
+                        - 'misc_deltE'
+                        - 'broadeninig'
+                        - 'normalization'
+        """
+        key_word = data_key.split("_")[0]
+        data_dict = getattr(self,f"_{data_key.upper()}_FORMAT")
+        self.parent.data[keyword].update({key:int(vary) for key in data_dict if key.startswith("vary_")})
+
 
      
 
