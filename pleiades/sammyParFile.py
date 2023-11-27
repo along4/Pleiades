@@ -99,13 +99,11 @@ class ParFile:
                                      "vary_exponential_bg":slice(69-1,70),
                                      "vary_exp_decay_bg":slice(71-1,72)}
         
-        self._BROADENING_FORMAT = {"channel_radius":slice(1-1,10),
-                                     "temperature":slice(11-1,20),
+        self._BROADENING_FORMAT = {  "temperature":slice(11-1,20),
                                      "thickness":slice(21-1,30),
                                      "flight_path_spread":slice(31-1,40),
                                      "deltag_fwhm":slice(41-1,50),
                                      "deltae_us":slice(51-1,60),
-                                     "vary_channel_radius":slice(61-1,62),
                                      "vary_temperature":slice(63-1,64),
                                      "vary_thickness":slice(65-1,66),
                                      "vary_flight_path_spread":slice(67-1,68),
@@ -857,13 +855,11 @@ class Update():
               - vary_deltae_us (int) 0=fixed, 1=vary, 2=pup
         """
         if "broadening" not in self.parent.data:
-            self.parent.data["broadening"] = {"channel_radius":"",
-                                                 "temperature":"296.",
+            self.parent.data["broadening"] = {  "temperature":"296.",
                                                  "thickness":"",
                                                  "flight_path_spread":"",
                                                  "deltag_fwhm":"",
                                                  "deltae_us":"",
-                                                 "vary_channel_radius":0,
                                                  "vary_temperature":0,
                                                  "vary_thickness":0,
                                                  "vary_flight_path_spread":0,
