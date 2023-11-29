@@ -110,6 +110,9 @@ def get_info(isotopic_str):
     if match:
         element_name = match.group(1)
         atomic_number = int(match.group(2))
+    else:
+        element_name = ""
+        atomic_number = None
 
     return element_name, atomic_number
 
@@ -150,7 +153,8 @@ def get_mass_from_ame(isotopic_str: str='U-238')->float:
 
         # If we didn't find any data for the isotope
         if len(possible_isotopes_data_list) == 0:
-            raise ValueError("No data found for {} in {}".format(isotopic_str, nucelar_masses_file))
+            # raise ValueError("No data found for {} in {}".format(isotopic_str, nucelar_masses_file))
+            return None 
         # If we found more than one isotope, then we need to find the correct one. 
         else:
             for iso in possible_isotopes_data_list:
