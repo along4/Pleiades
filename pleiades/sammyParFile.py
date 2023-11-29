@@ -292,7 +292,7 @@ class ParFile:
             lines.append("")
 
         # normalization
-        if self.data["normalization"]:
+        if any(self.data["normalization"].values()):
             lines.append("NORMALIZATION AND BACKGROUND FOLLOW".ljust(80))
             card = self.data["normalization"]
             lines.append(self._write_normalization(card))
@@ -300,7 +300,7 @@ class ParFile:
             lines.append("")
 
         # broadening
-        if self.data["broadening"]:
+        if any(self.data["broadening"].values()):
             lines.append("BROADENING PARAMETERS MAY BE VARIED".ljust(80))
             card = self.data["broadening"]
             lines.append(self._write_broadening(card))
