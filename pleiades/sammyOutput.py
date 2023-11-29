@@ -41,11 +41,16 @@ class LptFile:
                 start_text=" CUSTOMARY CHI SQUARED DIVIDED",
                 skipped_rows=0,
                 line_format="float(line.split()[7])"),
+            "flight_path_length":dict(
+                start_text="    Flight Path=",
+                skipped_rows=0,
+                line_format="float(line.split()[2])"),
             "time_elapsed":dict(
                 start_text="                              Total time",
                 skipped_rows=0,
                 line_format="float(line.split()[3])"),
             }
+        
     
         self.LPT_SEARCH_PATTERNS = LPT_SEARCH_PATTERNS
             
