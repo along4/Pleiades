@@ -2,6 +2,7 @@ import configparser
 from pleiades import nucData as pnd
 from typing import List, Dict
 from contextlib import suppress
+import numpy as np
 
 class InputFile:
     """ InputFile class for the Sammy input file.
@@ -274,7 +275,7 @@ class InputFile:
             string: float field of the given width with the float right-justified.
         """
         # The ".4f" here denotes 4 decimal places. You can adjust if needed.
-        return f"{data:>{width}.4f}"
+        return f"{data:>{width}}"
 
     @staticmethod
     def format_type_I(data, width):
