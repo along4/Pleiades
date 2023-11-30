@@ -1,5 +1,7 @@
 import re
 import pathlib
+import shelve
+import configparser
 from typing import Tuple, List, Dict, Any
 
 class ParFile:
@@ -324,7 +326,14 @@ class ParFile:
 
         
         with open(filename,"w") as fid:
-            fid.write("\n".join(lines))    
+            fid.write("\n".join(lines)) 
+
+        # write the self.data dictionary to a config.ini file
+        with open(f'{filename.with_name("params.ini")}',"w") as fid:
+            config = configparser.ConfigParser()
+            config.update({key:self.data[key] for key in ['normalization', 'broadening', 'misc']})
+            config.write(fid)
+
         
     def _rename(self) -> None:
         """rename the isotope and particle-pair names
