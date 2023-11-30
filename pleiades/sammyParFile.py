@@ -113,27 +113,29 @@ class ParFile:
         self._MISC_DELTA_FORMAT = {"vary_delta_L1":slice(7-1,7),
                                    "vary_delta_L0":slice(9-1,9),
                                    "delta_L1":slice(11-1,20),
-                                   "delta_L1_err":slice(21-1,30),
+                                #    "delta_L1_err":slice(21-1,30),
                                    "delta_L0":slice(31-1,40),
-                                   "delta_L0_err":slice(41-1,50)}
+                                #    "delta_L0_err":slice(41-1,50)
+                                   }
     
         self._MISC_TZERO_FORMAT = {"vary_t0":slice(7-1,7),
                                    "vary_L0":slice(9-1,9),
                                    "t0":slice(11-1,20),
-                                   "t0_err":slice(21-1,30),
+                                #    "t0_err":slice(21-1,30),
                                    "L0":slice(31-1,40),
-                                   "L0_err":slice(41-1,50),
+                                #    "L0_err":slice(41-1,50),
                                    "flight_path_length":slice(51-1,60)}
     
         self._MISC_DELTE_FORMAT = {"vary_DE":slice(7-1,7),
                                    "vary_D0":slice(9-1,9),
                                    "vary_DlnE":slice(10-1,10),
                                    "DE":slice(11-1,20),
-                                   "DE_err":slice(21-1,30),
+                                #    "DE_err":slice(21-1,30),
                                    "D0":slice(31-1,40),
-                                   "D0_err":slice(41-1,50),
+                                #    "D0_err":slice(41-1,50),
                                    "DlnE":slice(51-1,60),
-                                   "DlnE_err":slice(61-1,70)}
+                                #    "DlnE_err":slice(61-1,70)
+                                  }
         
 
 
@@ -740,7 +742,7 @@ class Update():
         for num, res in enumerate(self.parent.data["resonance_params"]):
             # cast all numbers such as "3.6700-5" to floats
             energy = "e-".join(res['reosnance_energy'].split("-")).lstrip("e").replace("+","e+") if not "e" in res['reosnance_energy'] else res['reosnance_energy']
-            if self.parent.emin <=  float(energy) < self.parent.emax:
+            if float(self.parent.emin) <=  float(energy) < float(self.parent.emax):
                 new_res_params.append(res)
                 igroups.add(res["igroup"].strip())
         
@@ -874,21 +876,13 @@ class Update():
 
         Args:
               - delta_L1 (float) DELL11
-              - delta_L1_err (float) D1
               - delta_L0 (float) DELL00
-              - delta_L0_err (float) D0
               - t0 (float) TZERO
               - L0 (float) LZERO
-              - t0_err (float) DTZERO
-              - L0_err (float) DLZERO
               - flight_path_length (float) FPL
               - D0 (float) DELE0
               - DE (float) DELE1
               - DlnE (float) DELEL
-              - D0_err (float) DD0
-              - DE_err (float) DD1
-              - DlnE_err (float) DDL
-
 
               - vary_delta_L1 (int) 0=fixed, 1=vary, 2=pup
               - vary_delta_L0 (int) 0=fixed, 1=vary, 2=pup
@@ -901,26 +895,19 @@ class Update():
         if "misc" not in self.parent.data:
             self.parent.data["misc"] = {"vary_delta_L1":       "",                     
                                         "vary_delta_L0":       "",                     
-                                        "delta_L1":            "",             
-                                        "delta_L1_err":        "",                 
-                                        "delta_L0":            "",             
-                                        "delta_L0_err":        "",                 
+                                        "delta_L1":            "",                           
+                                        "delta_L0":            "",                            
                                         "vary_t0":             "",             
                                         "vary_L0":             "",             
-                                        "t0":                  "",         
-                                        "t0_err":              "",             
-                                        "L0":                  "",         
-                                        "L0_err":              "",             
+                                        "t0":                  "",                  
+                                        "L0":                  "",                
                                         "flight_path_length":  "",                         
                                         "vary_DE":             "",             
                                         "vary_D0":             "",             
                                         "vary_DlnE":           "",                 
-                                        "DE":                  "",         
-                                        "DE_err":              "",             
-                                        "D0":                  "",         
-                                        "D0_err":              "",             
-                                        "DlnE":                "",         
-                                        "DlnE_err":            "",             
+                                        "DE":                  "",                    
+                                        "D0":                  "",              
+                                        "DlnE":                "",                  
                                          }
 
         self.parent.data["misc"].update({key:value for key,value in kwargs.items() if key in self.parent.data["misc"]})
