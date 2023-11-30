@@ -1,5 +1,7 @@
 import pathlib
 from typing import List, Union, Dict
+from itertools import takewhile, dropwhile
+import re
 
 class LptFile:
     # utilities to read and parse an LPT output file
@@ -187,6 +189,45 @@ class LptFile:
                 self.register_new_stats(f"weight_{num}"," Nuclide    Abundance", num+1, "float(line[12:18])")            
 
 
+    def param_table(self,vary_params: list=[]) -> dict:
+        """get a table of parameters and uncertainties
+
+        Args:
+            vary_params (list, optional): if the list of vary parameter names is given, the table is assigned with parameter names
+        """
+        # get the part of the LPT file that has the final parameters listed
+        with open(self._filename,"r") as fid:
+            parameter_lines = list(takewhile(lambda line: not line.startswith(' ***** CORRELATION MATRIX FOR OUTPUT PARAMETERS'),
+                                            dropwhile(lambda line: not line.startswith(' ***** NEW VALUES FOR RESONANCE PARAMETERS'), fid)))
+        
+        # get the part of the LPT file that has the correleation matrix listed
+        with open(self._filename,"r") as fid:
+            uncertainty_lines = list(takewhile(lambda line: not line.startswith(" ***** RATIO OF UNCERTAINTIES ON VARIED PARAMETERS "),
+                                            dropwhile(lambda line: not line.startswith(' ***** CORRELATION MATRIX FOR OUTPUT PARAMETERS'), fid)))
+
+        params = {}    
+        for line in parameter_lines:
+            for match in re.compile(r'([0-9.]+(?:[eE][+-]?\d+)?)\s*\(\s*(\d+)\)').finditer(line):
+                if match:
+                    params[int(match.group(2))] = float(match.group(1))
+
+        uncertainties = {}    
+
+        for line in uncertainty_lines:
+            try:
+                uncertainties[len(uncertainties)+1] = float(line[5:14])
+            except:
+                pass
+
+
+        if vary_params:
+            vary_params = {i+1:vary_params[i] for i in range(len(vary_params))}
+            return {key:(vary_params[key], params[key], uncertainties[key] ) for key in params}
+        else:
+            return {key:(f"param_{key}", params[key], uncertainties[key]) for key in params}
+
+        
+        
 
 
     def commands(self) -> list:
