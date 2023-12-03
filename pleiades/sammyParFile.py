@@ -33,7 +33,9 @@ class ParFile:
         self.emax = emax
 
         self.data = {}
-        self.data["fudge_factor"] = 0.1
+        self.data["info"] = {}
+        self.data["info"]["fudge_factor"] = 0.1
+        self.data["info"]["filename"] = filename
 
         # group all update methods in the Update class (and the `update`` namespace)
         self.update = Update(self)
@@ -275,7 +277,7 @@ class ParFile:
         for card in self.data["resonance_params"]:
             lines.append(self._write_resonance_params(card))
         lines.append(" "*80)
-        lines.append(f"{self.data['fudge_factor']:<11}")
+        lines.append(f"{self.data["info"]['fudge_factor']:<11}")
         lines.append(" "*80)
 
         # channel radii
@@ -331,7 +333,7 @@ class ParFile:
         # write the self.data dictionary to a config.ini file
         with open(f'{filename.with_name("params.ini")}',"w") as fid:
             config = configparser.ConfigParser()
-            config.update({key:self.data[key] for key in ['normalization', 'broadening', 'misc']})
+            config.update({key:self.data[key] for key in ['info','normalization', 'broadening', 'misc']})
             config.write(fid)
 
         
@@ -364,7 +366,7 @@ class ParFile:
                         channel["channel_name"] = new_name
 
             reaction["name"] = new_name
-
+        self.data["info"][name] = self.weight
         self.name = name
 
 
@@ -405,6 +407,7 @@ class ParFile:
             # update isotopic_masses
             compound.data["isotopic_masses"] += isotope.data["isotopic_masses"]
 
+            compound.data["info"].update(isotope.data["info"])
         return compound
 
 
@@ -742,6 +745,7 @@ class Update():
         """
         for isotope in self.parent.data["isotopic_masses"]:
             isotope["vary_abundance"] = f"{vary:<5}"
+            self.parent.data["info"][f"vary_{self.name}"] = f"{vary:<5}"
 
 
     def limit_energies_of_parfile(self) -> None:
