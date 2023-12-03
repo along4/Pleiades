@@ -38,6 +38,7 @@ class ParFile:
         self.data["info"]["fudge_factor"] = 0.1
         self.data["info"]["filename"] = filename
 
+
         # group all update methods in the Update class (and the `update`` namespace)
         self.update = Update(self)
                         
@@ -247,6 +248,7 @@ class ParFile:
             Args:
                 - filename (string): the par file name to write to
         """
+        self.filename = pathlib.Path(filename)
         
         if not self.data:
             raise RuntimeError("self.data is emtpy, please run the self.read() method first")
@@ -278,7 +280,7 @@ class ParFile:
         for card in self.data["resonance_params"]:
             lines.append(self._write_resonance_params(card))
         lines.append(" "*80)
-        lines.append(f"{self.data["info"]['fudge_factor']:<11}")
+        lines.append(f"{self.data['info']['fudge_factor']:<11}")
         lines.append(" "*80)
 
         # channel radii
@@ -293,7 +295,7 @@ class ParFile:
         # isotopic masses
         if self.data["isotopic_masses"]:
             lines.append("ISOTOPIC MASSES AND ABUNDANCES FOLLOW".ljust(80))
-            for card in self.data["isotopic_masses"]:
+            for card in self.data["isotopic_masses"].values():
                 lines.append(self._write_isotopic_masses(card))
             lines.append(" "*80)
             lines.append("")
@@ -331,11 +333,7 @@ class ParFile:
         with open(filename,"w") as fid:
             fid.write("\n".join(lines)) 
 
-        # write the self.data dictionary to a config.ini file
-        with open(f'{filename.with_name("params.ini")}',"w") as fid:
-            config = configparser.ConfigParser()
-            config.update({key:self.data[key] for key in ['info','normalization', 'broadening', 'misc']})
-            config.write(fid)
+        self.update.save_params_to_config()
 
         
     def _rename(self) -> None:
@@ -368,6 +366,7 @@ class ParFile:
 
             reaction["name"] = new_name
         self.data["info"][name] = self.weight
+        self.data["info"]["isotopes"] = [name]
         self.name = name
 
 
@@ -406,9 +405,13 @@ class ParFile:
             compound.data["channel_radii"] += isotope.data["channel_radii"]
 
             # update isotopic_masses
-            compound.data["isotopic_masses"] += isotope.data["isotopic_masses"]
+            compound.data["isotopic_masses"].update(isotope.data["isotopic_masses"])
 
+            # update info
+            isotopes = compound.data["info"]["isotopes"] + isotope.data["info"]["isotopes"]
             compound.data["info"].update(isotope.data["info"])
+            compound.data["info"]["isotopes"] = isotopes
+            
         return compound
 
 
@@ -508,7 +511,7 @@ class ParFile:
     def _parse_isotopic_masses_cards(self) -> None:
         """ parse a list of isotopic_masses cards, sort the key-word values
         """
-        im_dicts = []
+        im_dicts = {}
         for card in self._isotopic_masses_cards:
             im_dicts.append(self._read_isotopic_masses(card))
 
@@ -687,7 +690,7 @@ class Update():
 
         # bump isotopic masses
         if self.parent.data["isotopic_masses"]:
-            for isotope in self.parent.data["isotopic_masses"]:
+            for key,isotope in self.parent.data["isotopic_masses"].items():
                 spin_groups = [f"{group[0]['group_number'].strip():>5}" for group in self.parent.data["spin_group"]]
                     
                 sg_formatted = "".join(spin_groups[:8]).ljust(43)
@@ -736,7 +739,7 @@ class Update():
                         "abundance_uncertainty":f"{f'{self.parent.weight*0.1:.7f}':>9}",
                         "vary_abundance":"1".ljust(5),
                         "spin_groups":sg_formatted}
-            self.parent.data["isotopic_masses"].append(iso_dict)
+            self.parent.data["isotopic_masses"][self.parent.name] = iso_dict
 
     def toggle_vary_abundances(self,vary:bool =False) -> None:
         """toggles the vary flag on all abundances
@@ -745,8 +748,8 @@ class Update():
             vary (bool, optional): True will flag all abundances to vary
         """
         for isotope in self.parent.data["isotopic_masses"]:
-            isotope["vary_abundance"] = f"{vary:<5}"
-            self.parent.data["info"][f"vary_{self.name}"] = f"{vary:<5}"
+            self.parent.data["isotopic_masses"][isotope]["vary_abundance"] = f"{vary:<5}"
+            self.parent.data["info"][f"vary_{isotope}"] = f"{vary:<5}"
 
 
     def limit_energies_of_parfile(self) -> None:
@@ -951,13 +954,23 @@ class Update():
         data_dict = getattr(self.parent,f"_{data_key.upper()}_FORMAT")
         self.parent.data[keyword].update({key:int(vary) for key in data_dict if key.startswith("vary_")})
 
+    def save_params_to_config(self) -> None:
+        # write the self.data dictionary to a config.ini file
+        inifilename = f'{pathlib.Path(self.parent.filename).with_name("params.ini")}'
+        with open(inifilename,"w") as fid:
+            config = configparser.ConfigParser()
+            config.optionxform = str
+            config.update({key:self.parent.data[key] for key in ['info','normalization', 'broadening', 'misc']})
+            config.write(fid)
+
 
      
 
 if __name__=="__main__":
 
-    par = ParFile("/sammy/samexm/samexm/endf_to_par/archive/Ar_40/results/Ar_40.par")
-    par.read()
+    par1 = ParFile("/sammy/work/archive/U238/results/U238.par").read()
+    par2 = ParFile("/sammy/work/archive/U238/results/U238.par").read()
+    par = par1 + par2
     print(par.data)
 
 
