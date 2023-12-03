@@ -31,6 +31,7 @@ class ParFile:
         self.name = name
         self.emin = emin
         self.emax = emax
+        self.energy_range_pad = 0.3 # 30% above emax and below emin
 
         self.data = {}
         self.data["info"] = {}
@@ -755,7 +756,15 @@ class Update():
         for num, res in enumerate(self.parent.data["resonance_params"]):
             # cast all numbers such as "3.6700-5" to floats
             energy = "e-".join(res['reosnance_energy'].split("-")).lstrip("e").replace("+","e+") if not "e" in res['reosnance_energy'] else res['reosnance_energy']
-            if float(self.parent.emin) <=  float(energy) < float(self.parent.emax):
+            if self.parent.emin<5.:
+                # if emin is low anyway, grab all resonances down to below zro
+                emin = -100.
+            else:
+                emin = float(self.parent.emin)*(1.-self.parent.energy_range_pad)
+            emax = float(self.parent.emax)*(1.+self.parent.energy_range_pad)
+            self.parent.data["info"]["emin"] = emin
+            self.parent.data["info"]["emax"] = emax
+            if emin <=  float(energy) < emax:
                 new_res_params.append(res)
                 igroups.add(res["igroup"].strip())
         
