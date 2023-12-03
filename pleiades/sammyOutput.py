@@ -1,7 +1,9 @@
 import pathlib
-from typing import List, Union, Dict
+from typing import List, Union, Dict, Union
 from itertools import takewhile, dropwhile
+import configparser
 import re
+import pandas
 
 class LptFile:
     # utilities to read and parse an LPT output file
@@ -55,6 +57,8 @@ class LptFile:
         
     
         self.LPT_SEARCH_PATTERNS = LPT_SEARCH_PATTERNS
+
+        self.params = ParamsConfig(self)
             
 
     def stats(self) -> dict:
@@ -189,11 +193,13 @@ class LptFile:
                 self.register_new_stats(f"weight_{num}"," Nuclide    Abundance", num+1, "float(line[12:18])")            
 
 
-    def param_table(self,vary_params: list=[]) -> dict:
+    def param_table(self, only_vary:bool = True,
+                    dataframe:bool = True) -> Union[dict,"pandas.DataFrame"]:
         """get a table of parameters and uncertainties
 
         Args:
-            vary_params (list, optional): if the list of vary parameter names is given, the table is assigned with parameter names
+            only_vary (bool): if True, return only the varied parameters
+            dataframe (bool, default True): if True return a pandas.DataFrame, otherwise return a dictionary
         """
         # get the part of the LPT file that has the final parameters listed
         with open(self._filename,"r") as fid:
@@ -215,16 +221,28 @@ class LptFile:
 
         for line in uncertainty_lines:
             try:
-                uncertainties[len(uncertainties)+1] = float(line[5:14])
+                uncertainties[len(uncertainties)+1] = float(line[5:15])
             except:
                 pass
+        
+        # get a dictionary of vary parameters
+        
 
-
-        if vary_params:
-            vary_params = {i+1:vary_params[i] for i in range(len(vary_params))}
-            return {key:(vary_params[key], params[key], uncertainties[key] ) for key in params}
+        
+        initial_params = self.params.get_vary_params(only_vary=True)
+        final_params = {vary_key:(params[key], uncertainties[key],"1") for vary_key,key in zip(initial_params,params)}
+        if only_vary:
+            initial_params.update(final_params)
         else:
-            return {key:(f"param_{key}", params[key], uncertainties[key]) for key in params}
+            all_initial_params = self.params.get_vary_params(only_vary=False)
+            initial_params = {key:(all_initial_params[key] if key not in final_params else final_params[key]) for key in all_initial_params }
+
+        self.final_params = initial_params # this is an updated copy of initial_params
+
+        if dataframe:
+            return pandas.DataFrame(self.final_params,index=["param","uncertainty","vary"]).T
+        else:
+            return initial_params
 
         
         
@@ -247,5 +265,71 @@ class LptFile:
                         
         return cards
     
+
+class ParamsConfig:
+    # utilities to parse and read param config files
+
+    def __init__(self, parent: "LptFile") -> None:
+        """
+        utilities to read and parse param config files
+        """
+        self.parent = parent
+        self._archivepath = pathlib.Path(self.parent._filename).parent.parent
+        
+
+        self.load_initial();
+
+    
+    def load_initial(self, filename: str="params.ini") -> dict:
+        # loads the intial_config file and update internal self.data params
+        inifilename = self._archivepath / "params.ini"
+        config = configparser.ConfigParser()
+        config.optionxform = str
+        config.read(inifilename)
+        self.params = {key:dict(config[key]) for key in config.sections()}
+        # make also a flatten_params object, where all dictionaries are normalized to parent
+        self.flatten_params = {}
+        for key in self.params:
+            self.flatten_params.update(self.params[key])
+
+        return self.params
+    
+    def get_vary_params(self, only_vary: bool=True) -> dict:
+        """get a list of all vary params
+
+        Args:
+            only_vary (bool): if True, return only params which has are varied, otherwise return both varied and fixed params
+        Returns:
+            dict of vary_params and vary values
+        """
+        if only_vary:
+            vary_params = {key:value for key,value in self.flatten_params.items() if key.startswith("vary_") and value=="1"}
+        else:
+            vary_params = {key:value for key,value in self.flatten_params.items() if key.startswith("vary_")}
+
+        # sort according to order of parameters as they appear in the LPT file
+        params_order = ["isotopes","temperature","thickness",
+                        "flight_path_spread","deltag_fwhm","deltae_us",
+                        "delta_L1","delta_L0",
+                        "t0","L0",
+                        "DE","D0","DlnE",
+                        "normalization","constant_bg",
+                        "one_over_v_bg","sqrt_energy_bg",
+                        "exponential_bg","exp_decay_bg"]
+        sorted_params = {}
+        # populatet isotopes first:
+        for isotope in eval(self.flatten_params["isotopes"]):
+            if only_vary:
+                if self.flatten_params[f"vary_{isotope}"] == "1":
+                    sorted_params[isotope] = (self.flatten_params[isotope],0.,self.flatten_params[f"vary_{isotope}"])
+            else:
+                sorted_params[isotope] = (self.flatten_params[isotope],0.,self.flatten_params[f"vary_{isotope}"])
+
+        for key in params_order:
+            if f"vary_{key}" in vary_params:
+                # return param, error, vary
+                sorted_params[key] = (self.flatten_params[key],0.,vary_params[f"vary_{key}"])   
+
+        return sorted_params
 
 
