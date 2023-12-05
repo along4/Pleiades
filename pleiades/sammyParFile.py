@@ -144,7 +144,71 @@ class ParFile:
                                 #    "DlnE_err":slice(61-1,70)
                                   }
         
-
+        self._RESOLUTION_FORMAT = {"burst_keyword":slice(1-1,5),
+                                   "vary_burst":slice(7-1,7),
+                                   "burst":slice(11-1,20),
+                                   "tau_keyword":slice(1-1+81,5+81),
+                                   "vary_tau1":slice(6-1+81,6+81),
+                                   "vary_tau2":slice(7-1+81,7+81),
+                                   "vary_tau3":slice(8-1+81,8+81),
+                                   "vary_tau4":slice(9-1+81,9+81),
+                                   "vary_tau5":slice(10-1+81,10+81),
+                                   "tau1":slice(11-1+81,20+81),
+                                   "tau2":slice(21-1+81,30+81),
+                                   "tau3":slice(31-1+81,40+81),
+                                   "tau4":slice(41-1+81,50+81),
+                                   "tau5":slice(51-1+81,60+81),
+                                   "tau6":slice(61-1+81,70+81),
+                                   "tau7":slice(71-1+81,80+81),
+                                   "tau_keyword2":slice(1-1+162,5+162),
+                                   "vary_tau6":slice(6-1+162,6+162),
+                                   "vary_tau7":slice(7-1+162,7+162),
+                                   "lambd_keyword":slice(1-1+243,5+243),
+                                   "vary_lambd0":slice(6-1+243,6+243),
+                                   "vary_lambd1":slice(7-1+243,7+243),
+                                   "vary_lambd2":slice(8-1+243,8+243),
+                                   "vary_lambd3":slice(9-1+243,9+243),
+                                   "vary_lambd4":slice(10-1+243,10+243),
+                                   "lambd0":slice(11-1+243,20+243),
+                                   "lambd1":slice(21-1+243,30+243),
+                                   "lambd2":slice(31-1+243,40+243),
+                                   "lambd3":slice(41-1+243,50+243),  
+                                   "lambd4":slice(51-1+243,60+243), 
+                                   "lambd_keyword2":slice(1-1+324,5+324),
+                                   "a1_keyword":slice(1-1+405,5+405),
+                                   "vary_a1":slice(6-1+405,6+405),
+                                   "vary_a2":slice(7-1+405,7+405),
+                                   "vary_a3":slice(8-1+405,8+405),
+                                   "vary_a4":slice(9-1+405,9+405),
+                                   "vary_a5":slice(10-1+405,10+405),
+                                   "a1":slice(11-1+405,20+405),
+                                   "a2":slice(21-1+405,30+405),
+                                   "a3":slice(31-1+405,40+405),
+                                   "a4":slice(41-1+405,50+405),
+                                   "a5":slice(51-1+405,60+405),
+                                   "a6":slice(61-1+405,70+405),
+                                   "a7":slice(71-1+405,80+405), 
+                                   "a1_keyword2":slice(1-1+486,5+486),
+                                   "vary_a6":slice(6-1+486,6+486),
+                                   "vary_a7":slice(7-1+486,7+486),  
+                                   "expon_keyword":slice(1-1+567,5+567),
+                                   "vary_expon_t0":slice(6-1+567,6+567),
+                                   "vary_expon_a2":slice(7-1+567,7+567),
+                                   "vary_expon_a3":slice(8-1+567,8+567),
+                                   "vary_expon_a4":slice(9-1+567,9+567),
+                                   "vary_expon_a5":slice(10-1+567,10+567),
+                                   "expon_t0":slice(11-1+567,20+567),
+                                   "expon_a2":slice(21-1+567,30+567),
+                                   "expon_a3":slice(31-1+567,40+567),
+                                   "expon_a4":slice(41-1+567,50+567),  
+                                   "expon_a5":slice(51-1+567,60+567),  
+                                   "expon_keyword2":slice(1-1+648,5+648),   
+                                   "chann_keyword":slice(1-1+729,5+729),  
+                                   "vary_chann":slice(7-1+729,7+729),
+                                   "chann_emax":slice(11-1+729,20+729),
+                                   "chann":slice(21-1+729,30+729)
+                                  }
+        
 
     def read(self) -> 'ParFile':
         """Reads SAMMY .par file into data-structure that allows updating values
@@ -238,6 +302,7 @@ class ParFile:
             self.update.vary_all_resonances(False)
             self.update.normalization()
             self.update.broadening()
+            self.update.resolution()
             
 
         return self
@@ -327,6 +392,14 @@ class ParFile:
                 lines.append(self._write_misc_tzero(card))
             if any([value for key,value in self.data["misc"].items() if key in self._MISC_DELTE_FORMAT]):
                 lines.append(self._write_misc_deltE(card))
+            lines.append(" "*80)
+            lines.append("")
+
+        # resolution
+        if any(self.data["resolution"].values()):
+            lines.append("RPI RESOLUTION PARAMETERS FOLLOW".ljust(80))
+            card = self.data["resolution"]
+            lines.append(self._write_resolution(card))
             lines.append(" "*80)
             lines.append("")
 
@@ -660,6 +733,20 @@ class ParFile:
             new_text[slice_value] = list(str(misc_deltE_dict[key]).ljust(word_length))
         return "".join(new_text)
 
+    def _write_resolution(self,resolution_dict: dict) -> str:
+        # write a formated resolution line from dict with the key-word resolution values
+        new_text =([" "]*80 +["\n"])*9# 80 characters long list of spaces to be filled
+        resolution_dict["burst_keyword"] = "BURST"
+        resolution_dict["tau_keyword"] = resolution_dict["tau_keyword2"] = "TAU  "
+        resolution_dict["lambd_keyword"] = resolution_dict["lambd_keyword2"] = "LAMBD"
+        resolution_dict["a1_keyword"] = resolution_dict["a1_keyword2"] = "A1   "
+        resolution_dict["expon_keyword"] = resolution_dict["expon_keyword2"] = "EXPON"
+        resolution_dict["chann_keyword"] = "CHANN"
+        for key,slice_value in self._RESOLUTION_FORMAT.items():
+            word_length = slice_value.stop - slice_value.start
+            # assign the fixed-format position with the corresponding key-word value
+            new_text[slice_value] = list(str(resolution_dict[key]).ljust(word_length))
+        return "".join(new_text)
 
 
 
@@ -965,6 +1052,139 @@ class Update():
 
         self.parent.data["misc"].update({key:value for key,value in kwargs.items() if key in self.parent.data["misc"]})
 
+
+    def resolution(self, **kwargs) -> None:
+        """change or vary resolution parameters and vary flags
+
+        Args:
+            - vary_burst  (int) 0=fixed, 1=vary, 2=pup
+            - burst (float)
+
+            - vary_tau1  (int) 0=fixed, 1=vary, 2=pup
+            - vary_tau2  (int) 0=fixed, 1=vary, 2=pup
+            - vary_tau3  (int) 0=fixed, 1=vary, 2=pup
+            - vary_tau4  (int) 0=fixed, 1=vary, 2=pup
+            - vary_tau5  (int) 0=fixed, 1=vary, 2=pup
+            - tau1 (float)
+            - tau2 (float)
+            - tau3 (float)
+            - tau4 (float)
+            - tau5 (float)
+            - tau6 (float)
+            - tau7 (float)
+            - vary_tau6  (int) 0=fixed, 1=vary, 2=pup
+            - vary_tau7  (int) 0=fixed, 1=vary, 2=pup
+
+            - vary_lambd0  (int) 0=fixed, 1=vary, 2=pup
+            - vary_lambd1  (int) 0=fixed, 1=vary, 2=pup
+            - vary_lambd2  (int) 0=fixed, 1=vary, 2=pup
+            - vary_lambd3  (int) 0=fixed, 1=vary, 2=pup
+            - vary_lambd4  (int) 0=fixed, 1=vary, 2=pup
+            - lambd0 (float)
+            - lambd1 (float)
+            - lambd2 (float)
+            - lambd3 (float)
+            - lambd4 (float)
+
+
+            - vary_a1  (int) 0=fixed, 1=vary, 2=pup
+            - vary_a2  (int) 0=fixed, 1=vary, 2=pup
+            - vary_a3  (int) 0=fixed, 1=vary, 2=pup
+            - vary_a4  (int) 0=fixed, 1=vary, 2=pup
+            - vary_a5  (int) 0=fixed, 1=vary, 2=pup
+            - a1 (float)
+            - a2 (float)
+            - a3 (float)
+            - a4 (float)
+            - a5 (float)
+            - a6 (float)
+            - a7 (float)
+            - vary_a6  (int) 0=fixed, 1=vary, 2=pup
+            - vary_a7  (int) 0=fixed, 1=vary, 2=pup
+
+            - vary_expon_t0  (int) 0=fixed, 1=vary, 2=pup
+            - vary_expon_a2  (int) 0=fixed, 1=vary, 2=pup
+            - vary_expon_a3  (int) 0=fixed, 1=vary, 2=pup
+            - vary_expon_a4  (int) 0=fixed, 1=vary, 2=pup
+            - vary_expon_a5  (int) 0=fixed, 1=vary, 2=pup
+            - expon_t0 (float)
+            - expon_a2 (float)
+            - expon_a3 (float)
+            - expon_a4 (float)
+            - expon_a5 (float)
+
+            - vary_chann (float)
+            - chann_emax (float)
+            - chann (float)
+        """
+        if "resolution" not in self.parent.data:
+            self.parent.data["resolution"] = {"burst_keyword": "",
+                                        "vary_burst": "",
+                                        "burst": "",
+                                        "tau_keyword": "",
+                                        "vary_tau1": "",
+                                        "vary_tau2": "",
+                                        "vary_tau3": "",
+                                        "vary_tau4": "",
+                                        "vary_tau5": "",
+                                        "tau1": "",
+                                        "tau2": "",
+                                        "tau3": "",
+                                        "tau4": "",
+                                        "tau5": "",
+                                        "tau6": "",
+                                        "tau7": "",
+                                        "tau_keyword2": "",
+                                        "vary_tau6": "",
+                                        "vary_tau7": "",
+                                        "lambd_keyword": "",
+                                        "vary_lambd0": "",
+                                        "vary_lambd1": "",
+                                        "vary_lambd2": "",
+                                        "vary_lambd3": "",
+                                        "vary_lambd4": "",
+                                        "lambd0": "",
+                                        "lambd1": "",
+                                        "lambd2": "",
+                                        "lambd3": "",
+                                        "lambd4": "",
+                                        "lambd_keyword2": "",
+                                        "a1_keyword": "",
+                                        "vary_a1": "",
+                                        "vary_a2": "",
+                                        "vary_a3": "",
+                                        "vary_a4": "",
+                                        "vary_a5": "",
+                                        "a1": "",
+                                        "a2": "",
+                                        "a3": "",
+                                        "a4": "",
+                                        "a5": "",
+                                        "a6": "",
+                                        "a7": "",
+                                        "a1_keyword2": "",
+                                        "vary_a6": "",
+                                        "vary_a7": "",
+                                        "expon_keyword": "",
+                                        "vary_expon_t0": "",
+                                        "vary_expon_a2": "",
+                                        "vary_expon_a3": "",
+                                        "vary_expon_a4": "",
+                                        "vary_expon_a5": "",
+                                        "expon_t0": "",
+                                        "expon_a2": "",
+                                        "expon_a3": "",
+                                        "expon_a4": "",
+                                        "expon_a5": "",
+                                        "expon_keyword2": "",
+                                        "chann_keyword": "",
+                                        "vary_chann": "",
+                                        "chann_emax": "",
+                                        "chann": ""}
+
+        self.parent.data["resolution"].update({key:value for key,value in kwargs.items() if key in self.parent.data["resolution"]})
+
+
                                                  
     def vary_all(self,vary=True,data_key="misc_delta"):
         """toggle all vary parameters in a data keyword to either vary/fixed
@@ -988,7 +1208,7 @@ class Update():
         with open(inifilename,"w") as fid:
             config = configparser.ConfigParser()
             config.optionxform = str
-            config.update({key:self.parent.data[key] for key in ['info','normalization', 'broadening', 'misc']})
+            config.update({key:self.parent.data[key] for key in ['info','normalization', 'broadening', 'misc','resolution']})
             config.write(fid)
 
 
