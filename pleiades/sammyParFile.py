@@ -31,12 +31,13 @@ class ParFile:
         self.name = name
         self.emin = emin
         self.emax = emax
-        self.energy_range_pad = 0.3 # 30% above emax and below emin
 
         self.data = {}
         self.data["info"] = {}
         self.data["info"]["fudge_factor"] = 0.1
         self.data["info"]["filename"] = filename
+        self.data["info"]["emin"] = emin
+        self.data["info"]["emax"] = emax
 
 
         # group all update methods in the Update class (and the `update`` namespace)
@@ -234,7 +235,7 @@ class ParFile:
             self.update.isotopic_weight()
             self.update.limit_energies_of_parfile()
             self.update.isotopic_masses_abundance()
-            self.update.toggle_vary_all_resonances(False)
+            self.update.vary_all_resonances(False)
             self.update.normalization()
             self.update.broadening()
             
@@ -759,14 +760,9 @@ class Update():
         for num, res in enumerate(self.parent.data["resonance_params"]):
             # cast all numbers such as "3.6700-5" to floats
             energy = "e-".join(res['reosnance_energy'].split("-")).lstrip("e").replace("+","e+") if not "e" in res['reosnance_energy'] else res['reosnance_energy']
-            if self.parent.emin<5.:
-                # if emin is low anyway, grab all resonances down to below zro
-                emin = -100.
-            else:
-                emin = float(self.parent.emin)*(1.-self.parent.energy_range_pad)
-            emax = float(self.parent.emax)*(1.+self.parent.energy_range_pad)
-            self.parent.data["info"]["emin"] = emin
-            self.parent.data["info"]["emax"] = emax
+
+            emin = float(self.parent.data["info"]["emin"])
+            emax = float(self.parent.data["info"]["emax"])
             if emin <=  float(energy) < emax:
                 new_res_params.append(res)
                 igroups.add(res["igroup"].strip())
@@ -817,7 +813,7 @@ class Update():
 
         
 
-    def toggle_vary_all_resonances(self,vary: bool=False) -> None:
+    def vary_all_resonances(self,vary: bool=False) -> None:
         """toggles the vary flag on all resonances
 
         Args:
@@ -831,6 +827,38 @@ class Update():
                 card["vary_fission1_width"] = f"{1:>2}" if vary else f"{0:>2}"
             if card["fission2_width"].strip():
                 card["vary_fission2_width"] = f"{1:>2}" if vary else f"{0:>2}"
+
+
+    def vary_resonances_in_energy_range(self,vary_energies: bool=False, 
+                                             vary_gamma_widths: bool=True,
+                                             vary_neutron_widths: bool=True,
+                                             vary_fission_widths: bool=False,
+                                             emin: float=None, emax: float=None) -> None:
+        """toggle vary flag on resonances between energy limits
+
+        Args:
+            vary_energies (bool, optional): True will flag all resonance energies to vary
+            vary_gamma_widths (bool): if True vary the resoanance gamma widths
+            vary_neutron_widths (bool): if True vary only the resoanance neutron widths
+            vary_fission_widths (bool): if True vary only the resoanance fission widths
+
+            emin (float): the lower energy in which to vary resonance params
+            emax (float): the upper energy in which to vary resonance params
+        """
+        if not emin:
+            emin = -1.0e24
+        if not emax:
+            emax = 1.0e24
+        for card in self.parent.data["resonance_params"]:
+            if emin <= float(card["reosnance_energy"]) <= emax:
+
+                card["vary_energy"] = f"{1:>2}" if vary_energies else f"{0:>2}"
+                card["vary_capture_width"] = f"{1:>2}" if vary_gamma_widths else f"{0:>2}"
+                card["vary_neutron_width"] = f"{1:>2}" if vary_neutron_widths else f"{0:>2}"
+                if card["fission1_width"].strip():
+                    card["vary_fission1_width"] = f"{1:>2}" if vary_fission else f"{0:>2}"
+                if card["fission2_width"].strip():
+                    card["vary_fission2_width"] = f"{1:>2}" if vary_fission else f"{0:>2}"
 
 
     def normalization(self, **kwargs) -> None:
