@@ -745,7 +745,7 @@ class ParFile:
         for key,slice_value in self._RESOLUTION_FORMAT.items():
             word_length = slice_value.stop - slice_value.start
             # assign the fixed-format position with the corresponding key-word value
-            new_text[slice_value] = list(str(resolution_dict[key]).ljust(word_length))
+            new_text[slice_value] = list(str(resolution_dict[key]).ljust(word_length)[:word_length])
         return "".join(new_text)
 
 
