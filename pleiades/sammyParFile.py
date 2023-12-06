@@ -735,7 +735,7 @@ class ParFile:
 
     def _write_resolution(self,resolution_dict: dict) -> str:
         # write a formated resolution line from dict with the key-word resolution values
-        new_text =([" "]*80 +["\n"])*9# 80 characters long list of spaces to be filled
+        new_text =([" "]*80 +["\n"])*10# 80 characters long list of spaces to be filled
         resolution_dict["burst_keyword"] = "BURST"
         resolution_dict["tau_keyword"] = resolution_dict["tau_keyword2"] = "TAU  "
         resolution_dict["lambd_keyword"] = resolution_dict["lambd_keyword2"] = "LAMBD"
