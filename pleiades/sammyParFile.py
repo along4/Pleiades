@@ -397,7 +397,7 @@ class ParFile:
 
         # resolution
         if any(self.data["resolution"].values()):
-            lines.append("RPI RESOLUTION PARAMETERS FOLLOW".ljust(80))
+            lines.append("RESOLUTION PARAMETERS FOLLOW".ljust(80))
             card = self.data["resolution"]
             lines.append(self._write_resolution(card))
             lines.append(" "*80)
