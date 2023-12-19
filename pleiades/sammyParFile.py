@@ -805,7 +805,7 @@ class Update():
         """Update the isotopic weight in the spin_group data
         """
         for group in self.parent.data["spin_group"]:
-            group[0]["isotopic_abundance"] = f"{f'{self.parent.weight:.7f}':>10}"
+            group[0]["isotopic_abundance"] = f"{f'{self.parent.weight:.7f}':>9}"[:9]
 
 
     def isotopic_masses_abundance(self) -> None:
@@ -813,7 +813,7 @@ class Update():
         """
         if self.parent.data["isotopic_masses"]:
             for card in self.parent.data["isotopic_masses"]:
-                card["abundance"] = f"{f'{self.parent.weight:.7f}':>9}"
+                card["abundance"] = f"{f'{self.parent.weight:.7f}':>9}"[:9]
         else:
             spin_groups = [f"{group[0]['group_number'].strip():>5}" for group in self.parent.data["spin_group"]]
                 
@@ -822,9 +822,9 @@ class Update():
             for l in range(0,L+1):
                 sg_formatted += "-1\n" + "".join(spin_groups[8+15*l:8+15*(l+1)]).ljust(78)
                 
-            iso_dict = {"atomic_mass":f'{float(self.parent.data["particle_pairs"][0]["mass_b"]):>9}',
-                        "abundance":f"{f'{self.parent.weight:.7f}':>9}",
-                        "abundance_uncertainty":f"{f'{self.parent.weight*0.1:.7f}':>9}",
+            iso_dict = {"atomic_mass":f'{float(self.parent.data["particle_pairs"][0]["mass_b"]):>9}'[:9],
+                        "abundance":f"{f'{self.parent.weight:.7f}':>9}"[:9],
+                        "abundance_uncertainty":f"{f'':>9}",
                         "vary_abundance":"1".ljust(5),
                         "spin_groups":sg_formatted}
             self.parent.data["isotopic_masses"][self.parent.name] = iso_dict

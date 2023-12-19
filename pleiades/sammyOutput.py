@@ -230,7 +230,10 @@ class LptFile:
 
         
         initial_params = self.params.get_vary_params(only_vary=True)
-        final_params = {vary_key:(params[key], uncertainties[key],"1") for vary_key,key in zip(initial_params,params)}
+        if uncertainties:
+            final_params = {vary_key:(params[key], uncertainties[key],"1") for vary_key,key in zip(initial_params,params)}
+        else:
+            final_params = {vary_key:(params[key], "","1") for vary_key,key in zip(initial_params,params)}
         if only_vary:
             initial_params.update(final_params)
         else:
