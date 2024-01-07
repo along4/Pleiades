@@ -2,6 +2,7 @@ import configparser
 from pleiades import nucData as pnd
 from typing import List, Dict
 from contextlib import suppress
+import numpy as np
 
 class InputFile:
     """ InputFile class for the Sammy input file.
@@ -36,8 +37,7 @@ class InputFile:
         self._set_predefined_commands()
 
         # update auto values
-        if auto_update:
-            self._update_and_calculate_values()
+        self._update_and_calculate_values(auto_update=auto_update)
 
         return
 
@@ -57,8 +57,7 @@ class InputFile:
         Returns: the InputFIle instance
         """
         # update auto values
-        if auto_update:
-            self._update_and_calculate_values()
+        self._update_and_calculate_values(auto_update=auto_update)
 
         # List to store formatted input card lines
         lines = []
@@ -104,6 +103,10 @@ class InputFile:
 
         # Add a newline at the end of the input cards
         self.processed_cards = lines + ["\n"]
+
+        # add optional user-defiend resolution function
+        if hasattr(self,"_resolution_commands"):
+            self.processed_cards += [self._resolution_commands]
 
         return self
 
@@ -213,7 +216,7 @@ class InputFile:
             NO_CHI_SQUARED = "CHI SQUARED IS NOT Wanted"
             )
         
-    def _update_and_calculate_values(self) -> None:
+    def _update_and_calculate_values(self,auto_update: bool=True) -> None:
         """
         Update and calculate values in the self.data dictionary.
 
@@ -222,7 +225,7 @@ class InputFile:
         dictionary in-place.
 
         Args:
-            None
+            auto_update (bool): if True 'auto' tagged parameters are updated
 
         Returns:
             None
@@ -231,20 +234,25 @@ class InputFile:
         isotopic_str = self.data["Card2"]["elmnt"]
         atomic_weight = pnd.get_mass_from_ame(isotopic_str.replace("_","-"))
 
-        #replace atomic weight based on the isotope name
-        if self.data["Card2"]["aw"] == "auto":
-            self.data["Card2"]["aw"] = f"{atomic_weight:.8f}"
+        if auto_update:
+            #replace atomic weight based on the isotope name
+            if self.data["Card2"]["aw"] == "auto":
+                self.data["Card2"]["aw"] = f"{atomic_weight:.8f}"
 
-        # get mat number
-        mat_number = pnd.get_mat_number(isotopic_str)
+            # get mat number
+            mat_number = pnd.get_mat_number(isotopic_str)
 
         # update mat number in ENDF command
         commands = self.data["Card3"]["commands"].split(',')
         for i, command in enumerate(commands):
-            if command.startswith("INPUT IS ENDF"):
+            if auto_update and command.startswith("INPUT IS ENDF"):
                 commands[i] = f"INPUT IS ENDF/B FILE MAT={mat_number}"
+            if command.startswith("FILE="):
+                self._resolution_commands = f"USER-DEFINED RESOLUTION FUNCTION\n{command}\n"
+                commands.pop(i)
 
         self.data["Card3"]["commands"] = ",".join(commands)
+
 
         return
     
@@ -274,7 +282,7 @@ class InputFile:
             string: float field of the given width with the float right-justified.
         """
         # The ".4f" here denotes 4 decimal places. You can adjust if needed.
-        return f"{data:>{width}.4f}"
+        return f"{data:>{width}}"
 
     @staticmethod
     def format_type_I(data, width):
