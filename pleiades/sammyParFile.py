@@ -586,8 +586,8 @@ class ParFile:
         """ parse a list of isotopic_masses cards, sort the key-word values
         """
         im_dicts = {}
-        for card in self._isotopic_masses_cards:
-            im_dicts.append(self._read_isotopic_masses(card))
+        for isotope,card in zip(self.data["particle_pairs"],self._isotopic_masses_cards):
+            im_dicts.update(**{isotope["name"]: self._read_isotopic_masses(card)})
 
         self.data.update({"isotopic_masses":im_dicts})
 
@@ -813,7 +813,7 @@ class Update():
         """
         if self.parent.data["isotopic_masses"]:
             for card in self.parent.data["isotopic_masses"]:
-                card["abundance"] = f"{f'{self.parent.weight:.7f}':>9}"[:9]
+                self.parent.data["isotopic_masses"][card]["abundance"] = f"{f'{self.parent.weight:.7f}':>9}"[:9]
         else:
             spin_groups = [f"{group[0]['group_number'].strip():>5}" for group in self.parent.data["spin_group"]]
                 
