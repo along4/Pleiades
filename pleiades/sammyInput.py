@@ -15,7 +15,7 @@ class InputFile:
             - config_file (str): config file name
             - auto_update (bool): True will replace atomic mass and values set to "auto" 
         """
-        # read connfig file
+        # read config file
         self._config = configparser.ConfigParser()
         self._config.read(config_file)
 
@@ -144,7 +144,7 @@ class InputFile:
                 'iptwid': ('5',int,2),        # Determines the number of points to be added to auxiliary grid in tails of small resonances. Defaults to 5
                 'ixxchn': ('0',int,10),       # Number of energy channels in ODF-type data file to be ignored 
                 'ndigit': ('2',int,2),        # Number of digits for compact format for covariance matrix (Default = 2)
-                'idropp': ('2',int,2),        # The input resonanceparameter covariance matrix will be modified before being used in the fitting procedure. Defaults to 2
+                'idropp': ('2',int,2),        # The input resonance parameter covariance matrix will be modified before being used in the fitting procedure. Defaults to 2
                 'matnum': ('0',int,6),         # ENDF Material number. Defaults to 0.
                 },     
             Card3={
