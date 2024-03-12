@@ -1,4 +1,7 @@
-![PLEIADES](./images/PLEIADES.jpg)
+.. image:: ./images/PLEIADES.jpg
+   :alt: My Image Description
+   :align: center
+
 
 PLEIADES
 ========
