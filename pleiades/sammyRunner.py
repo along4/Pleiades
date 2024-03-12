@@ -36,12 +36,16 @@ def run(archivename: str="example",
 
 
     # copy files into archive
-    shutil.copy(inpfile, archivepath / f'{archivename}.inp')
-    inpfile = f'{archivename}.inp'
-    shutil.copy(parfile, archivepath / f'{archivename}.par')
-    parfile = f'{archivename}.par'
-    shutil.copy(datafile, archivepath / f'{archivename}.dat')
-    datafile = f'{archivename}.dat'
+    try:
+        shutil.copy(inpfile, archivepath / f'{archivename}.inp')
+        inpfile = f'{archivename}.inp'
+        shutil.copy(parfile, archivepath / f'{archivename}.par')
+        parfile = f'{archivename}.par'
+        shutil.copy(datafile, archivepath / f'{archivename}.dat')
+        datafile = f'{archivename}.dat'
+    except FileNotFoundError:
+        # print(f"grab files from within the {archivepath} directory")
+        pass
 
     outputfile = f'{archivename}.out'
 
@@ -87,9 +91,15 @@ def run_endf(inpfile: str = "") -> None:
     import os
     import shutil
 
-    archivename = inpfile.split(".")[0]
+    inpfile= pathlib.Path(inpfile)
+    archivename = pathlib.Path(inpfile.stem)
 
-    archivepath = pathlib.Path(f"archive/{archivename}") 
+    # read the input file to get the Emin and Emax:
+    with open(inpfile) as fid:
+        next(fid)
+        Emin, Emax = next(fid).split()[2:4]
+
+    archivepath = pathlib.Path("archive") / archivename
 
     # create an archive directory
     os.makedirs(archivepath,exist_ok=True)
@@ -97,13 +107,11 @@ def run_endf(inpfile: str = "") -> None:
 
 
     # copy files into archive
-    shutil.copy(inpfile, archivepath / f'{archivename}.inp')
-    inpfile = f'{archivename}.inp'
+    shutil.copy(inpfile, archivepath / archivename.with_suffix(".inp"))
+    inpfile = archivename.with_suffix(".inp")
+    
 
-    # read the input file to get the Emin and Emax:
-    with open(inpfile) as fid:
-        next(fid)
-        Emin, Emax = next(fid).split()[2:4]
+
 
     # write a fake datafile with two entries of Emin and Emax
     with open(archivepath / f'{archivename}.dat',"w") as fid:
