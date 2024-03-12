@@ -31,7 +31,7 @@ class InputFile:
         self._set_default_params()
 
         # update the defaults with config file data
-        self.data.update(self._config_data)
+        self._update_default_params_with_config()
 
         # populate the database of predefined commands 
         self._set_predefined_commands()
@@ -104,7 +104,7 @@ class InputFile:
         # Add a newline at the end of the input cards
         self.processed_cards = lines + ["\n"]
 
-        # add optional user-defiend resolution function
+        # add optional user-defined resolution function
         if hasattr(self,"_resolution_commands"):
             self.processed_cards += [self._resolution_commands]
 
@@ -188,8 +188,18 @@ class InputFile:
             self.data[card] = {}
             for parameter in self._default_data[card]:
                 self.data[card][parameter] = self._default_data[card][parameter][0]
-
+                
         return
+
+    def _update_default_params_with_config(self) -> None:
+        """Update the default parameters with config file data, only if they exist in both."""
+        for card, params in self._config_data.items():
+            if card in self.data:
+                for param, value in params.items():
+                    if param in self.data[card]:
+                        self.data[card][param] = value
+
+
 
     def _set_predefined_commands(self) -> None:
         """dictoinary that holds keywords that expands to SAMMY alphanumerical commands

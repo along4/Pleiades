@@ -4,9 +4,13 @@ import pleiades.nucData as pnd      # grabbing nucData for Pleiades.
 
 def main(config_file=None):
 
-    # read config files 
-    sammy_input = psi.InputFile("config.ini")
-    sammy_input.process()
+    # Read config files 
+    sammy_input = psi.InputFile("config.ini",auto_update=True)
+    
+    # Process input data and format the cards.
+    sammy_input.process()       
+    
+    # Write formatted input cards to a specified file.
     sammy_input.write("example.inp")
 
 
