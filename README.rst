@@ -11,6 +11,6 @@ PLEIADES' user documentation
 ============================
 
 **PLEIADES:** Python Libraries Extensions for Isotopic Analysis via Detailed Extraction of SAMMY. 
-This is a Python package that sets up, executes, and analyzes, SAMMY runs. If you are unfimiliar 
+This is a Python package that sets up, executes, and analyzes, SAMMY runs. If you are unfamiliar 
 with SAMMY, please see the `SAMMY website <https://code.ornl.gov/RNSD/SAMMY>`_.
 
