@@ -156,5 +156,3 @@ def run_endf(inpfile: str = "") -> None:
         os.remove(f)
 
     return
-
-

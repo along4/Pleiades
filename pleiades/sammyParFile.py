@@ -303,6 +303,7 @@ class ParFile:
             self.update.normalization()
             self.update.broadening()
             self.update.resolution()
+            self.update.misc()
             
 
         return self

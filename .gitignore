@@ -178,6 +178,10 @@ tests/files/SAM*
 *.endf
 *.lpt
 *.LPT
+*.io
 *.IO
+*.lst
+*.LST
+
 
 ./archive/*
