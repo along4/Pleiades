@@ -168,3 +168,16 @@ tests/new_compound.par
 tests/files/compound.par
 tests/files/SAM*
 
+# ignore any text files
+*.txt
+*.twenty
+*.inp
+*.par
+*.out
+*.dat
+*.endf
+*.lpt
+*.LPT
+*.IO
+
+./archive/*
