@@ -168,7 +168,7 @@ tests/new_compound.par
 tests/files/compound.par
 tests/files/SAM*
 
-# ignore any text files
+# ignore any text files from SAMMY
 *.txt
 *.twenty
 *.inp
