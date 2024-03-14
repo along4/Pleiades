@@ -21,19 +21,22 @@ def main(config_inp_file: str="config_inp.ini"):
     sammy_par_file_name = run_name+".par"
     
     # Use the InputFile methods read config file, process it into a input, and write an inp file
+    print("--> Reading config file and creating input file")
     sammy_input = psi.InputFile(config_inp_file)
     sammy_input.process()      
     sammy_input.write(sammy_inp_file_name)    
 
     # Use the run_endf in sammyRunner to generate the needed par file.
+    print("--> Running run_endf to generate par file")
     psr.run_endf(inpfile=sammy_inp_file_name)
     
+    print("--> Reading in ENDF par file and creating Eu-153 par file")
     sammy_parameters = pspf.ParFile("archive/Eu_153/results/Eu_153.par").read()   
     sammy_parameters.write("Eu_153.par")
     
+    print("--> Updating input file for actual SAMMY fit")
     # Now need to modify input file to run an actual SAMMY fit. 
     sammy_input.data["Card1"]["title"] = "Run SAMMY to find abundance of Eu-153 isotope"
-    
     # update commands. We need to preform the REICH_MOORE and SOLVE_BAYES for this case
     sammy_input.data["Card3"]["commands"] = 'CHI_SQUARED,CSISRS,SOLVE_BAYES,QUANTUM_NUMBERS,REICH_MOORE_FORM,GENERATE ODF FILE AUTOMATICALLY,RPI TRANSMISSION RESOLUTION FUNCTION'
     # set the resolution width from flight path according to the RPI paper
@@ -45,9 +48,11 @@ def main(config_inp_file: str="config_inp.ini"):
     sammy_input.write(sammy_inp_file_name)
     
     # Run SAMMY!!!!!!
+    print("--> Running SAMMY")
     psr.run(archivename=run_name,datafile="Eu_153.dat") 
     
     # Grab lpt file
+    print("--> Reading in LPT file")
     lpt = pso.LptFile("archive/Eu_153/results/Eu_153.lpt")
     lpt.register_new_stats(keyname="weight_153",start_text="  Isotopic abundance",skipped_rows=3,line_format="float(line.split()[1])")
     stats = lpt.stats()
