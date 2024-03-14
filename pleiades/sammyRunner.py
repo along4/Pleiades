@@ -73,7 +73,6 @@ def run(archivename: str="example",
     files_to_move = ['SAMMY.PAR', 'SAMMY.LST', 'SAMMY.LPT', 'SAMMY.IO']
 
     # Move files
-    '''
     for file in files_to_move:
         source = archive_path / file
         destination = archive_path / f'results/{archivename}.{file.split(".")[-1]}'
@@ -84,10 +83,10 @@ def run(archivename: str="example",
             print(f"File {source} does not exist.")
 
     # remove SAM*.*
-    #filelist = glob.glob(f"{archive_path}/SAM*")
-    #for f in filelist:
-    #    os.remove(f)
-    '''
+    filelist = glob.glob(f"{archive_path}/SAM*")
+    for f in filelist:
+        os.remove(f)
+    
     return
 
 

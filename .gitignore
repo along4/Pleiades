@@ -161,7 +161,9 @@ cython_debug/
 *.txt
 *.twenty
 *.inp
+*.INP
 *.par
+*.PAR
 *.out
 *.dat
 *.endf
@@ -176,5 +178,11 @@ cython_debug/
 *.LST
 *.ODF
 *.odf
+*.RED
+*.DAT
+*.dat
+*.cov
+*.COV
+
 
 ./archive/*
