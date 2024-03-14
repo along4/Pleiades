@@ -34,9 +34,9 @@ class LptFile:
                 skipped_rows=0,
                 line_format="float(line.split()[5])"),
             "thickness":dict(
-                start_text=" Target Thickness=",
-                skipped_rows=0,
-                line_format="float(line.split()[2])"),
+                start_text="  TEMPERATURE      THICKNESS",
+                skipped_rows=1,
+                line_format="float(line.split()[1])"),
             "varied_params":dict(
                 start_text=" Number of varied parameters",
                 skipped_rows=0,

@@ -51,7 +51,6 @@ def main(config_inp_file: str="config_inp.ini"):
     # Grab lpt file
     print("--> Reading in LPT file")
     lpt = pso.LptFile("archive/U_235/results/U_235.LPT")
-    lpt.register_abundances_stats()
     stats = lpt.stats()
     print(stats)
 
