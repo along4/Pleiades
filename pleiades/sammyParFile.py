@@ -303,6 +303,7 @@ class ParFile:
             self.update.normalization()
             self.update.broadening()
             self.update.resolution()
+            self.update.misc()
             
 
         return self
@@ -407,7 +408,7 @@ class ParFile:
         with open(filename,"w") as fid:
             fid.write("\n".join(lines)) 
 
-        self.update.save_params_to_config()
+        #self.update.save_params_to_config()
 
         
     def _rename(self) -> None:

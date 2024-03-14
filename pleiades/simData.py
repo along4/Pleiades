@@ -1,4 +1,4 @@
-import re
+import re, os
 import configparser
 import numpy as np
 from scipy.interpolate import interp1d
@@ -76,6 +76,8 @@ def parse_xs_file(file_location, isotope_name):
     xs_data = []
     isotope_xs_found = False
     capture_data = False
+    
+    
     with open(file_location, 'r') as f:
         for line in f:
             # If we find the name of the isotope
@@ -155,7 +157,7 @@ def load_isotopes_from_config(config_file, verbose=False):
 
         # Fetch each attribute with the default value from the dummy Isotope instance
         name = config.get(section, 'name', fallback=default_isotope.name)
-        atomic_mass = pnd.get_mass_from_ame(name, verbose=verbose)
+        atomic_mass = pnd.get_mass_from_ame(name)
         if atomic_mass == None:
             raise ValueError(f"Could not find atomic mass for {name}")
         thickness = config.getfloat(section, 'thickness', fallback=default_isotope.thickness)
