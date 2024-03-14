@@ -1,7 +1,7 @@
 import pandas
 import argparse, sys
-import shutil
-import matplotlib.pyplot as plt
+#import shutil
+#import matplotlib.pyplot as plt
 
 import pleiades.sammyInput as psi 
 import pleiades.sammyRunner as psr 
@@ -36,6 +36,7 @@ def main(config_inp_file: str="config_inp.ini"):
     print("--> Updating input file for actual SAMMY fit")
     # Now need to modify input file to run an actual SAMMY fit. 
     sammy_input.data["Card1"]["title"] = "Run SAMMY to find abundance of uranium-235 isotope"
+    sammy_input.data["Card2"]["itmax"] = 4
     # update commands. We need to preform the REICH_MOORE and SOLVE_BAYES for this case
     sammy_input.data["Card3"]["commands"] = 'CHI_SQUARED,TWENTY,SOLVE_BAYES,QUANTUM_NUMBERS,GENERATE ODF FILE AUTOMATICALLY,REICH_MOORE_FORM'
 

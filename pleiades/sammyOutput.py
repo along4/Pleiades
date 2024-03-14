@@ -5,6 +5,152 @@ import configparser
 import re
 import pandas
 
+
+class lptResults:
+    def __init__(self,filename: str) -> None:
+        """_summary_
+
+        Args:
+            filename (str): _description_
+
+        Returns:
+            _type_: _description_
+        """ 
+        self._filename = filename
+        
+        self._results = {
+            "General": {
+                "Emin": "",
+                "Emax": "",
+                "Target Element": "",
+                "Atomic Weight": "",
+                "Number of nuclides": "",
+                "Data Type": "",
+                "Iteration Block Lines": []
+            },
+            "Iteration Results": []
+        }
+        
+        self.preprocess_lpt_file()
+        self.grab_results_of_fits()
+        
+    def preprocess_lpt_file(self):
+        """
+        Preprocess the LPT file to extract general info and identify iteration blocks.
+        """
+        
+        iteration_start_flags = [
+            "***** INITIAL VALUES FOR PARAMETERS",
+            "***** INTERMEDIATE VALUES FOR RESONANCE PARAMETERS",
+            "***** NEW VALUES FOR RESONANCE PARAMETERS"
+        ]
+        
+        iteration_start_lines = [] 
+        
+        with open(self._filename, "r") as lpt_file:
+            lines = lpt_file.readlines()
+            
+        for i, line in enumerate(lines):
+            # Extract general information
+            if line.startswith(" Emin and Emax ="):
+                self._results["General"]["Emin"], self._results["General"]["Emax"] = self._parse_emin_emax(line)
+            elif line.startswith(" TARGET ELEMENT IS"):
+                self._results["General"]["Target Element"] = line.split("IS")[1].strip()
+            elif line.startswith(" ATOMIC WEIGHT IS"):
+                self._results["General"]["Atomic Weight"] = line.split("IS")[1].strip()
+            elif line.startswith(" Number of nuclides is "):
+                self._results["General"]["Number of nuclides"] = int(line.split("is")[1].strip())
+            
+            elif any(flag in line for flag in iteration_start_flags):
+                iteration_start_lines.append(i)
+        
+        # Store iteration block start and end lines
+        for i, start_line in enumerate(iteration_start_lines):
+            if i < len(iteration_start_lines) - 1:
+                end_line = iteration_start_lines[i + 1] - 1
+            else:
+                end_line = len(lines) - 1
+            self._results["General"]["Iteration Block Lines"].append([start_line, end_line])        
+            
+    def grab_results_of_fits(self):
+        """Extracts results from each iteration block."""
+        with open(self._filename, "r") as lpt_file:
+            lines = lpt_file.readlines()
+
+        for block in self._results["General"]["Iteration Block Lines"]:
+            start_line, end_line = block
+            iteration_block = lines[start_line:end_line + 1]
+            iteration_result = self._parse_iteration_block(iteration_block)
+            self._results["Iteration Results"].append(iteration_result)
+    
+    def _parse_iteration_block(self, block_lines):
+        """Parses an iteration block and extracts parameters."""
+        iteration_result = {
+            "Temperature": "",
+            "Thickness": "",
+            "DELTA-L": "",
+            "DELTA-T-GAUS": "",
+            "DELTA-T-EXP": "",
+            "NORMALIZATION": "",
+            "Backgrounds": {
+                "BCKG(CONST)": "",
+                "BCKG/SQRT(E)": "",
+                "BCKG*SQRT(E)": ""
+            },
+            "Nuclides": [],
+            "Chi2": "",
+            "RedChi2": ""
+        }
+
+        for i, line in enumerate(block_lines):
+            if "TEMPERATURE" in line and "THICKNESS" in line:
+                # Extract temperature and thickness from the line
+                match = re.search(r"(\d+\.\d+E[+-]?\d+)\s+(\d+\.\d+E[+-]?\d+)", block_lines[i+1])
+                if match:
+                    iteration_result["Temperature"] = float(match.group(1))
+                    iteration_result["Thickness"] = float(match.group(2))
+            elif "DELTA-L" in line and "DELTA-T-GAUS" in line and "DELTA-T-EXP" in line:
+                # Extract all three Deltas
+                match = re.search(r"(\d+\.\d+E[+-]?\d+)\s+(\d+\.\d+E[+-]?\d+)\s+(\d+\.\d+E[+-]?\d+)", block_lines[i+1])
+                if match:
+                    iteration_result["DELTA-L"] = float(match.group(1))
+                    iteration_result["DELTA-T-GAUS"] = float(match.group(2))
+                    iteration_result["DELTA-T-EXP"] = float(match.group(3))
+            elif " CUSTOMARY CHI SQUARED =" in line:
+                match = re.search(r"CUSTOMARY CHI SQUARED =\s*([+-]?[0-9]*\.?[0-9]*(?:[Ee][+-]?[0-9]+)?)",line)
+                if match:
+                    iteration_result["Chi2"] = float(match.group(1))
+            elif " CUSTOMARY CHI SQUARED DIVIDED BY NDAT =" in line:
+                match = re.search(r"CUSTOMARY CHI SQUARED DIVIDED BY NDAT =\s*([+-]?[0-9]*\.?[0-9]*(?:[Ee][+-]?[0-9]+)?)",line)
+                if match:
+                    iteration_result["RedChi2"] = float(match.group(1))
+            elif " Nuclide" in line and "Abundance" in line and "Mass" in line and "Spin groups" in line:
+                #print(self._results["General"]["Number of nuclides"])
+                for i in range(self._results["General"]["Number of nuclides"]):
+                    print(f"{i}")                    
+        # Add logic to parse nuclide information if it exists in the block
+        
+        return iteration_result
+    
+    def _parse_value_from_line(self, line):
+        """Extracts a numerical value from a given line."""
+        match = re.search(r"=\s*([+-]?[0-9]*\.?[0-9]*(?:[Ee][+-]?[0-9]+)?)", line)
+        if match:
+            return float(match.group(1))
+        return ""
+    
+    def _parse_emin_emax(self, line):
+        """Parses Emin and Emax values from a given line."""
+        # Ensure the regex pattern matches scientific notation accurately
+        match = re.search(r"Emin and Emax =\s*([+-]?[0-9]*\.?[0-9]*(?:[Ee][+-]?[0-9]+)?)\s+([+-]?[0-9]*\.?[0-9]*(?:[Ee][+-]?[0-9]+)?)", line)
+        if match:
+            emin = float(match.group(1))
+            emax = float(match.group(2))
+            return emin, emax
+        else:
+            return None, None
+
+
 class LptFile:
     # utilities to read and parse an LPT output file
 
@@ -16,44 +162,18 @@ class LptFile:
         """
         self._filename = filename
         
-        LPT_SEARCH_PATTERNS = {
-            "input_file":dict(
-                start_text=" Name of input file",
-                skipped_rows=1,
-                line_format="line.split()[1]"),
-            "par_file":dict(
-                start_text=" Name of parameter file",
-                skipped_rows=1,
-                line_format="line.split()[1]"),
-            "Emin":dict(
-                start_text=" Emin and Emax",
-                skipped_rows=0,
-                line_format="float(line.split()[4])"),
-            "Emax":dict(
-                start_text=" Emin and Emax",
-                skipped_rows=0,
-                line_format="float(line.split()[5])"),
-            "thickness":dict(
-                start_text="  TEMPERATURE      THICKNESS",
-                skipped_rows=1,
-                line_format="float(line.split()[1])"),
-            "varied_params":dict(
-                start_text=" Number of varied parameters",
-                skipped_rows=0,
-                line_format="int(line.split()[5])"),
-            "reduced_chi2":dict(
-                start_text=" CUSTOMARY CHI SQUARED DIVIDED",
-                skipped_rows=0,
-                line_format="float(line.split()[7])"),
-            "flight_path_length":dict(
-                start_text="    Flight Path=",
-                skipped_rows=0,
-                line_format="float(line.split()[2])"),
-            "time_elapsed":dict(
-                start_text="                              Total time",
-                skipped_rows=0,
-                line_format="float(line.split()[3])"),
-            }
+        LPT_SEARCH_PATTERNS = { 
+            "input_file":dict(start_text=" Name of input file", skipped_rows=1,line_format="line.split()[1]"),
+            "par_file":dict(start_text=" Name of parameter file", skipped_rows=1, line_format="line.split()[1]"),
+            "Emin":dict( start_text=" Emin and Emax", skipped_rows=0, line_format="float(line.split()[4])"),
+            "Emax":dict( start_text=" Emin and Emax", skipped_rows=0, line_format="float(line.split()[5])"),
+            "thickness":dict( start_text="  TEMPERATURE      THICKNESS",skipped_rows=1, line_format="float(line.split()[1])"),
+            "varied_params":dict( start_text=" Number of varied parameters", skipped_rows=0, line_format="int(line.split()[5])"),
+            "reduced_chi2":dict( start_text=" CUSTOMARY CHI SQUARED DIVIDED", skipped_rows=0, line_format="float(line.split()[7])"),
+            "flight_path_length":dict( start_text="    Flight Path=", skipped_rows=0,line_format="float(line.split()[2])"),
+            "time_elapsed":dict( start_text="                              Total time", skipped_rows=0,line_format="float(line.split()[3])"),
+        }
+        
         
     
         self.LPT_SEARCH_PATTERNS = LPT_SEARCH_PATTERNS
