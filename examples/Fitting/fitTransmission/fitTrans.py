@@ -16,25 +16,35 @@ def main(config_inp_file: str="config_inp.ini"):
     sammy_inp_endf_file_name = run_name+"-endf.inp"
     sammy_inp_file_name = run_name+".inp"
     sammy_par_file_name = run_name+".par"
+    sammy_data_file_name = run_name+".twenty"
     
+    print("--> Reading config file and creating input file")
     # Use the InputFile methods read config file, process it into a input, and write an inp file
     sammy_input = psi.InputFile(config_inp_file)
     sammy_input.process()      
     sammy_input.write(sammy_inp_endf_file_name)    
 
+    print("--> Running run_endf to generate par file")
     # Use the run_endf in sammyRunner to generate the needed par file.
     psr.run_endf(inpfile=sammy_inp_endf_file_name)
     
+    print("--> Reading in ENDF par file and creating U_235 par file")
+    sammy_parameters = pspf.ParFile("archive/U_235-endf/results/U_235-endf.par").read()   
+    sammy_parameters.write("U_235.par")
+    
+    print("--> Updating input file for actual SAMMY fit")
     # Now need to modify input file to run an actual SAMMY fit. 
     sammy_input.data["Card1"]["title"] = "Run SAMMY to find abundance of uranium-235 isotope"
     # update commands. We need to preform the REICH_MOORE and SOLVE_BAYES for this case
     sammy_input.data["Card3"]["commands"] = 'CHI_SQUARED,TWENTY,SOLVE_BAYES,QUANTUM_NUMBERS,REICH_MOORE_FORM'
-    
+
     # Update info and write it. 
     sammy_input.process()      
     sammy_input.write(sammy_inp_file_name)
     
-    psr.run(archivename=run_name,datafile="u235_1_to_100eV.twenty") 
+    print("--> Running SAMMY")
+    # Run SAMMY!!!!!!
+    psr.run(archivename=run_name,datafile=sammy_data_file_name)
 
 
 if __name__ == "__main__":

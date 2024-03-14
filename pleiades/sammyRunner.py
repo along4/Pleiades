@@ -2,6 +2,8 @@ import pathlib
 import inspect
 import glob
 import time
+import os
+import shutil
 
 def run(archivename: str="example",
             inpfile: str = "",
@@ -17,9 +19,6 @@ def run(archivename: str="example",
         parfile (str, optional): parameter file name
         datafile (str, optional): data file name
     """
-    
-    import os
-    import shutil
 
     # if no file names are provided, assume they are the same as the archive name
     if not inpfile:
@@ -70,21 +69,29 @@ def run(archivename: str="example",
     os.system(run_command) 
     os.chdir(pwd)
 
-    # move files
-    shutil.move(archive_path /'SAMMY.PAR', archive_path / f'results/{archivename}.par')
-    shutil.move(archive_path /'SAMMY.LST', archive_path / f'results/{archivename}.lst')
-    shutil.move(archive_path /'SAMMY.LPT', archive_path / f'results/{archivename}.lpt')
-    shutil.move(archive_path /'SAMMY.IO', archive_path / f'results/{archivename}.io')
+    # Define the files to move
+    files_to_move = ['SAMMY.PAR', 'SAMMY.LST', 'SAMMY.LPT', 'SAMMY.IO']
+
+    # Move files
+    '''
+    for file in files_to_move:
+        source = archive_path / file
+        destination = archive_path / f'results/{archivename}.{file.split(".")[-1]}'
+        
+        if pathlib.Path(source).exists():
+            shutil.move(source, destination)
+        else:
+            print(f"File {source} does not exist.")
 
     # remove SAM*.*
-    filelist = glob.glob(f"{archive_path}/SAM*")
-    for f in filelist:
-        os.remove(f)
-
+    #filelist = glob.glob(f"{archive_path}/SAM*")
+    #for f in filelist:
+    #    os.remove(f)
+    '''
     return
 
 
-def run_endf(inpfile: str = "") -> None:
+def run_endf(archivename: str="example",inpfile: str = "") -> None:
     """
     run sammy input with endf isotopes tables file to create a par file
     - This can only be done for a single isotope at a time
@@ -94,8 +101,6 @@ def run_endf(inpfile: str = "") -> None:
     Args:
         inpfile (str): input file name
     """    
-    import os
-    import shutil
 
     inpfile= pathlib.Path(inpfile)
     archivename = pathlib.Path(inpfile.stem)
