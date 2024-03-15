@@ -126,9 +126,16 @@ class lptResults:
                     iteration_result["RedChi2"] = float(match.group(1))
             elif " Nuclide" in line and "Abundance" in line and "Mass" in line and "Spin groups" in line:
                 #print(self._results["General"]["Number of nuclides"])
-                for i in range(self._results["General"]["Number of nuclides"]):
-                    print(f"{i}")                    
-        # Add logic to parse nuclide information if it exists in the block
+                print(line)
+                for j in range(self._results["General"]["Number of nuclides"]):
+                    print(block_lines[i+j+1])
+                    iteration_result["Nuclides"].append({
+                        "Number": block_lines[i+j+1][0:12].strip(),
+                        "Abundance": block_lines[i+j+1][12:22].strip(),
+                        "Vary Flag": block_lines[i+j+1][22:27].strip(),
+                        "Mass": block_lines[i+j+1][33:40].strip(),
+                        "SpinGroups": block_lines[i+j+1][40:].strip()
+                    })              
         
         return iteration_result
     

@@ -51,9 +51,8 @@ def main(config_inp_file: str="config_inp.ini"):
     
     # Grab lpt file
     print("--> Reading in LPT file")
-    lpt = pso.LptFile("archive/U_235/results/U_235.LPT")
-    stats = lpt.stats()
-    print(stats)
+    siNat_lptResults = pso.lptResults("archive/U_235/results/U_235.LPT")
+    print(siNat_lptResults._results)
 
 
 if __name__ == "__main__":
