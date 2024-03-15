@@ -7,6 +7,7 @@ import pleiades.sammyInput as psi
 import pleiades.sammyRunner as psr 
 import pleiades.sammyParFile as pspf
 import pleiades.sammyOutput as pso
+import pleiades.sammyPlotter as psp
 
 
 
@@ -35,8 +36,8 @@ def main(config_inp_file: str="config_inp.ini"):
     
     print("--> Updating input file for actual SAMMY fit")
     # Now need to modify input file to run an actual SAMMY fit. 
-    sammy_input.data["Card1"]["title"] = "Run SAMMY to find abundance of uranium-235 isotope"
-    sammy_input.data["Card2"]["itmax"] = 4
+    sammy_input.data["Card1"]["title"] = "Run SAMMY to find abundance of uranium-235 isotope"  # modifying Title
+    sammy_input.data["Card2"]["itmax"] = 4  # Modifying number of sammy fit iterations
     # update commands. We need to preform the REICH_MOORE and SOLVE_BAYES for this case
     sammy_input.data["Card3"]["commands"] = 'CHI_SQUARED,TWENTY,SOLVE_BAYES,QUANTUM_NUMBERS,GENERATE ODF FILE AUTOMATICALLY,REICH_MOORE_FORM'
 
@@ -53,6 +54,9 @@ def main(config_inp_file: str="config_inp.ini"):
     print("--> Reading in LPT file")
     siNat_lptResults = pso.lptResults("archive/U_235/results/U_235.LPT")
 
+    # Plot the results
+    print("--> Plotting LPT file")
+    psp.process_and_plot_lst_file("archive/U_235/results/U_235.LST", residual=True, quantity='transmission')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process config file for sammy input, run sammy, and plot results.')

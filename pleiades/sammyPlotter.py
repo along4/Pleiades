@@ -10,18 +10,38 @@ def process_and_plot_lst_file(filename, residual=False, quantity='cross-section'
         filename (str): The path to the LST file.
         plot_type (str): Type of plot. Options: 'cross-section', 'Transmission'
     """
-    # Read the file into a DataFrame. The separator is whitespace, and the file may not have headers.
-    data = pd.read_csv(filename, sep="\s+", header=None)
-    
+    # Define all possible column names
+    all_column_names = [
+        'Energy',
+        'Experimental cross section',
+        'Absolute uncertainty in experimental cross section',
+        'Zeroth-order theoretical cross section',
+        'Final theoretical cross section',
+        'Experimental transmission',
+        'Absolute uncertainty in experimental transmission',
+        'Zeroth-order theoretical transmission',
+        'Final theoretical transmission',
+        'Theoretical uncertainty on section 4 or 8',
+        'Theoretical uncertainty on section 5 or 9',
+        'Adjusted energy initially',
+        'Adjusted energy'
+    ]
+
+    # Read the file with pandas without column names
+    data = pd.read_csv(filename, header=None, comment='#', delim_whitespace=True)
+
+    # Get the number of columns in the data
     num_columns = data.shape[1]
-    print(f"Number of columns in the file: {num_columns}")
-    
+
+    # Assign only as many column names as there are columns in the data
+    data.columns = all_column_names[:num_columns]
+
     if quantity == 'cross-section' and num_columns >= 5:
         plot_cross_section(data, residual=residual)
         
-    elif quantity == 'Transmission' and num_columns >= 10:
+    elif quantity == 'transmission' and num_columns >= 10:
         plot_transmission(data, residual=residual)
-    
+
     
 def plot_cross_section(data, residual=False):
     """
@@ -63,20 +83,54 @@ def plot_cross_section(data, residual=False):
         
 def plot_transmission(data, residual=False):
     """
-    Plots the transmission data from the LST file.
+    Plot the transmission data and optionally the residuals.
 
     Args:
-        data (DataFrame): The DataFrame containing the LST file data.
-        residual (bool): If True, the difference between the theoretical and experimental transmission will be plotted.
+        data (DataFrame): The data to plot. It should have columns "energy", "Zeroth-order theoretical transmission", "Zeroth-order theoretical transmission", "Final theoretical transmission", and optionally "Absolute uncertainty in experimental transmission" if residual is True.
+        residual (bool, optional): If True, plot the residuals. Defaults to False.
     """
-    energy = data.iloc[:,0]
-    exp_trans = data.iloc[:,6]
-    theo_trans_initial = data.iloc[:,8]
-    theo_tran_final = data.iloc[:,9]
     
     if residual:
-        diff_initial = exp_trans - theo_trans_initial
-        diff_final = exp_trans - theo_tran_final
+        fig, ax = plt.subplots(2,2, sharey=False,figsize=(8,6),gridspec_kw={"width_ratios":[5,1],"height_ratios":[5,2]})
+        ax = np.ravel(ax)
+    else:
+        fig, ax = plt.subplots(figsize=(8,6))
+        ax = [ax]
+
+    data.plot(x="Energy",y="Experimental transmission",ax=ax[0],zorder=-1)
+    data.plot(x="Energy",y=["Zeroth-order theoretical transmission"],ax=ax[0],alpha=0.8)
+    data.plot(x="Energy",y=["Final theoretical transmission"],ax=ax[0],alpha=0.8)
+    ax[0].set_xlabel("")
+    ax[0].set_xticks([])
+    ax[0].legend(["data","initial fit","final fit"])
+    ax[0].set_ylabel("transmission")
+
+    if residual:
+        ax[1].spines['right'].set_visible(False)
+        ax[1].spines['top'].set_visible(False)
+        ax[1].spines['bottom'].set_visible(False)
+        ax[1].spines['left'].set_visible(False)
+        ax[1].set_xticks([])
+        ax[1].set_yticks([],[])
+
+        data["residual_initial"] = (data["Zeroth-order theoretical transmission"] - data["Zeroth-order theoretical transmission"])/data["Absolute uncertainty in experimental transmission"]
+        data["residual_final"] = (data["Final theoretical transmission"] - data["Zeroth-order theoretical transmission"])/data["Absolute uncertainty in experimental transmission"]
+        data.plot(x="Energy",y=["residual_initial","residual_final"],marker=".",lw=0,ms=3,ylim=(-10,10),ax=ax[2],alpha=0.8,legend=False)
+        ax[2].set_ylabel("residuals\n(fit-data)/err [σ]")
+        ax[2].set_xlabel("energy [eV]")
+
+        data.plot.hist(y=["residual_initial","residual_final"],bins=np.arange(-8,8,0.2),ax=ax[3],orientation="horizontal",legend=False,alpha=0.8,histtype="stepfilled")
+        ax[3].set_xlabel("")
+        ax[3].set_xticks([],[])
+        ax[3].set_yticks([],[])
+        ax[3].spines['right'].set_visible(False)
+        ax[3].spines['top'].set_visible(False)
+        ax[3].spines['bottom'].set_visible(False)
+        ax[3].spines['left'].set_visible(False)
+        ax[2].set_ylim(-10,10)
+
+    plt.subplots_adjust(wspace=0.003,hspace=0.03)
+    plt.show()
 
 def read_data(filename):
     # Load the data

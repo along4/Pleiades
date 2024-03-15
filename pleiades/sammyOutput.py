@@ -153,7 +153,6 @@ class lptResults:
             elif " Nuclide" in line and "Abundance" in line and "Mass" in line and "Spin groups" in line:
                 # Extract nuclide information
                 for j in range(self._results["General"]["Number of nuclides"]):
-                    print(block_lines[i+j+1])
                     iteration_result["Nuclides"].append({
                         "Number": block_lines[i+j+1][0:12].strip(),
                         "Abundance": block_lines[i+j+1][12:22].strip(),
