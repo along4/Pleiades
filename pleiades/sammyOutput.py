@@ -8,48 +8,53 @@ import pandas
 
 class lptResults:
     def __init__(self,filename: str) -> None:
-        """_summary_
+        """
+        Initializes the class with the filename to be parsed and prepares the results structure.
 
         Args:
-            filename (str): _description_
-
-        Returns:
-            _type_: _description_
-        """ 
+            filename (str): Path to the LPT file to be analyzed.
+        """
         self._filename = filename
         
+        # Initialize the results structure. This has two main sections:
+        # 1. General information about the run
+        # 2. Results of each SAMMY fit iteration 
         self._results = {
             "General": {
-                "Emin": "",
-                "Emax": "",
-                "Target Element": "",
-                "Atomic Weight": "",
-                "Number of nuclides": "",
-                "Data Type": "",
-                "Iteration Block Lines": []
+                "Emin": "",                     # minimum energy
+                "Emax": "",                     # maximum energy
+                "Target Element": "",           # target element
+                "Atomic Weight": "",            # atomic weight
+                "Number of nuclides": "",       # number of nuclides
+                "Data Type": "",                # data type
+                "Iteration Block Lines": []     # start and end lines of each iteration block
             },
-            "Iteration Results": []
+            "Iteration Results": []             # results of each iteration block
         }
         
-        self.preprocess_lpt_file()
-        self.grab_results_of_fits()
+        self.preprocess_lpt_file()  # Preprocess the LPT file to extract general info and identify iteration blocks
+        self.grab_results_of_fits() # Extracts results from each iteration block
         
     def preprocess_lpt_file(self):
         """
         Preprocess the LPT file to extract general info and identify iteration blocks.
         """
         
+        # Flags to identify the start of each iteration block
         iteration_start_flags = [
             "***** INITIAL VALUES FOR PARAMETERS",
             "***** INTERMEDIATE VALUES FOR RESONANCE PARAMETERS",
             "***** NEW VALUES FOR RESONANCE PARAMETERS"
         ]
         
+        # Store the start and end lines of each iteration block
         iteration_start_lines = [] 
         
+        # Read the LPT file and extract general information
         with open(self._filename, "r") as lpt_file:
             lines = lpt_file.readlines()
             
+        # Loop through each line and extract general information
         for i, line in enumerate(lines):
             # Extract general information
             if line.startswith(" Emin and Emax ="):
@@ -61,6 +66,7 @@ class lptResults:
             elif line.startswith(" Number of nuclides is "):
                 self._results["General"]["Number of nuclides"] = int(line.split("is")[1].strip())
             
+            # Identify the start of each iteration block
             elif any(flag in line for flag in iteration_start_flags):
                 iteration_start_lines.append(i)
         
@@ -71,9 +77,12 @@ class lptResults:
             else:
                 end_line = len(lines) - 1
             self._results["General"]["Iteration Block Lines"].append([start_line, end_line])        
-            
+    
+    
     def grab_results_of_fits(self):
-        """Extracts results from each iteration block."""
+        """ grabs the results of each iteration block and stores them in the results structure
+        returns: None
+        """
         with open(self._filename, "r") as lpt_file:
             lines = lpt_file.readlines()
 
@@ -84,7 +93,13 @@ class lptResults:
             self._results["Iteration Results"].append(iteration_result)
     
     def _parse_iteration_block(self, block_lines):
-        """Parses an iteration block and extracts parameters."""
+        """
+        Parses an iteration block and extracts parameters.
+        Args:
+            block_lines (list): List of lines in the iteration block
+        Returns:
+            dict: Dictionary containing the iteration results
+        """
         iteration_result = {
             "Temperature": "",
             "Thickness": "",
@@ -102,13 +117,18 @@ class lptResults:
             "RedChi2": ""
         }
 
+        # Loop through each line in the block and extract parameters
         for i, line in enumerate(block_lines):
+            
+            # If the line contains TEMPERATURE and THICKNESS, then their information is to follow (next line)
             if "TEMPERATURE" in line and "THICKNESS" in line:
                 # Extract temperature and thickness from the line
                 match = re.search(r"(\d+\.\d+E[+-]?\d+)\s+(\d+\.\d+E[+-]?\d+)", block_lines[i+1])
                 if match:
                     iteration_result["Temperature"] = float(match.group(1))
                     iteration_result["Thickness"] = float(match.group(2))
+            
+            # If the line contains DELTA-L, DELTA-T-GAUS, and DELTA-T-EXP, then their information is to follow
             elif "DELTA-L" in line and "DELTA-T-GAUS" in line and "DELTA-T-EXP" in line:
                 # Extract all three Deltas
                 match = re.search(r"(\d+\.\d+E[+-]?\d+)\s+(\d+\.\d+E[+-]?\d+)\s+(\d+\.\d+E[+-]?\d+)", block_lines[i+1])
@@ -116,17 +136,22 @@ class lptResults:
                     iteration_result["DELTA-L"] = float(match.group(1))
                     iteration_result["DELTA-T-GAUS"] = float(match.group(2))
                     iteration_result["DELTA-T-EXP"] = float(match.group(3))
+            
+            # If the line contains CUSTOMARY CHI SQUARED, then it also contains the chi squared
             elif " CUSTOMARY CHI SQUARED =" in line:
                 match = re.search(r"CUSTOMARY CHI SQUARED =\s*([+-]?[0-9]*\.?[0-9]*(?:[Ee][+-]?[0-9]+)?)",line)
                 if match:
                     iteration_result["Chi2"] = float(match.group(1))
+            
+            # If the line contains CUSTOMARY CHI SQUARED DIVIDED BY NDAT, then it also contains the reduced chi squared
             elif " CUSTOMARY CHI SQUARED DIVIDED BY NDAT =" in line:
                 match = re.search(r"CUSTOMARY CHI SQUARED DIVIDED BY NDAT =\s*([+-]?[0-9]*\.?[0-9]*(?:[Ee][+-]?[0-9]+)?)",line)
                 if match:
                     iteration_result["RedChi2"] = float(match.group(1))
+            
+            # If the line contains Nuclide, Abundance, Mass, and Spin groups, then information on the nuclides is to follow
             elif " Nuclide" in line and "Abundance" in line and "Mass" in line and "Spin groups" in line:
-                #print(self._results["General"]["Number of nuclides"])
-                print(line)
+                # Extract nuclide information
                 for j in range(self._results["General"]["Number of nuclides"]):
                     print(block_lines[i+j+1])
                     iteration_result["Nuclides"].append({
@@ -138,16 +163,16 @@ class lptResults:
                     })              
         
         return iteration_result
-    
-    def _parse_value_from_line(self, line):
-        """Extracts a numerical value from a given line."""
-        match = re.search(r"=\s*([+-]?[0-9]*\.?[0-9]*(?:[Ee][+-]?[0-9]+)?)", line)
-        if match:
-            return float(match.group(1))
-        return ""
-    
+        
     def _parse_emin_emax(self, line):
-        """Parses Emin and Emax values from a given line."""
+        """Parses Emin and Emax values from a given line.
+
+        Args:
+            line (str): Line containing Emin and Emax values
+
+        Returns:
+            tuple: Tuple containing Emin and Emax values
+        """
         # Ensure the regex pattern matches scientific notation accurately
         match = re.search(r"Emin and Emax =\s*([+-]?[0-9]*\.?[0-9]*(?:[Ee][+-]?[0-9]+)?)\s+([+-]?[0-9]*\.?[0-9]*(?:[Ee][+-]?[0-9]+)?)", line)
         if match:
