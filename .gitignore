@@ -157,19 +157,32 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# PyCharm
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#  and can be added to the global gitignore or merged into this file.  For a more nuclear
-#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#.idea/
-tests/compound.par
-tests/new_compound.par
-tests/files/compound.par
-tests/files/SAM*
-examples/makeCompoundFit/archive/*
-examples/makeCompoundFit/Eu_151.inp
-examples/makeCompoundFit/Eu_153.inp
-examples/makeCompoundFit/Eu_nat.inp
-examples/makeCompoundFit/Eu_nat.par
-examples/makeCompoundFit/archive/*
+# ignore any text files from SAMMY
+*.txt
+*.twenty
+*.inp
+*.INP
+*.par
+*.PAR
+*.out
+*.dat
+*.endf
+*.ENDF
+*.plt
+*.PLT
+*.lpt
+*.LPT
+*.io
+*.IO
+*.lst
+*.LST
+*.ODF
+*.odf
+*.RED
+*.DAT
+*.dat
+*.cov
+*.COV
+
+
+./archive/*

@@ -15,7 +15,7 @@ class InputFile:
             - config_file (str): config file name
             - auto_update (bool): True will replace atomic mass and values set to "auto" 
         """
-        # read connfig file
+        # read config file
         self._config = configparser.ConfigParser()
         self._config.read(config_file)
 
@@ -31,7 +31,7 @@ class InputFile:
         self._set_default_params()
 
         # update the defaults with config file data
-        self.data.update(self._config_data)
+        self._update_default_params_with_config()
 
         # populate the database of predefined commands 
         self._set_predefined_commands()
@@ -104,7 +104,7 @@ class InputFile:
         # Add a newline at the end of the input cards
         self.processed_cards = lines + ["\n"]
 
-        # add optional user-defiend resolution function
+        # add optional user-defined resolution function
         if hasattr(self,"_resolution_commands"):
             self.processed_cards += [self._resolution_commands]
 
@@ -144,7 +144,7 @@ class InputFile:
                 'iptwid': ('5',int,2),        # Determines the number of points to be added to auxiliary grid in tails of small resonances. Defaults to 5
                 'ixxchn': ('0',int,10),       # Number of energy channels in ODF-type data file to be ignored 
                 'ndigit': ('2',int,2),        # Number of digits for compact format for covariance matrix (Default = 2)
-                'idropp': ('2',int,2),        # The input resonanceparameter covariance matrix will be modified before being used in the fitting procedure. Defaults to 2
+                'idropp': ('2',int,2),        # The input resonance parameter covariance matrix will be modified before being used in the fitting procedure. Defaults to 2
                 'matnum': ('0',int,6),         # ENDF Material number. Defaults to 0.
                 },     
             Card3={
@@ -188,8 +188,18 @@ class InputFile:
             self.data[card] = {}
             for parameter in self._default_data[card]:
                 self.data[card][parameter] = self._default_data[card][parameter][0]
-
+                
         return
+
+    def _update_default_params_with_config(self) -> None:
+        """Update the default parameters with config file data, only if they exist in both."""
+        for card, params in self._config_data.items():
+            if card in self.data:
+                for param, value in params.items():
+                    if param in self.data[card]:
+                        self.data[card][param] = value
+
+
 
     def _set_predefined_commands(self) -> None:
         """dictoinary that holds keywords that expands to SAMMY alphanumerical commands

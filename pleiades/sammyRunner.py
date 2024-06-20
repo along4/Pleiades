@@ -2,6 +2,8 @@ import pathlib
 import inspect
 import glob
 import time
+import os
+import shutil
 
 def run(archivename: str="example",
             inpfile: str = "",
@@ -17,10 +19,8 @@ def run(archivename: str="example",
         parfile (str, optional): parameter file name
         datafile (str, optional): data file name
     """
-    
-    import os
-    import shutil
 
+    # if no file names are provided, assume they are the same as the archive name
     if not inpfile:
         inpfile = f"{archivename}.inp"
     if not parfile:
@@ -28,27 +28,29 @@ def run(archivename: str="example",
     if not datafile:
         datafile = f"{archivename}.dat"
 
-    archivepath = pathlib.Path(f"archive/{archivename}") 
+    # Set the archive path
+    archive_path = pathlib.Path(f"archive/{archivename}") 
 
     # create an archive directory
-    os.makedirs(archivepath,exist_ok=True)
-    os.makedirs(archivepath / "results",exist_ok=True)
+    os.makedirs(archive_path,exist_ok=True)
+    os.makedirs(archive_path / "results",exist_ok=True)
 
 
     # copy files into archive
     try:
-        shutil.copy(inpfile, archivepath / f'{archivename}.inp')
+        shutil.copy(inpfile, archive_path / f'{archivename}.inp')
         inpfile = f'{archivename}.inp'
-        shutil.copy(parfile, archivepath / f'{archivename}.par')
+        shutil.copy(parfile, archive_path / f'{archivename}.par')
         parfile = f'{archivename}.par'
-        shutil.copy(datafile, archivepath / f'{archivename}.dat')
+        shutil.copy(datafile, archive_path / f'{archivename}.dat')
         datafile = f'{archivename}.dat'
     except FileNotFoundError:
-        # print(f"grab files from within the {archivepath} directory")
+        # print(f"grab files from within the {archive_path} directory")
         pass
 
     outputfile = f'{archivename}.out'
 
+    # generate the run command
     run_command = f"""sammy > {outputfile} 2>/dev/null << EOF
                       {inpfile}
                       {parfile}
@@ -56,12 +58,15 @@ def run(archivename: str="example",
 
                       EOF 
                       """
+    # remove indentation
     run_command = inspect.cleandoc(run_command) # remove indentation
     
+    # 
     pwd = pathlib.Path.cwd()
 
-    os.chdir(archivepath)
-    os.system(run_command) # run sammy
+    # change directory to the archive, run sammy, and return to the original directory
+    os.chdir(archive_path)
+    os.system(run_command) 
     os.chdir(pwd)
 
     # move files
@@ -89,7 +94,7 @@ def run(archivename: str="example",
     return
 
 
-def run_endf(inpfile: str = "") -> None:
+def run_endf(archivename: str="example",inpfile: str = "") -> None:
     """
     run sammy input with endf isotopes tables file to create a par file
     - This can only be done for a single isotope at a time
@@ -99,8 +104,6 @@ def run_endf(inpfile: str = "") -> None:
     Args:
         inpfile (str): input file name
     """    
-    import os
-    import shutil
 
     inpfile= pathlib.Path(inpfile)
     archivename = pathlib.Path(inpfile.stem)
@@ -110,22 +113,22 @@ def run_endf(inpfile: str = "") -> None:
         next(fid)
         Emin, Emax = next(fid).split()[2:4]
 
-    archivepath = pathlib.Path("archive") / archivename
+    archive_path = pathlib.Path("archive") / archivename
 
     # create an archive directory
-    os.makedirs(archivepath,exist_ok=True)
-    os.makedirs(archivepath / "results",exist_ok=True)
+    os.makedirs(archive_path,exist_ok=True)
+    os.makedirs(archive_path / "results",exist_ok=True)
 
 
     # copy files into archive
-    shutil.copy(inpfile, archivepath / archivename.with_suffix(".inp"))
+    shutil.copy(inpfile, archive_path / archivename.with_suffix(".inp"))
     inpfile = archivename.with_suffix(".inp")
     
 
 
 
     # write a fake datafile with two entries of Emin and Emax
-    with open(archivepath / f'{archivename}.dat',"w") as fid:
+    with open(archive_path / f'{archivename}.dat',"w") as fid:
         fid.write(f"{Emax} 0 0\n")
         fid.write(f"{Emin} 0 0\n")
     
@@ -133,7 +136,7 @@ def run_endf(inpfile: str = "") -> None:
 
     endffile = pathlib.Path(__file__).parent.parent / "nucDataLibs/resonanceTables/res_endf8.endf"
     try:
-        os.symlink(endffile,archivepath / 'res_endf8.endf')
+        os.symlink(endffile,archive_path / 'res_endf8.endf')
     except FileExistsError:
         pass
     endffile = 'res_endf8.endf'
@@ -151,21 +154,19 @@ def run_endf(inpfile: str = "") -> None:
     
     pwd = pathlib.Path.cwd()
 
-    os.chdir(archivepath)
+    os.chdir(archive_path)
     os.system(run_command) # run sammy
     os.chdir(pwd)
 
     # move files
-    shutil.move(archivepath /'SAMNDF.PAR', archivepath / f'results/{archivename}.par')
-    shutil.move(archivepath /'SAMNDF.INP', archivepath / f'results/{archivename}.inp')
-    shutil.move(archivepath /'SAMMY.LPT', archivepath / f'results/{archivename}.lpt')
+    shutil.move(archive_path /'SAMNDF.PAR', archive_path / f'results/{archivename}.par')
+    shutil.move(archive_path /'SAMNDF.INP', archive_path / f'results/{archivename}.inp')
+    shutil.move(archive_path /'SAMMY.LPT', archive_path / f'results/{archivename}.lpt')
 
 
     # remove SAM*.*
-    filelist = glob.glob(f"{archivepath}/SAM*")
+    filelist = glob.glob(f"{archive_path}/SAM*")
     for f in filelist:
         os.remove(f)
 
     return
-
-

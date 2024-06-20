@@ -3,9 +3,3 @@
 *.twenty
 *.inp
 *.par
-*.out
-*.dat
-*.endf
-*.lpt
-
-./archive/*
