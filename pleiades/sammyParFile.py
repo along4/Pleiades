@@ -1,5 +1,7 @@
 import re
 import pathlib
+import shelve
+import configparser
 from typing import Tuple, List, Dict, Any
 
 class ParFile:
@@ -10,6 +12,7 @@ class ParFile:
     def __init__(self,filename: str="Ar_40.par", 
                       name: str="auto",
                       weight: float = 1.,
+                      fixed_weight: bool = False,
                       emin: float = 0.001,
                       emax: float = 100) -> None:
         """
@@ -21,6 +24,7 @@ class ParFile:
                                 "none" will keep the original name (PPair1 usually)
                                otherwise, reaction name will be renamed according to 'name'
             - weight (float): the weight/abundance of the isotope in the target
+            - fixed_weight (bool): if True the weight will be fixed when defining a compound
             - emin (float): minimum energy [eV] to include in par file, default 1 meV
             - emax (float): maximum energy [eV] to include in par file, default 100 eV
         """
@@ -29,9 +33,15 @@ class ParFile:
         self.name = name
         self.emin = emin
         self.emax = emax
+        self.fixed_weight = fixed_weight
 
         self.data = {}
-        self.data["fudge_factor"] = 0.1
+        self.data["info"] = {}
+        self.data["info"]["fudge_factor"] = 0.1
+        self.data["info"]["filename"] = filename
+        self.data["info"]["emin"] = emin
+        self.data["info"]["emax"] = emax
+
 
         # group all update methods in the Update class (and the `update`` namespace)
         self.update = Update(self)
@@ -99,19 +109,109 @@ class ParFile:
                                      "vary_exponential_bg":slice(69-1,70),
                                      "vary_exp_decay_bg":slice(71-1,72)}
         
-        self._BROADENING_FORMAT = {"channel_radius":slice(1-1,10),
-                                     "temperature":slice(11-1,20),
+        self._BROADENING_FORMAT = {  "temperature":slice(11-1,20),
                                      "thickness":slice(21-1,30),
                                      "flight_path_spread":slice(31-1,40),
                                      "deltag_fwhm":slice(41-1,50),
                                      "deltae_us":slice(51-1,60),
-                                     "vary_channel_radius":slice(61-1,62),
                                      "vary_temperature":slice(63-1,64),
                                      "vary_thickness":slice(65-1,66),
                                      "vary_flight_path_spread":slice(67-1,68),
                                      "vary_deltag_fwhm":slice(69-1,70),
                                      "vary_deltae_us":slice(71-1,72)}
-
+    
+        self._MISC_DELTA_FORMAT = {"vary_delta_L1":slice(7-1,7),
+                                   "vary_delta_L0":slice(9-1,9),
+                                   "delta_L1":slice(11-1,20),
+                                #    "delta_L1_err":slice(21-1,30),
+                                   "delta_L0":slice(31-1,40),
+                                #    "delta_L0_err":slice(41-1,50)
+                                   }
+    
+        self._MISC_TZERO_FORMAT = {"vary_t0":slice(7-1,7),
+                                   "vary_L0":slice(9-1,9),
+                                   "t0":slice(11-1,20),
+                                #    "t0_err":slice(21-1,30),
+                                   "L0":slice(31-1,40),
+                                #    "L0_err":slice(41-1,50),
+                                   "flight_path_length":slice(51-1,60)}
+    
+        self._MISC_DELTE_FORMAT = {"vary_DE":slice(7-1,7),
+                                   "vary_D0":slice(9-1,9),
+                                   "vary_DlnE":slice(10-1,10),
+                                   "DE":slice(11-1,20),
+                                #    "DE_err":slice(21-1,30),
+                                   "D0":slice(31-1,40),
+                                #    "D0_err":slice(41-1,50),
+                                   "DlnE":slice(51-1,60),
+                                #    "DlnE_err":slice(61-1,70)
+                                  }
+        
+        self._RESOLUTION_FORMAT = {"burst_keyword":slice(1-1,5),
+                                   "vary_burst":slice(7-1,7),
+                                   "burst":slice(11-1,20),
+                                   "tau_keyword":slice(1-1+81,5+81),
+                                   "vary_tau1":slice(6-1+81,6+81),
+                                   "vary_tau2":slice(7-1+81,7+81),
+                                   "vary_tau3":slice(8-1+81,8+81),
+                                   "vary_tau4":slice(9-1+81,9+81),
+                                   "vary_tau5":slice(10-1+81,10+81),
+                                   "tau1":slice(11-1+81,20+81),
+                                   "tau2":slice(21-1+81,30+81),
+                                   "tau3":slice(31-1+81,40+81),
+                                   "tau4":slice(41-1+81,50+81),
+                                   "tau5":slice(51-1+81,60+81),
+                                   "tau6":slice(61-1+81,70+81),
+                                   "tau7":slice(71-1+81,80+81),
+                                   "tau_keyword2":slice(1-1+162,5+162),
+                                   "vary_tau6":slice(6-1+162,6+162),
+                                   "vary_tau7":slice(7-1+162,7+162),
+                                   "lambd_keyword":slice(1-1+243,5+243),
+                                   "vary_lambd0":slice(6-1+243,6+243),
+                                   "vary_lambd1":slice(7-1+243,7+243),
+                                   "vary_lambd2":slice(8-1+243,8+243),
+                                   "vary_lambd3":slice(9-1+243,9+243),
+                                   "vary_lambd4":slice(10-1+243,10+243),
+                                   "lambd0":slice(11-1+243,20+243),
+                                   "lambd1":slice(21-1+243,30+243),
+                                   "lambd2":slice(31-1+243,40+243),
+                                   "lambd3":slice(41-1+243,50+243),  
+                                   "lambd4":slice(51-1+243,60+243), 
+                                   "lambd_keyword2":slice(1-1+324,5+324),
+                                   "a1_keyword":slice(1-1+405,5+405),
+                                   "vary_a1":slice(6-1+405,6+405),
+                                   "vary_a2":slice(7-1+405,7+405),
+                                   "vary_a3":slice(8-1+405,8+405),
+                                   "vary_a4":slice(9-1+405,9+405),
+                                   "vary_a5":slice(10-1+405,10+405),
+                                   "a1":slice(11-1+405,20+405),
+                                   "a2":slice(21-1+405,30+405),
+                                   "a3":slice(31-1+405,40+405),
+                                   "a4":slice(41-1+405,50+405),
+                                   "a5":slice(51-1+405,60+405),
+                                   "a6":slice(61-1+405,70+405),
+                                   "a7":slice(71-1+405,80+405), 
+                                   "a1_keyword2":slice(1-1+486,5+486),
+                                   "vary_a6":slice(6-1+486,6+486),
+                                   "vary_a7":slice(7-1+486,7+486),  
+                                   "expon_keyword":slice(1-1+567,5+567),
+                                   "vary_expon_t0":slice(6-1+567,6+567),
+                                   "vary_expon_a2":slice(7-1+567,7+567),
+                                   "vary_expon_a3":slice(8-1+567,8+567),
+                                   "vary_expon_a4":slice(9-1+567,9+567),
+                                   "vary_expon_a5":slice(10-1+567,10+567),
+                                   "expon_t0":slice(11-1+567,20+567),
+                                   "expon_a2":slice(21-1+567,30+567),
+                                   "expon_a3":slice(31-1+567,40+567),
+                                   "expon_a4":slice(41-1+567,50+567),  
+                                   "expon_a5":slice(51-1+567,60+567),  
+                                   "expon_keyword2":slice(1-1+648,5+648),   
+                                   "chann_keyword":slice(1-1+729,5+729),  
+                                   "vary_chann":slice(7-1+729,7+729),
+                                   "chann_emax":slice(11-1+729,20+729),
+                                   "chann":slice(21-1+729,30+729)
+                                  }
+        
 
     def read(self) -> 'ParFile':
         """Reads SAMMY .par file into data-structure that allows updating values
@@ -202,9 +302,11 @@ class ParFile:
             self.update.isotopic_weight()
             self.update.limit_energies_of_parfile()
             self.update.isotopic_masses_abundance()
-            self.update.toggle_vary_all_resonances(False)
+            self.update.vary_all_resonances(False)
             self.update.normalization()
             self.update.broadening()
+            self.update.resolution()
+            self.update.misc()
             
 
         return self
@@ -216,6 +318,10 @@ class ParFile:
             Args:
                 - filename (string): the par file name to write to
         """
+        self.filename = pathlib.Path(filename)
+        import os
+
+        os.makedirs(self.filename.parent,exist_ok=True)
         
         if not self.data:
             raise RuntimeError("self.data is emtpy, please run the self.read() method first")
@@ -247,7 +353,7 @@ class ParFile:
         for card in self.data["resonance_params"]:
             lines.append(self._write_resonance_params(card))
         lines.append(" "*80)
-        lines.append(f"{self.data['fudge_factor']:<11}")
+        lines.append(f"{self.data['info']['fudge_factor']:<11}")
         lines.append(" "*80)
 
         # channel radii
@@ -262,13 +368,13 @@ class ParFile:
         # isotopic masses
         if self.data["isotopic_masses"]:
             lines.append("ISOTOPIC MASSES AND ABUNDANCES FOLLOW".ljust(80))
-            for card in self.data["isotopic_masses"]:
+            for card in self.data["isotopic_masses"].values():
                 lines.append(self._write_isotopic_masses(card))
             lines.append(" "*80)
             lines.append("")
 
         # normalization
-        if self.data["normalization"]:
+        if any(self.data["normalization"].values()):
             lines.append("NORMALIZATION AND BACKGROUND FOLLOW".ljust(80))
             card = self.data["normalization"]
             lines.append(self._write_normalization(card))
@@ -276,16 +382,40 @@ class ParFile:
             lines.append("")
 
         # broadening
-        if self.data["broadening"]:
+        if any(self.data["broadening"].values()):
             lines.append("BROADENING PARAMETERS MAY BE VARIED".ljust(80))
             card = self.data["broadening"]
             lines.append(self._write_broadening(card))
             lines.append(" "*80)
             lines.append("")
 
+        # misc
+        if any(self.data["misc"].values()):
+            lines.append('MISCELLANEOUS PARAMETERS FOLLOW'.ljust(80))
+            card = self.data["misc"]
+            if any([value for key,value in self.data["misc"].items() if key in self._MISC_DELTA_FORMAT]):
+                lines.append(self._write_misc_delta(card))
+            if any([value for key,value in self.data["misc"].items() if key in self._MISC_TZERO_FORMAT]):
+                lines.append(self._write_misc_tzero(card))
+            if any([value for key,value in self.data["misc"].items() if key in self._MISC_DELTE_FORMAT]):
+                lines.append(self._write_misc_deltE(card))
+            lines.append(" "*80)
+            lines.append("")
+
+        # resolution
+        if any(self.data["resolution"].values()):
+            lines.append("RESOLUTION PARAMETERS FOLLOW".ljust(80))
+            card = self.data["resolution"]
+            lines.append(self._write_resolution(card))
+            lines.append(" "*80)
+            lines.append("")
+
         
         with open(filename,"w") as fid:
-            fid.write("\n".join(lines))    
+            fid.write("\n".join(lines)) 
+
+        self.update.save_params_to_config()
+
         
     def _rename(self) -> None:
         """rename the isotope and particle-pair names
@@ -316,7 +446,8 @@ class ParFile:
                         channel["channel_name"] = new_name
 
             reaction["name"] = new_name
-
+        self.data["info"][name] = self.weight
+        self.data["info"]["isotopes"] = [name]
         self.name = name
 
 
@@ -355,8 +486,14 @@ class ParFile:
             compound.data["channel_radii"] += isotope.data["channel_radii"]
 
             # update isotopic_masses
-            compound.data["isotopic_masses"] += isotope.data["isotopic_masses"]
+            compound.data["isotopic_masses"].update(isotope.data["isotopic_masses"])
 
+
+            # update info
+            isotopes = compound.data["info"]["isotopes"] + isotope.data["info"]["isotopes"]
+            compound.data["info"].update(isotope.data["info"])
+            compound.data["info"]["isotopes"] = isotopes
+            
         return compound
 
 
@@ -456,9 +593,9 @@ class ParFile:
     def _parse_isotopic_masses_cards(self) -> None:
         """ parse a list of isotopic_masses cards, sort the key-word values
         """
-        im_dicts = []
-        for card in self._isotopic_masses_cards:
-            im_dicts.append(self._read_isotopic_masses(card))
+        im_dicts = {}
+        for isotope,card in zip(self.data["particle_pairs"],self._isotopic_masses_cards):
+            im_dicts.update(**{isotope["name"]: self._read_isotopic_masses(card)})
 
         self.data.update({"isotopic_masses":im_dicts})
 
@@ -574,7 +711,50 @@ class ParFile:
             new_text[slice_value] = list(str(broadening_dict[key]).ljust(word_length))
         return "".join(new_text)
     
+    def _write_misc_delta(self,misc_delta_dict: dict) -> str:
+        # write a formated misc_delta line from dict with the key-word misc_delta values
+        new_text = [" "]*80 # 80 characters long list of spaces to be filled
+        new_text[:5] = list("DELTA")
+        for key,slice_value in self._MISC_DELTA_FORMAT.items():
+            word_length = slice_value.stop - slice_value.start
+            # assign the fixed-format position with the corresponding key-word value
+            new_text[slice_value] = list(str(misc_delta_dict[key]).ljust(word_length))
+        return "".join(new_text)
 
+    def _write_misc_tzero(self,misc_tzero_dict: dict) -> str:
+        # write a formated misc_tzero line from dict with the key-word misc_tzero values
+        new_text = [" "]*80 # 80 characters long list of spaces to be filled
+        new_text[:5] = list("TZERO")
+        for key,slice_value in self._MISC_TZERO_FORMAT.items():
+            word_length = slice_value.stop - slice_value.start
+            # assign the fixed-format position with the corresponding key-word value
+            new_text[slice_value] = list(str(misc_tzero_dict[key]).ljust(word_length))
+        return "".join(new_text)
+    
+    def _write_misc_deltE(self,misc_deltE_dict: dict) -> str:
+        # write a formated misc_deltE line from dict with the key-word misc_deltE values
+        new_text = [" "]*80 # 80 characters long list of spaces to be filled
+        new_text[:5] = list("DELTE")
+        for key,slice_value in self._MISC_DELTE_FORMAT.items():
+            word_length = slice_value.stop - slice_value.start
+            # assign the fixed-format position with the corresponding key-word value
+            new_text[slice_value] = list(str(misc_deltE_dict[key]).ljust(word_length))
+        return "".join(new_text)
+
+    def _write_resolution(self,resolution_dict: dict) -> str:
+        # write a formated resolution line from dict with the key-word resolution values
+        new_text =([" "]*80 +["\n"])*10# 80 characters long list of spaces to be filled
+        resolution_dict["burst_keyword"] = "BURST"
+        resolution_dict["tau_keyword"] = resolution_dict["tau_keyword2"] = "TAU  "
+        resolution_dict["lambd_keyword"] = resolution_dict["lambd_keyword2"] = "LAMBD"
+        resolution_dict["a1_keyword"] = resolution_dict["a1_keyword2"] = "A1   "
+        resolution_dict["expon_keyword"] = resolution_dict["expon_keyword2"] = "EXPON"
+        resolution_dict["chann_keyword"] = "CHANN"
+        for key,slice_value in self._RESOLUTION_FORMAT.items():
+            word_length = slice_value.stop - slice_value.start
+            # assign the fixed-format position with the corresponding key-word value
+            new_text[slice_value] = list(str(resolution_dict[key]).ljust(word_length)[:word_length])
+        return "".join(new_text)
 
 
 
@@ -606,7 +786,7 @@ class Update():
 
         # bump isotopic masses
         if self.parent.data["isotopic_masses"]:
-            for isotope in self.parent.data["isotopic_masses"]:
+            for key,isotope in self.parent.data["isotopic_masses"].items():
                 spin_groups = [f"{group[0]['group_number'].strip():>5}" for group in self.parent.data["spin_group"]]
                     
                 sg_formatted = "".join(spin_groups[:8]).ljust(43)
@@ -632,8 +812,9 @@ class Update():
     def isotopic_weight(self) -> None:
         """Update the isotopic weight in the spin_group data
         """
+        # update the weights only if the weight is not fixed.
         for group in self.parent.data["spin_group"]:
-            group[0]["isotopic_abundance"] = f"{f'{self.parent.weight:.7f}':>10}"
+            group[0]["isotopic_abundance"] = f"{f'{self.parent.weight:.7f}':>9}"[:9]
 
 
     def isotopic_masses_abundance(self) -> None:
@@ -641,7 +822,7 @@ class Update():
         """
         if self.parent.data["isotopic_masses"]:
             for card in self.parent.data["isotopic_masses"]:
-                card["abundance"] = f"{f'{self.parent.weight:.7f}':>9}"
+                self.parent.data["isotopic_masses"][card]["abundance"] = f"{f'{self.parent.weight:.7f}':>9}"[:9]
         else:
             spin_groups = [f"{group[0]['group_number'].strip():>5}" for group in self.parent.data["spin_group"]]
                 
@@ -650,12 +831,33 @@ class Update():
             for l in range(0,L+1):
                 sg_formatted += "-1\n" + "".join(spin_groups[8+15*l:8+15*(l+1)]).ljust(78)
                 
-            iso_dict = {"atomic_mass":f'{float(self.parent.data["particle_pairs"][0]["mass_b"]):>9}',
-                        "abundance":f"{f'{self.parent.weight:.7f}':>9}",
-                        "abundance_uncertainty":f"{f'{self.parent.weight*0.1:.7f}':>9}",
+            iso_dict = {"atomic_mass":f'{float(self.parent.data["particle_pairs"][0]["mass_b"]):>9}'[:9],
+                        "abundance":f"{f'{self.parent.weight:.7f}':>9}"[:9],
+                        "abundance_uncertainty":f"{f'':>9}",
                         "vary_abundance":"1".ljust(5),
                         "spin_groups":sg_formatted}
-            self.parent.data["isotopic_masses"].append(iso_dict)
+            self.parent.data["isotopic_masses"][self.parent.name] = iso_dict
+
+    def define_as_element(self,name:str,weight:float=1.) -> None:
+        from numpy import average
+        spin_groups = [f"{group[0]['group_number'].strip():>5}" for group in self.parent.data["spin_group"]]
+            
+        sg_formatted = "".join(spin_groups[:8]).ljust(43)
+        L = (len(spin_groups) - 8)//15 if len(spin_groups)>8 else -1 # number of extra lines needed
+        for l in range(0,L+1):
+            sg_formatted += "-1\n" + "".join(spin_groups[8+15*l:8+15*(l+1)]).ljust(78)
+
+        aw = [float(i["mass_b"]) for i in self.parent.data["particle_pairs"]]
+        weights = [float(self.parent.data["isotopic_masses"][i]["abundance"]) for i in self.parent.data["isotopic_masses"]]
+        aw = average(aw,weights=weights)
+
+        iso_dict = {"atomic_mass":f'{aw:>9}'[:9],
+                    "abundance":f"{f'{weight:.7f}':>9}"[:9],
+                    "abundance_uncertainty":f"{f'':>9}",
+                    "vary_abundance":"1".ljust(5),
+                    "spin_groups":sg_formatted}
+        self.parent.data["isotopic_masses"] = {}
+        self.parent.data["isotopic_masses"][name] = iso_dict
 
     def toggle_vary_abundances(self,vary:bool =False) -> None:
         """toggles the vary flag on all abundances
@@ -664,7 +866,8 @@ class Update():
             vary (bool, optional): True will flag all abundances to vary
         """
         for isotope in self.parent.data["isotopic_masses"]:
-            isotope["vary_abundance"] = f"{vary:<5}"
+            self.parent.data["isotopic_masses"][isotope]["vary_abundance"] = f"{vary:<5}"
+            self.parent.data["info"][f"vary_{isotope}"] = f"{vary:<5}"
 
 
     def limit_energies_of_parfile(self) -> None:
@@ -674,7 +877,10 @@ class Update():
         for num, res in enumerate(self.parent.data["resonance_params"]):
             # cast all numbers such as "3.6700-5" to floats
             energy = "e-".join(res['reosnance_energy'].split("-")).lstrip("e").replace("+","e+") if not "e" in res['reosnance_energy'] else res['reosnance_energy']
-            if self.parent.emin <=  float(energy) < self.parent.emax:
+
+            emin = float(self.parent.data["info"]["emin"])
+            emax = float(self.parent.data["info"]["emax"])
+            if emin <=  float(energy) < emax:
                 new_res_params.append(res)
                 igroups.add(res["igroup"].strip())
         
@@ -724,7 +930,7 @@ class Update():
 
         
 
-    def toggle_vary_all_resonances(self,vary: bool=False) -> None:
+    def vary_all_resonances(self,vary: bool=False) -> None:
         """toggles the vary flag on all resonances
 
         Args:
@@ -740,7 +946,39 @@ class Update():
                 card["vary_fission2_width"] = f"{1:>2}" if vary else f"{0:>2}"
 
 
-    def normalization(self,**kwargs) -> None:
+    def vary_resonances_in_energy_range(self,vary_energies: bool=False, 
+                                             vary_gamma_widths: bool=True,
+                                             vary_neutron_widths: bool=True,
+                                             vary_fission_widths: bool=False,
+                                             emin: float=None, emax: float=None) -> None:
+        """toggle vary flag on resonances between energy limits
+
+        Args:
+            vary_energies (bool, optional): True will flag all resonance energies to vary
+            vary_gamma_widths (bool): if True vary the resoanance gamma widths
+            vary_neutron_widths (bool): if True vary only the resoanance neutron widths
+            vary_fission_widths (bool): if True vary only the resoanance fission widths
+
+            emin (float): the lower energy in which to vary resonance params
+            emax (float): the upper energy in which to vary resonance params
+        """
+        if not emin:
+            emin = -1.0e24
+        if not emax:
+            emax = 1.0e24
+        for card in self.parent.data["resonance_params"]:
+            if emin <= float(card["reosnance_energy"]) <= emax:
+
+                card["vary_energy"] = f"{1:>2}" if vary_energies else f"{0:>2}"
+                card["vary_capture_width"] = f"{1:>2}" if vary_gamma_widths else f"{0:>2}"
+                card["vary_neutron_width"] = f"{1:>2}" if vary_neutron_widths else f"{0:>2}"
+                if card["fission1_width"].strip():
+                    card["vary_fission1_width"] = f"{1:>2}" if vary_fission else f"{0:>2}"
+                if card["fission2_width"].strip():
+                    card["vary_fission2_width"] = f"{1:>2}" if vary_fission else f"{0:>2}"
+
+
+    def normalization(self, **kwargs) -> None:
         """change or vary normalization parameters and vary flags
 
         Args:
@@ -769,20 +1007,20 @@ class Update():
                                                  "vary_one_over_v_bg":0,
                                                  "vary_sqrt_energy_bg":0,
                                                  "vary_exponential_bg":0,
-                                                 "vary_exp_decay_bg":0,}
-        self.parent.data["normalization"].update(**kwargs)
+                                                 "vary_exp_decay_bg":0,}    
+                       
+        self.parent.data["normalization"].update({key:value for key,value in kwargs.items() if key in self.parent.data["normalization"]})
 
-    def broadening(self,**kwargs) -> None:
+
+    def broadening(self, **kwargs) -> None:
         """change or vary broadening parameters and vary flags
 
         Args:
-              - channel_radius (float) CRFN
               - temperature (float) TEMP
               - thickness (float) THICK
               - flight_path_spread (float) DELTAL
               - deltag_fwhm (float) DELTAG
               - deltae_us (float) DELTAE
-              - vary_channel_radius (int) 0=fixed, 1=vary, 2=pup
               - vary_temperature (int) 0=fixed, 1=vary, 2=pup
               - vary_thickness (int) 0=fixed, 1=vary, 2=pup
               - vary_flight_path_spread (int) 0=fixed, 1=vary, 2=pup
@@ -790,26 +1028,227 @@ class Update():
               - vary_deltae_us (int) 0=fixed, 1=vary, 2=pup
         """
         if "broadening" not in self.parent.data:
-            self.parent.data["broadening"] = {"channel_radius":"",
-                                                 "temperature":"",
+            self.parent.data["broadening"] = {  "temperature":"296.",
                                                  "thickness":"",
                                                  "flight_path_spread":"",
                                                  "deltag_fwhm":"",
                                                  "deltae_us":"",
-                                                 "vary_channel_radius":0,
                                                  "vary_temperature":0,
                                                  "vary_thickness":0,
                                                  "vary_flight_path_spread":0,
                                                  "vary_deltag_fwhm":0,
                                                  "vary_deltae_us":0,}
-        self.parent.data["broadening"].update(**kwargs)
+
+        self.parent.data["broadening"].update({key:value for key,value in kwargs.items() if key in self.parent.data["broadening"]})
+
+    def misc(self, **kwargs) -> None:
+        """change or vary misc parameters and vary flags
+
+        Args:
+              - delta_L1 (float) DELL11
+              - delta_L0 (float) DELL00
+              - t0 (float) TZERO
+              - L0 (float) LZERO
+              - flight_path_length (float) FPL
+              - D0 (float) DELE0
+              - DE (float) DELE1
+              - DlnE (float) DELEL
+
+              - vary_delta_L1 (int) 0=fixed, 1=vary, 2=pup
+              - vary_delta_L0 (int) 0=fixed, 1=vary, 2=pup
+              - vary_L0 (int) 0=fixed, 1=vary, 2=pup
+              - vary_t0 (int) 0=fixed, 1=vary, 2=pup
+              - vary_D0 (int) 0=fixed, 1=vary, 2=pup
+              - vary_DE (int) 0=fixed, 1=vary, 2=pup
+              - vary_DlnE (int) 0=fixed, 1=vary, 2=pup
+        """
+        if "misc" not in self.parent.data:
+            self.parent.data["misc"] = {"vary_delta_L1":       "",                     
+                                        "vary_delta_L0":       "",                     
+                                        "delta_L1":            "",                           
+                                        "delta_L0":            "",                            
+                                        "vary_t0":             "",             
+                                        "vary_L0":             "",             
+                                        "t0":                  "",                  
+                                        "L0":                  "",                
+                                        "flight_path_length":  "",                         
+                                        "vary_DE":             "",             
+                                        "vary_D0":             "",             
+                                        "vary_DlnE":           "",                 
+                                        "DE":                  "",                    
+                                        "D0":                  "",              
+                                        "DlnE":                "",                  
+                                         }
+
+        self.parent.data["misc"].update({key:value for key,value in kwargs.items() if key in self.parent.data["misc"]})
+
+
+    def resolution(self, **kwargs) -> None:
+        """change or vary resolution parameters and vary flags
+
+        Args:
+            - vary_burst  (int) 0=fixed, 1=vary, 2=pup
+            - burst (float)
+
+            - vary_tau1  (int) 0=fixed, 1=vary, 2=pup
+            - vary_tau2  (int) 0=fixed, 1=vary, 2=pup
+            - vary_tau3  (int) 0=fixed, 1=vary, 2=pup
+            - vary_tau4  (int) 0=fixed, 1=vary, 2=pup
+            - vary_tau5  (int) 0=fixed, 1=vary, 2=pup
+            - tau1 (float)
+            - tau2 (float)
+            - tau3 (float)
+            - tau4 (float)
+            - tau5 (float)
+            - tau6 (float)
+            - tau7 (float)
+            - vary_tau6  (int) 0=fixed, 1=vary, 2=pup
+            - vary_tau7  (int) 0=fixed, 1=vary, 2=pup
+
+            - vary_lambd0  (int) 0=fixed, 1=vary, 2=pup
+            - vary_lambd1  (int) 0=fixed, 1=vary, 2=pup
+            - vary_lambd2  (int) 0=fixed, 1=vary, 2=pup
+            - vary_lambd3  (int) 0=fixed, 1=vary, 2=pup
+            - vary_lambd4  (int) 0=fixed, 1=vary, 2=pup
+            - lambd0 (float)
+            - lambd1 (float)
+            - lambd2 (float)
+            - lambd3 (float)
+            - lambd4 (float)
+
+
+            - vary_a1  (int) 0=fixed, 1=vary, 2=pup
+            - vary_a2  (int) 0=fixed, 1=vary, 2=pup
+            - vary_a3  (int) 0=fixed, 1=vary, 2=pup
+            - vary_a4  (int) 0=fixed, 1=vary, 2=pup
+            - vary_a5  (int) 0=fixed, 1=vary, 2=pup
+            - a1 (float)
+            - a2 (float)
+            - a3 (float)
+            - a4 (float)
+            - a5 (float)
+            - a6 (float)
+            - a7 (float)
+            - vary_a6  (int) 0=fixed, 1=vary, 2=pup
+            - vary_a7  (int) 0=fixed, 1=vary, 2=pup
+
+            - vary_expon_t0  (int) 0=fixed, 1=vary, 2=pup
+            - vary_expon_a2  (int) 0=fixed, 1=vary, 2=pup
+            - vary_expon_a3  (int) 0=fixed, 1=vary, 2=pup
+            - vary_expon_a4  (int) 0=fixed, 1=vary, 2=pup
+            - vary_expon_a5  (int) 0=fixed, 1=vary, 2=pup
+            - expon_t0 (float)
+            - expon_a2 (float)
+            - expon_a3 (float)
+            - expon_a4 (float)
+            - expon_a5 (float)
+
+            - vary_chann (float)
+            - chann_emax (float)
+            - chann (float)
+        """
+        if "resolution" not in self.parent.data:
+            self.parent.data["resolution"] = {"burst_keyword": "",
+                                        "vary_burst": "",
+                                        "burst": "",
+                                        "tau_keyword": "",
+                                        "vary_tau1": "",
+                                        "vary_tau2": "",
+                                        "vary_tau3": "",
+                                        "vary_tau4": "",
+                                        "vary_tau5": "",
+                                        "tau1": "",
+                                        "tau2": "",
+                                        "tau3": "",
+                                        "tau4": "",
+                                        "tau5": "",
+                                        "tau6": "",
+                                        "tau7": "",
+                                        "tau_keyword2": "",
+                                        "vary_tau6": "",
+                                        "vary_tau7": "",
+                                        "lambd_keyword": "",
+                                        "vary_lambd0": "",
+                                        "vary_lambd1": "",
+                                        "vary_lambd2": "",
+                                        "vary_lambd3": "",
+                                        "vary_lambd4": "",
+                                        "lambd0": "",
+                                        "lambd1": "",
+                                        "lambd2": "",
+                                        "lambd3": "",
+                                        "lambd4": "",
+                                        "lambd_keyword2": "",
+                                        "a1_keyword": "",
+                                        "vary_a1": "",
+                                        "vary_a2": "",
+                                        "vary_a3": "",
+                                        "vary_a4": "",
+                                        "vary_a5": "",
+                                        "a1": "",
+                                        "a2": "",
+                                        "a3": "",
+                                        "a4": "",
+                                        "a5": "",
+                                        "a6": "",
+                                        "a7": "",
+                                        "a1_keyword2": "",
+                                        "vary_a6": "",
+                                        "vary_a7": "",
+                                        "expon_keyword": "",
+                                        "vary_expon_t0": "",
+                                        "vary_expon_a2": "",
+                                        "vary_expon_a3": "",
+                                        "vary_expon_a4": "",
+                                        "vary_expon_a5": "",
+                                        "expon_t0": "",
+                                        "expon_a2": "",
+                                        "expon_a3": "",
+                                        "expon_a4": "",
+                                        "expon_a5": "",
+                                        "expon_keyword2": "",
+                                        "chann_keyword": "",
+                                        "vary_chann": "",
+                                        "chann_emax": "",
+                                        "chann": ""}
+
+        self.parent.data["resolution"].update({key:value for key,value in kwargs.items() if key in self.parent.data["resolution"]})
+
+
+                                                 
+    def vary_all(self,vary=True,data_key="misc_delta"):
+        """toggle all vary parameters in a data keyword to either vary/fixed
+
+        Args:
+            vary (bool, optional): If True the parameters are set to vary, else all are set to fixed
+            data_key (str, optional): choice of one of the followings:
+                        - 'misc_delta'
+                        - 'misc_tzero'
+                        - 'misc_deltE'
+                        - 'broadeninig'
+                        - 'normalization'
+        """
+        keyword = data_key.split("_")[0]
+        data_dict = getattr(self.parent,f"_{data_key.upper()}_FORMAT")
+        self.parent.data[keyword].update({key:int(vary) for key in data_dict if key.startswith("vary_")})
+
+    def save_params_to_config(self) -> None:
+        # write the self.data dictionary to a config.ini file
+        inifilename = f'{pathlib.Path(self.parent.filename).with_name("params.ini")}'
+        with open(inifilename,"w") as fid:
+            config = configparser.ConfigParser()
+            config.optionxform = str
+            config.update({key:self.parent.data[key] for key in ['info','normalization', 'broadening', 'misc','resolution']})
+            config.write(fid)
+
 
      
 
 if __name__=="__main__":
 
-    par = ParFile("/sammy/samexm/samexm/endf_to_par/archive/Ar_40/results/Ar_40.par")
-    par.read()
+    par1 = ParFile("/sammy/work/archive/U238/results/U238.par").read()
+    par2 = ParFile("/sammy/work/archive/U238/results/U238.par").read()
+    par = par1 + par2
     print(par.data)
 
 

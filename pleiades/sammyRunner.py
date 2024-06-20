@@ -36,12 +36,16 @@ def run(archivename: str="example",
 
 
     # copy files into archive
-    shutil.copy(inpfile, archivepath / f'{archivename}.inp')
-    inpfile = f'{archivename}.inp'
-    shutil.copy(parfile, archivepath / f'{archivename}.par')
-    parfile = f'{archivename}.par'
-    shutil.copy(datafile, archivepath / f'{archivename}.dat')
-    datafile = f'{archivename}.dat'
+    try:
+        shutil.copy(inpfile, archivepath / f'{archivename}.inp')
+        inpfile = f'{archivename}.inp'
+        shutil.copy(parfile, archivepath / f'{archivename}.par')
+        parfile = f'{archivename}.par'
+        shutil.copy(datafile, archivepath / f'{archivename}.dat')
+        datafile = f'{archivename}.dat'
+    except FileNotFoundError:
+        # print(f"grab files from within the {archivepath} directory")
+        pass
 
     outputfile = f'{archivename}.out'
 
@@ -61,16 +65,27 @@ def run(archivename: str="example",
     os.chdir(pwd)
 
     # move files
-    shutil.move(archivepath /'SAMMY.PAR', archivepath / f'results/{archivename}.par')
-    shutil.move(archivepath /'SAMMY.LST', archivepath / f'results/{archivename}.lst')
-    shutil.move(archivepath /'SAMMY.LPT', archivepath / f'results/{archivename}.lpt')
-    shutil.move(archivepath /'SAMMY.IO', archivepath / f'results/{archivename}.io')
 
-    # remove SAM*.*
-    filelist = glob.glob(f"{archivepath}/SAM*")
-    for f in filelist:
-        os.remove(f)
-
+    try:
+        shutil.move(archivepath /'SAMMY.LST', archivepath / f'results/{archivename}.lst')
+    except FileNotFoundError:
+        print("lst file is not found")
+    try:
+        shutil.move(archivepath /'SAMMY.LPT', archivepath / f'results/{archivename}.lpt')
+    except FileNotFoundError:
+        print("lpt file is not found")
+    try:
+        shutil.move(archivepath /'SAMMY.IO', archivepath / f'results/{archivename}.io')
+    except FileNotFoundError:
+        print("io file is not found")
+    try:
+        shutil.move(archivepath /'SAMMY.PAR', archivepath / f'results/{archivename}.par')
+        # remove SAM*.*
+        filelist = glob.glob(f"{archivepath}/SAM*")
+        for f in filelist:
+            os.remove(f)
+    except FileNotFoundError:
+        print("par file is not found")
     return
 
 
@@ -87,9 +102,15 @@ def run_endf(inpfile: str = "") -> None:
     import os
     import shutil
 
-    archivename = inpfile.split(".")[0]
+    inpfile= pathlib.Path(inpfile)
+    archivename = pathlib.Path(inpfile.stem)
 
-    archivepath = pathlib.Path(f"archive/{archivename}") 
+    # read the input file to get the Emin and Emax:
+    with open(inpfile) as fid:
+        next(fid)
+        Emin, Emax = next(fid).split()[2:4]
+
+    archivepath = pathlib.Path("archive") / archivename
 
     # create an archive directory
     os.makedirs(archivepath,exist_ok=True)
@@ -97,13 +118,11 @@ def run_endf(inpfile: str = "") -> None:
 
 
     # copy files into archive
-    shutil.copy(inpfile, archivepath / f'{archivename}.inp')
-    inpfile = f'{archivename}.inp'
+    shutil.copy(inpfile, archivepath / archivename.with_suffix(".inp"))
+    inpfile = archivename.with_suffix(".inp")
+    
 
-    # read the input file to get the Emin and Emax:
-    with open(inpfile) as fid:
-        next(fid)
-        Emin, Emax = next(fid).split()[2:4]
+
 
     # write a fake datafile with two entries of Emin and Emax
     with open(archivepath / f'{archivename}.dat',"w") as fid:
