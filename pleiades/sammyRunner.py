@@ -94,7 +94,7 @@ def run(archivename: str="example",
     return
 
 
-def run_endf(archivename: str="example",inpfile: str = "") -> None:
+def run_endf(inpfile: str = "") -> None:
     """
     run sammy input with endf isotopes tables file to create a par file
     - This can only be done for a single isotope at a time
@@ -134,7 +134,8 @@ def run_endf(archivename: str="example",inpfile: str = "") -> None:
     
     datafile = f'{archivename}.dat'
 
-    endffile = pathlib.Path(__file__).parent.parent / "nucDataLibs/resonanceTables/res_endf8.endf"
+    import nucDataLibs
+    endffile = pathlib.Path(nucDataLibs.__file__).parent / "resonanceTables/res_endf8.endf"
     try:
         os.symlink(endffile,archive_path / 'res_endf8.endf')
     except FileExistsError:
