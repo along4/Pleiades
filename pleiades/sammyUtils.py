@@ -145,11 +145,12 @@ def save_transmission_spectrum(
         resolution_file_path = Path.cwd() / "sammy_files" / resolution_file
         resolution_file_path.parent.mkdir(parents=True, exist_ok=True)
         try:
-            os.unlink(output_filename.with_name("FP5.udp"))
             os.symlink(resolution_file_path, output_filename.with_name("FP5.udp"))
         except FileNotFoundError:
             print(f"Put the .udp resolution file in this directory {resolution_file_path.parent}")
-
+        except:
+            pass
+    
     # Plot data if label provided
     if plot_label:
         filtered_data.plot(
