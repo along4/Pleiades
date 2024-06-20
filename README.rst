@@ -22,7 +22,7 @@ with SAMMY, please see the `SAMMY website <https://code.ornl.gov/RNSD/SAMMY>`_.
 Certainly, here's the installation instruction snippet in reStructuredText (RST) format that you can directly paste into your existing README.rst file:
 
 
-## Installation
+**Installation**
 
 To install the `pleiades` package, follow these steps:
 
@@ -30,31 +30,31 @@ To install the `pleiades` package, follow these steps:
 
    Use `git` to clone the repository from GitHub:
 
-   ```bash
+   .. code-block:: bash
+
    git clone https://github.com/along4/Pleiades
-   ```
 
 2. **Navigate to the Directory:**
 
    Change directories to the cloned repository:
 
-   ```bash
-   cd pleiades
-   ```
+   .. code-block:: bash
+
+      cd pleiades
 
 3. **Install the Package:**
 
    Use `pip` to install the `pleiades` package in editable mode. This allows you to make changes to the code without reinstalling:
 
-   ```bash
-   pip install -e .
-   ```
+   .. code-block:: bash
+
+      pip install -e .
 
 **Additional Notes:**
 
 * Make sure you have `git` and `pip` installed on your system. You can usually install them using your system's package manager.
-* Installing in editable mode is recommended for development purposes. If you want a standalone installation, use `pip install` without the `-e` flag.
-```
+* Installing in editable mode is recommended for development purposes. If you want a standalone installation, use `pip install` without the dot `-e` flag.
+
 
 ## License
 
