@@ -45,19 +45,26 @@ To install the `pleiades` package, follow these steps:
 
 3. **Install the Package:**
 
-   Use `pip` to install the `pleiades` package in editable mode. This allows you to make changes to the code without reinstalling:
+   Use `pip` to install the `pleiades` package:
 
    .. code-block:: bash
 
-      pip install -e .
+      pip install .
+
+4. **Uninstall the Package:**
+
+   To uninstall simply type:
+
+   .. code-block:: bash
+
+      pip uninstall pleiades
 
 **Additional Notes:**
 
 * Make sure you have `git` and `pip` installed on your system. You can usually install them using your system's package manager.
-* Installing in editable mode is recommended for development purposes. If you want a standalone installation, use `pip install` without the `-e` flag.
 
-
-## License
+License
+=======
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
