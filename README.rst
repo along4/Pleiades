@@ -54,7 +54,7 @@ To install the `pleiades` package, follow these steps:
 **Additional Notes:**
 
 * Make sure you have `git` and `pip` installed on your system. You can usually install them using your system's package manager.
-* Installing in editable mode is recommended for development purposes. If you want a standalone installation, use `pip install` without the dot `-e` flag.
+* Installing in editable mode is recommended for development purposes. If you want a standalone installation, use `pip install` without the `-e` flag.
 
 
 ## License
