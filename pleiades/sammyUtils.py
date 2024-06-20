@@ -141,7 +141,7 @@ def save_transmission_spectrum(
     os.system(f"sed -i '1d' {output_filename}")
 
     # Create symbolic link to resolution file (consider alternative)
-    resolution_file_path = Path("sammy_files") / resolution_file
+    resolution_file_path = Path("nucDataLibs/sammyFiles") / resolution_file
     resolution_file_path.parent.mkdir(parents=True, exist_ok=True)
     os.symlink(resolution_file_path, output_filename.with_name("FP5.udp"))
 
@@ -175,7 +175,7 @@ def sammy_par_from_endf(isotope: str = "U-238", flight_path_length: float = 10.7
     """
 
     # Load configuration from a separate file (recommended)
-    config_file = Path("config_Eu_151.ini")  # Replace with your actual configuration file path
+    config_file = PWD/Path("nucDataLibs/sammyFiles/config_Eu_151.ini")  # Replace with your actual configuration file path
     inp = sammyInput.InputFile(config_file)
 
     # Update input data with isotope-specific information
@@ -187,7 +187,7 @@ def sammy_par_from_endf(isotope: str = "U-238", flight_path_length: float = 10.7
     inp.data["Card7"]["crfn"] = 0.001
 
     # Create output filename with proper extension
-    output_filename = Path("sammy_files") / Path(isotope.replace("-", "").replace("_", ""))
+    output_filename = Path("nucDataLibs/sammyFiles") / Path(isotope.replace("-", "").replace("_", ""))
     inp.process().write(output_filename.with_suffix(".inp"))
 
     # Run SAMMY with ENDF data to generate .par file
