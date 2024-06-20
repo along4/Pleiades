@@ -44,6 +44,7 @@ setup(
     cmdclass={
     'install': CustomInstallCommand,
     },
+    package_data = {'pleiades': ['nucDataLibs/*']},
     license="MIT",
     python_requires='>=3.7',
 )
