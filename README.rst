@@ -22,7 +22,8 @@ with SAMMY, please see the `SAMMY website <https://code.ornl.gov/RNSD/SAMMY>`_.
 Certainly, here's the installation instruction snippet in reStructuredText (RST) format that you can directly paste into your existing README.rst file:
 
 
-**Installation**
+Installation
+============
 
 To install the `pleiades` package, follow these steps:
 
@@ -32,7 +33,7 @@ To install the `pleiades` package, follow these steps:
 
    .. code-block:: bash
 
-   git clone https://github.com/along4/Pleiades
+        git clone https://github.com/along4/Pleiades
 
 2. **Navigate to the Directory:**
 
