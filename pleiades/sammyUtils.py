@@ -9,6 +9,7 @@ from pathlib import Path
 import pandas
 import pathlib
 import re
+import os
 
 from pleiades import sammyParFile, sammyInput, sammyRunner, nucData
 
@@ -54,7 +55,7 @@ def save_transmission_spectrum(
     plot_label: str = "",
     N: np.ndarray = np.array([1.0]),
     scale_bg: float = 1.0,
-    bg_type: str = "sammy",
+    bg_type: str = "",
     bg_params: dict = {},
     data_threshold: float = -999,
     resolution_file: str = "FP5_resolution.udp",
@@ -87,18 +88,17 @@ def save_transmission_spectrum(
         resolution_file (str, optional): Name of the resolution file (default: "FP5_resolution.udp").
     """
     # Create output filename with proper extension
-    output_filename = Path("archive") / archivename.with_suffix(".dat")
-
+    output_filename = Path("archive") / Path(archivename) / Path(archivename).with_suffix(".dat")
 
     # Calculate time of flight (TOF) with center bins
     tof = t_zero * Δt + np.arange(len(signal)) * Δt + 0.5 * Δt
 
     # Convert TOF to energy
-    energy = trinidi.util.time2energy(tof, flight_path_length)
+    energy = time2energy(tof*1e-6, flight_path_length)
 
     # Calculate background based on type
     if bg_type == "sammy":
-        background = scale_bg * sammy_bg(energy, **bg_params)
+        background = scale_bg * sammy_background(energy, **bg_params)
     else:
         background = scale_bg * np.ones_like(energy)  # Assume zero background for other types
 
@@ -140,10 +140,15 @@ def save_transmission_spectrum(
     # Remove the first line (header) using system call (consider alternative)
     os.system(f"sed -i '1d' {output_filename}")
 
-    # Create symbolic link to resolution file (consider alternative)
-    resolution_file_path = Path("nucDataLibs/sammyFiles") / resolution_file
-    resolution_file_path.parent.mkdir(parents=True, exist_ok=True)
-    os.symlink(resolution_file_path, output_filename.with_name("FP5.udp"))
+    if resolution_file:
+        # Create symbolic link to resolution file (consider alternative)
+        resolution_file_path = Path.cwd() / "sammy_files" / resolution_file
+        resolution_file_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            os.unlink(output_filename.with_name("FP5.udp"))
+            os.symlink(resolution_file_path, output_filename.with_name("FP5.udp"))
+        except FileNotFoundError:
+            print(f"Put the .udp resolution file in this directory {resolution_file_path.parent}")
 
     # Plot data if label provided
     if plot_label:
@@ -540,4 +545,62 @@ def print_stats_table(stats: dict, just_params:bool = True,
             display(df.iloc[:,i*display_columns:(i+1)*display_columns])
     return df
 
+import numpy as np
+SPEED_OF_LIGHT = 299792458 # m/s
+MASS_OF_NEUTRON = 939.56542052 * 1e6 / (SPEED_OF_LIGHT) ** 2  # [eV s²/m²]
+
+TOF_LABEL = "Time-of-flight [μs]"
+ENERGY_LABEL = "Energy [eV]"
+
+def time2energy(time, flight_path_length):
+    r"""Convert time-of-flight to energy of the neutron.
+
+    .. math::
+        E = \left( \gamma - 1 \right) m c^2 \; ,
+        \gamma = \frac{1}{\sqrt{1 - \left(\frac{L}{c \cdot t} \right)^2}} \; ,
+
+    where :math:`E` is the energy, :math:`m` is the mass, :math:`c` is
+    the speed of light, :math:`t` is the time-of-flight of the neutron,
+    and :math:`L` is the flight path length.
+
+    Args:
+        time: Time-of-flight in :math:`\mathrm{s}`.
+        flight_path_length: flight path length in :math:`\mathrm{m}`.
+
+    Returns:
+        Energy of the neutron in :math:`\mathrm{eV}`.
+    """
+    m = MASS_OF_NEUTRON  # [eV s²/m²]
+    c = SPEED_OF_LIGHT # m/s
+    L = flight_path_length  # m
+    t = time  # s
+    γ = 1 / np.sqrt (1 - (L / t) ** 2 / c ** 2 )
+    return ( γ - 1 ) * m * c ** 2  # eV
+
+def energy2time(energy, flight_path_length):
+    r"""Convert energy to time-of-flight of the neutron.
+
+    .. math::
+        t = \frac{L}{c} \sqrt{ \frac{\gamma^2}{\gamma^2 - 1 }} \; ,
+        \gamma = 1 + \frac{E}{mc^2}
+
+    where :math:`E` is the energy, :math:`m` is the mass, :math:`c`
+    is the speed of light, :math:`t` is the time-of-flight of the neutron,
+    and :math:`L` is the flight path length.
+
+    Args:
+        energy:  Energy of the neutron in :math:`\mathrm{eV}`.
+        flight_path_length: flight path length in :math:`\mathrm{m}`.
+
+    Returns:
+        Time-of-flight in :math:`\mathrm{s}`.
+
+    """
+    L = flight_path_length  # m
+    m = MASS_OF_NEUTRON  # eV s²/m²
+    c = SPEED_OF_LIGHT # m/s
+    E = energy  # eV
+    γ = 1 + E / m / c ** 2
+    t = L / c * np.sqrt(γ ** 2 / ( γ ** 2 - 1 ) ) # s
+    return t  # ns
     
