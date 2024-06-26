@@ -75,7 +75,7 @@ Installation
 
 6. **Install the Package:**
 
-   Use `pip` to install the `pleiades` package in editable mode. This allows you to make changes to the code without reinstalling:
+   Use `pip` to install the `pleiades` package:
 
    .. code-block:: bash
 
@@ -107,6 +107,7 @@ Installation
 
 * You can uninstall `pleiades` using `pip uninstall pleiades`.
 
-## License
+License
+=======
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
