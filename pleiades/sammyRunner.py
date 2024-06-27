@@ -72,21 +72,21 @@ def run(archivename: str="example",
     # move files
 
     try:
-        shutil.move(archivepath /'SAMMY.LST', archivepath / f'results/{archivename}.lst')
+        shutil.move(archive_path /'SAMMY.LST', archive_path / f'results/{archivename}.lst')
     except FileNotFoundError:
         print("lst file is not found")
     try:
-        shutil.move(archivepath /'SAMMY.LPT', archivepath / f'results/{archivename}.lpt')
+        shutil.move(archive_path /'SAMMY.LPT', archive_path / f'results/{archivename}.lpt')
     except FileNotFoundError:
         print("lpt file is not found")
     try:
-        shutil.move(archivepath /'SAMMY.IO', archivepath / f'results/{archivename}.io')
+        shutil.move(archive_path /'SAMMY.IO', archive_path / f'results/{archivename}.io')
     except FileNotFoundError:
         print("io file is not found")
     try:
-        shutil.move(archivepath /'SAMMY.PAR', archivepath / f'results/{archivename}.par')
+        shutil.move(archive_path /'SAMMY.PAR', archive_path / f'results/{archivename}.par')
         # remove SAM*.*
-        filelist = glob.glob(f"{archivepath}/SAM*")
+        filelist = glob.glob(f"{archive_path}/SAM*")
         for f in filelist:
             os.remove(f)
     except FileNotFoundError:
@@ -94,7 +94,7 @@ def run(archivename: str="example",
     return
 
 
-def run_endf(archivename: str="example",inpfile: str = "") -> None:
+def run_endf(inpfile: str = "") -> None:
     """
     run sammy input with endf isotopes tables file to create a par file
     - This can only be done for a single isotope at a time
@@ -134,7 +134,8 @@ def run_endf(archivename: str="example",inpfile: str = "") -> None:
     
     datafile = f'{archivename}.dat'
 
-    endffile = pathlib.Path(__file__).parent.parent / "nucDataLibs/resonanceTables/res_endf8.endf"
+    import nucDataLibs
+    endffile = pathlib.Path(nucDataLibs.__file__).parent / "resonanceTables/res_endf8.endf"
     try:
         os.symlink(endffile,archive_path / 'res_endf8.endf')
     except FileExistsError:
